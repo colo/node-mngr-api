@@ -37,7 +37,7 @@ module.exports = new Class({
 	all: [
 	  {
 		path: '',
-		callbacks: ['login']
+		callbacks: ['get']
 	  },
 	]
   },
@@ -82,95 +82,124 @@ module.exports = new Class({
   },
   
   get: function(req, res, next){
-	console.log('admin get');
-	//console.log(Object.getLength(req.params));
-	
-	if(Object.getLength(req.params) == 0){
-		res.json({ title: 'Admin app' });
-	}
-	else if(req.params.service_action){
-		res.json({ title: 'Admin app', param: req.params });
-	}
-	else{
-		console.log({ title: 'Admin app', param: req.params });
-		next();
-	}
-	
-	//next();
-  },
-  post: function(req, res, next){
-	console.log('admin post');
-  },
-  initialize: function(options){
+		console.log('admin get');
+		//console.log(Object.getLength(req.params));
+		
+		if(Object.getLength(req.params) == 0){
+			res.json({ title: 'Admin app' });
+		}
+		else if(req.params.service_action){
+			res.json({ title: 'Admin app', param: req.params });
+		}
+		else{
+			console.log({ title: 'Admin app', param: req.params });
+			next();
+		}
+		
+		//next();
+		},
+		post: function(req, res, next){
+		console.log('admin post');
+		},
+	initialize: function(options){
 
-	this.setOptions(options);//override default options
-	var app = express();
-	this.app = app;
-	
-	
-	console.log('admin.params:');
-	//console.log(Object.clone(this.params));
-	
-	this.sanitize_params();
-	this.apply_routes();
-	
+		this.setOptions(options);//override default options
+		var app = express();
+		this.app = app;
+		
+		
+		console.log('admin.params:');
+		//console.log(Object.clone(this.params));
+		
+		this.sanitize_params();
+		this.apply_routes();
+		this.apply_api_routes();
+		
 	
   },
-  sanitize_params: function(){
-	/**
+  /**
 	* @params
 	* 
 	* */
-	 
-	var params = Object.clone(this.params);
-	
-	console.log(params);
-	
-	if(params){
-		var app = this.app;
+  sanitize_params: function(){
+		 
+		var params = Object.clone(this.params);
 		
-		Object.each(params, function(condition, param){
-			console.log('param: '+param);
-			console.log('condition: '+condition);
+		console.log(params);
+		
+		if(params){
+			var app = this.app;
 			
-			app.param(param, function(req, res, next, str){
-				console.log('app.param: '+param);
-				console.log(condition.exec(str));
+			Object.each(params, function(condition, param){
+				console.log('param: '+param);
+				console.log('condition: '+condition);
 				
-				if(condition.exec(str) == null)
-					req.params[param] = null;
+				app.param(param, function(req, res, next, str){
+					console.log('app.param: '+param);
+					console.log(condition.exec(str));
 					
-				next();
+					if(condition.exec(str) == null)
+						req.params[param] = null;
+						
+					next();
+				});
 			});
-		});
-	}
+		}
+  }.protect(),
+  apply_api_routes: function(){
+	
+		if(this.api_routes){
+			var app = this.app;
+			console.log('routes');
+			console.log(this.routes);
+				
+			Object.each(this.routes, function(routes, verb){//for each HTTP VERB (get/post/...) there is an arry of routes
+				console.log('verb routes: '+verb);
+				console.log(routes);
+				
+				routes.each(function(route){//each array is a route
+					
+					//var path = app.path + route.path;
+
+					var callbacks = [];
+					route.callbacks.each(function(fn){
+						console.log('api function:' + fn);
+						callbacks.push(this[fn].bind(this));
+					}.bind(this));
+					
+					app[verb]('/api/'+route.path, callbacks);
+
+				}.bind(this));
+
+			}.bind(this));
+		}
   }.protect(),
   apply_routes: function(){
 	
-	if(this.routes){
-		var app = this.app;
-		console.log('routes');
-		console.log(this.routes);
-			
-		Object.each(this.routes, function(routes, verb){//for each HTTP VERB (get/post/...) there is an arry of routes
-			console.log('verb routes: '+verb);
-			console.log(routes);
-			
-			routes.each(function(route){//each array is a route
-			  
-			  //var path = app.path + route.path;
+		if(this.routes){
+			var app = this.app;
+			console.log('routes');
+			console.log(this.routes);
+				
+			Object.each(this.routes, function(routes, verb){//for each HTTP VERB (get/post/...) there is an arry of routes
+				console.log('verb routes: '+verb);
+				console.log(routes);
+				
+				routes.each(function(route){//each array is a route
+					
+					//var path = app.path + route.path;
 
-			  var callbacks = [];
-			  route.callbacks.each(function(fn){
-				callbacks.push(this[fn].bind(this));
-			  }.bind(this));
-			  
-			  app[verb](route.path, callbacks);
+					var callbacks = [];
+					route.callbacks.each(function(fn){
+						callbacks.push(this[fn].bind(this));
+					}.bind(this));
+					
+					app[verb](route.path, callbacks);
+
+				}.bind(this));
 
 			}.bind(this));
-
-		}.bind(this));
-	}
+		}
   }.protect(),
   express: function(){
 	  return this.app;

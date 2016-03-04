@@ -136,10 +136,6 @@ if(root){
 	})	
 }
 
-/**
- * @express-params
- * 
- */
 
 ////root.use('/', routes);
 //apps['index'].use('/users', apps['users']);
