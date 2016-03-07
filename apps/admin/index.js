@@ -2,7 +2,8 @@
 
 var Moo = require("mootools");
 
-var express = require('express');
+var express = require('express'),
+	semver = require('semver');
 	//express_params = require('express-params');
 
 var path = require('path');
@@ -69,7 +70,7 @@ module.exports = new Class({
 	* */
 	//content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
 	
-	//~ version: 1,
+	version: '1.0.0',
 	
 	//~ path: '/api',
 	
@@ -79,6 +80,13 @@ module.exports = new Class({
 			path: ':service_action',
 			callbacks: ['get_api'],
 			content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
+			version: '1.0.1',
+			},
+			{
+			path: ':service_action',
+			callbacks: ['get_api'],
+			content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
+			version: '2.0.0',
 			},
 		],
 		post: [
@@ -89,8 +97,9 @@ module.exports = new Class({
 		],
 		all: [
 		  {
-			path: '',
-			callbacks: ['get_api']
+			path: '*',
+			callbacks: ['get_no_version_available'],
+			version: '',
 		  },
 		]
 	},
@@ -117,10 +126,10 @@ module.exports = new Class({
 		//console.log(Object.getLength(req.params));
 		
 		if(Object.getLength(req.params) == 0){
-			res.json({ title: 'Admin API' });
+			res.json({ title: 'Admin API', version: req.version, content_type: req.get('content-type') });
 		}
 		else if(req.params.service_action){
-			res.json({ title: 'Admin API', param: req.params });
+			res.json({ title: 'Admin API', param: req.params, version: req.version, content_type: req.get('content-type') });
 		}
 		else{
 			console.log({ title: 'Admin API', param: req.params });
@@ -129,7 +138,13 @@ module.exports = new Class({
 		
 		//next();
   },
-  
+  get_no_version_available: function(req, res, next){
+		console.log('admin get_no_version_available');
+		//console.log(Object.getLength(req.params));
+		
+		res.status(404).json({ message: 'No API version available' });
+		
+  },
   post: function(req, res, next){
 		console.log('admin post');
   },
@@ -139,10 +154,10 @@ module.exports = new Class({
 		//console.log(Object.getLength(req.params));
 		
 		if(Object.getLength(req.params) == 0){
-			res.json({ title: 'Admin app' });
+			res.json({ title: 'Admin app', content_type: req.get('content-type') });
 		}
 		else if(req.params.service_action){
-			res.json({ title: 'Admin app', param: req.params });
+			res.json({ title: 'Admin app', param: req.params, content_type: req.get('content-type') });
 		}
 		else{
 			console.log({ title: 'Admin app', param: req.params });
@@ -154,6 +169,7 @@ module.exports = new Class({
   
   post: function(req, res, next){
 		console.log('admin post');
+		res.json({ title: 'Admin app POST', content_type: req.get('content-type') });
   },
   
   initialize: function(options){
@@ -219,30 +235,41 @@ module.exports = new Class({
 			console.log(routes);
 			
 			var content_type = (typeof(api.content_type) !== "undefined") ? api.content_type : '';
+			var version = (typeof(api.version) !== "undefined") ? api.version : '';
+			
 			console.log('routes content-type: '+content_type);
+			console.log('routes version: '+version);
 			
 			routes.each(function(route){//each array is a route
 				
 				var path = '';
 				path += (typeof(api.path) !== "undefined") ? api.path : '';
-				path += (typeof(api.version) !== "undefined") ? '/' + api.version : '';
+				//path += (typeof(api.version) !== "undefined") ? '/' + api.version : '';
 				path += (typeof(route.path) !== "undefined") ? '/' + route.path : '';
 				
 				content_type = (typeof(route.content_type) !== "undefined") ? route.content_type : content_type;
+				version = (typeof(route.version) !== "undefined") ? route.version : version;
 				
 				console.log('specific route content-type: '+content_type);	
+				console.log('specific route version: '+version);
 				
 				var callbacks = [];
 				route.callbacks.each(function(fn){
 					console.log('api function:' + fn);
 					
-					if(content_type != ''){
+					//if(content_type != ''){
 						//~ callbacks.push(this.check_content_type_api.bind(this));
-						callbacks.push(this.check_content_type.bind(this, this[fn].bind(this), content_type));
-					}
-					else{
-						callbacks.push(this[fn].bind(this));
-					}
+						callbacks.push(
+							this.check_content_type.bind(this, 
+								this.check_accept_version.bind(this, 
+									this[fn].bind(this),
+									version),
+							content_type)
+						);
+					//}
+					//else{
+						//callbacks.push(this[fn].bind(this));
+					//}
 					
 					
 				}.bind(this));
@@ -272,19 +299,38 @@ module.exports = new Class({
   },*/
   
   check_content_type: function(callback, content_type, req, res, next){
-	  //~ console.log('arguments');
-	  //~ console.log(arguments);
+	  console.log('arguments');
+	  console.log(req.headers);
+	  console.log(content_type);
 	  
 	  console.log('check content-type: '+ req.headers['content-type'] +' | ' +content_type.test(req.headers['content-type']));
 	  
-	  if(content_type.test(req.headers['content-type'])){
+	  if(content_type.test(req.headers['content-type']) || !req.headers['content-type']){
+		//req.content_type = content_type;
 		callback(req, res, next);
 	  }
 	  else{
 		next();
 	  }
   },
-  
+  check_accept_version: function(callback, version, req, res, next){
+	  console.log('version arg');
+	  console.log(version);
+	  
+	  console.log('check accept-version: '+ req.headers['accept-version'] +' | ' +semver.satisfies(version, req.headers['accept-version']));
+	  
+	  //if(version.test(req.headers['accept-version']) || !version){
+	  if(!version ||
+		!req.headers['accept-version'] ||
+		semver.satisfies(version, req.headers['accept-version'])){
+		
+		req.version = version;	
+		callback(req, res, next);
+	  }
+	  else{
+		next();
+	  }
+  },
   apply_routes: function(){
 	  
 	//~ var content_type = (typeof(this.routes.content_type) !== "undefined") ? this.routes.content_type : '';
