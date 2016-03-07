@@ -67,7 +67,7 @@ module.exports = new Class({
      * can be nested inside each route
      * http://stackoverflow.com/questions/23190659/expressjs-limit-acceptable-content-types
 	* */
-	content_type: /^application\/(?:x-www-form-urlencoded|json)(?:[\s;]|$)/,
+	//content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
 	
 	//~ version: 1,
 	
@@ -78,7 +78,7 @@ module.exports = new Class({
 			{
 			path: ':service_action',
 			callbacks: ['get_api'],
-			content_type: /^application\/(?:x-www-form-urlencoded|json)(?:[\s;]|$)/,
+			content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
 			},
 		],
 		post: [
