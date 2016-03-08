@@ -68,14 +68,26 @@ module.exports = new Class({
      * can be nested inside each route
      * http://stackoverflow.com/questions/23190659/expressjs-limit-acceptable-content-types
 	* */
-	//content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
+	content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
+	
+	//path: '/api',
 	
 	version: '1.0.0',
 	
-	//~ path: '/api',
+	//versioned_path: true, //default false
+	
+	force_versioned_path: true, //default true, if false & version_path true, there would be 2 routes, filter with content-type
+	
+	accept_header: 'accept-version',
 	
 	routes: {
 		get: [
+			/*{
+			path: '',
+			callbacks: ['get_api'],
+			content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
+			//version: '1.0.1',
+			},*/
 			{
 			path: ':service_action',
 			callbacks: ['get_api'],
@@ -178,7 +190,9 @@ module.exports = new Class({
 		var app = express();
 		this.app = app;
 		
-		
+		if(this.api.versioned_path !== true)
+			this.api.force_versioned_path = false;
+			
 		console.log('admin.params:');
 		//console.log(Object.clone(this.params));
 		
@@ -242,16 +256,27 @@ module.exports = new Class({
 			
 			routes.each(function(route){//each array is a route
 				
-				var path = '';
-				path += (typeof(api.path) !== "undefined") ? api.path : '';
-				//path += (typeof(api.version) !== "undefined") ? '/' + api.version : '';
-				path += (typeof(route.path) !== "undefined") ? '/' + route.path : '';
-				
 				content_type = (typeof(route.content_type) !== "undefined") ? route.content_type : content_type;
 				version = (typeof(route.version) !== "undefined") ? route.version : version;
 				
 				console.log('specific route content-type: '+content_type);	
 				console.log('specific route version: '+version);
+				
+				var path = '';
+				path += (typeof(api.path) !== "undefined") ? api.path : '';
+				
+				var versioned_path = '';
+				
+				if(api.versioned_path === true && version != ''){
+					//path += (typeof(api.version) !== "undefined") ? '/' + api.version : '';
+					console.log('version:'+version);
+					versioned_path = path + '/v'+semver.major(version);
+					versioned_path += (typeof(route.path) !== "undefined") ? '/' + route.path : '';
+				}
+				
+				path += (typeof(route.path) !== "undefined") ? '/' + route.path : '';
+				
+				console.log('PATH: '+path);
 				
 				var callbacks = [];
 				route.callbacks.each(function(fn){
@@ -276,7 +301,15 @@ module.exports = new Class({
 				
 				console.log('api route:'+path);
 				
-				app[verb](path, callbacks);
+				if(api.force_versioned_path){//route only work on api-version path
+					app[verb](versioned_path, callbacks);
+				}
+				else{//route works on defined path
+					if(api.versioned_path === true && version != ''){//route also works on api-version path
+						app[verb](versioned_path, callbacks);
+					}
+					app[verb](path, callbacks);
+				}
 
 			}.bind(this));
 
@@ -305,30 +338,33 @@ module.exports = new Class({
 	  
 	  console.log('check content-type: '+ req.headers['content-type'] +' | ' +content_type.test(req.headers['content-type']));
 	  
-	  if(content_type.test(req.headers['content-type']) || !req.headers['content-type']){
-		//req.content_type = content_type;
-		callback(req, res, next);
+	  if(this.api.force_versioned_path ||//if apt-version path is forced, no checks needed
+			content_type.test(req.headers['content-type']) || //check if content-type match
+			!req.headers['content-type']){//or if no content-type it specified
+			callback(req, res, next);
 	  }
 	  else{
-		next();
+			next();
 	  }
   },
   check_accept_version: function(callback, version, req, res, next){
 	  console.log('version arg');
 	  console.log(version);
 	  
-	  console.log('check accept-version: '+ req.headers['accept-version'] +' | ' +semver.satisfies(version, req.headers['accept-version']));
+	  console.log('check api-version: '+ req.headers[this.api.accept_header] +' | ' +semver.satisfies(version, req.headers[this.api.accept_header]));
+	  
+	  var accept_header = (this.api.accept_header) ? this.api.accept_header : 'accept-version';
 	  
 	  //if(version.test(req.headers['accept-version']) || !version){
 	  if(!version ||
-		!req.headers['accept-version'] ||
-		semver.satisfies(version, req.headers['accept-version'])){
+		!req.headers[accept_header] ||
+		semver.satisfies(version, req.headers[accept_header])){
 		
 		req.version = version;	
-		callback(req, res, next);
+			callback(req, res, next);
 	  }
 	  else{
-		next();
+			next();
 	  }
   },
   apply_routes: function(){
