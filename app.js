@@ -19,16 +19,16 @@ require("fs").readdirSync(wrk_dir).forEach(function(file) {
 	
 	
 	if(! (file.charAt(0) == '.')){//ommit 'hiden' files
-		console.log('-------');
+		//console.log('-------');
 		
-		console.log('app load: '+ file);
+		//console.log('app load: '+ file);
 		var app = null;
 		var id = '';//app id
 		var mount = '';
 		
 		if(fs.statSync(full_path).isDirectory() == true){//apps inside dir
 			
-			console.log('dir app: '+full_path);
+			//console.log('dir app: '+full_path);
 			
 			var dir = file;//is dir
 			
@@ -36,7 +36,7 @@ require("fs").readdirSync(wrk_dir).forEach(function(file) {
 			  
 				if(path.extname(file) == '.js' && ! (file.charAt(0) == '.')){
 				  
-					console.log('app load js: '+ file);
+					//console.log('app load js: '+ file);
 					app = require(path.join(full_path, file));
 					
 					if(file == 'index.js'){
@@ -48,18 +48,18 @@ require("fs").readdirSync(wrk_dir).forEach(function(file) {
 					}
 					
 					if(typeOf(app) == 'class'){//mootools class
-						console.log('class app');
+						//console.log('class app');
 						
 						var instance = new app();
 						
-						/*console.log('mootols_app.params:');
-						console.log(Object.clone(instance.params));*/
+						/*//console.log('mootols_app.params:');
+						//console.log(Object.clone(instance.params));*/
 						
 						app = instance.express();
 						//apps[app.locals.id || id]['app'] = app;
 					}
 					else{//nodejs module
-						console.log('express app...nothing to do');
+						//console.log('express app...nothing to do');
 					}
 					
 					mount = '/'+mount;
@@ -73,8 +73,8 @@ require("fs").readdirSync(wrk_dir).forEach(function(file) {
 
 		}
 		else if(path.extname( file ) == '.js'){// single js apps
-			console.log('file app: '+full_path);
-			console.log('basename: '+path.basename(file, '.js'));
+			//console.log('file app: '+full_path);
+			//console.log('basename: '+path.basename(file, '.js'));
 			
 			app = require(full_path);
 			id = path.basename(file, '.js');
@@ -91,7 +91,7 @@ require("fs").readdirSync(wrk_dir).forEach(function(file) {
 				app = instance.express();
 			}
 			else{//nodejs module
-				console.log('express app...nothing to do');
+				//console.log('express app...nothing to do');
 			}
 			
 			
@@ -105,8 +105,8 @@ require("fs").readdirSync(wrk_dir).forEach(function(file) {
 })
 
 Object.each(apps, function(app, id){
-	console.log('app id: '+id );
-	console.log('app mount: '+app.mount );
+	//console.log('app id: '+id );
+	//console.log('app mount: '+app.mount );
 	
 })
 
@@ -124,14 +124,14 @@ Object.each(apps, function(app, id){
 })
 
 
-//console.log(root);
+////console.log(root);
 
 if(root){
 	Object.each(apps, function(app, id){
 		
 		if(app['mount'] != root['mount']){
 			root['app'].use(app['mount'], app['app']);
-			console.log('app[\'mount\']: '+app['mount']);
+			//console.log('app[\'mount\']: '+app['mount']);
 		}
 	})	
 }
