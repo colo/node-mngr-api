@@ -11,9 +11,7 @@
     "node": ">= 0.10.21"
   },
   "dependencies": {
-    "connect-flash": "^0.1.1",
     "connect-memcached": "^0.1.0",
-    "cookie-parser": "^1.4.1",
     "express-session": "^1.13.0",
     "mootools": "^1.5.2"
   },

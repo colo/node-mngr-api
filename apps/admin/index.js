@@ -5,9 +5,8 @@ var Moo = require("mootools"),
 	express = require('express'),
 	semver = require('semver'),
 	bodyParser = require('body-parser'),//json parse
-	//for authentication
-	flash = require('connect-flash'), //for passport flash
 	session = require('express-session');//for passport session
+	
 
 var fs = require('fs'),
 	util = require('util');	
@@ -228,7 +227,7 @@ module.exports = new Class({
 					res.cookie('bad', false, { maxAge: 0, httpOnly: false });
 					
 					//return res.redirect('/');
-					return res.json({'login: ok'});
+					return res.json({'login': 'ok'});
 					
 				}.bind(this));
 		  }
@@ -253,7 +252,6 @@ module.exports = new Class({
 		app.use(this.logger.access());
 		
 		//authentication
-		//app.use(cookieParser('secret'));
 		var SessionMemoryStore = require('express-session/session/memory');//for socket.io / sessions
 		app.use(
 			session(
@@ -264,7 +262,7 @@ module.exports = new Class({
 					cookie : { secure : false, maxAge : (4 * 60 * 60 * 1000) }, // 4 hours
 					secret: 'keyboard cat',
 					resave: true,
-					//saveUninitialized: true
+					saveUninitialized: true
 				}
 			)
 		);
@@ -285,17 +283,13 @@ module.exports = new Class({
 		})
 		*/
 		
-		var authentication = new Authentication(this, 
-								new MemoryStore(users),
-								new UsersAuth({users: users})
-						  );
+		var authentication = new Authentication(this, {
+								store: new MemoryStore(users),
+								auth: new UsersAuth({users: users}),
+								passport: {session: true}
+						  });
 		
 		this.authentication = authentication;
-		
-		app.use(flash());//for passport 
-		
-		app.use(this.authentication.passport.initialize());
-		app.use(this.authentication.passport.session());
 		//-------------------------------------
 		
 		//authorization
