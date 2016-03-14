@@ -55,7 +55,7 @@ module.exports = new Class({
 	post: [
 	  {
 		path: '',
-		callbacks: ['post']
+		callbacks: ['check_authentication', 'post']
 	  },
 	],
 	all: [
@@ -113,7 +113,7 @@ module.exports = new Class({
 		post: [
 		  {
 			path: '',
-			callbacks: ['post'],
+			callbacks: ['check_authentication', 'post'],
 		  },
 		],
 		all: [
@@ -192,46 +192,49 @@ module.exports = new Class({
   },
   
   post: function(req, res, next){
+	  
 		console.log('admin post');
-		console.log(req.headers);
+		//console.log(req.headers);
+		res.json({ title: 'Admin app POST' });
+		
 		//console.log(req);
 		
-		this.authenticate(req, res, next,  function(err, user, info) {
+		//this.authenticate(req, res, next,  function(err, user, info) {
 	  
-		  if (err) {
-				this.log('login', 'error', err);
-				return next(err)
-		  }
+		  //if (err) {
+				//this.log('login', 'error', err);
+				//return next(err)
+		  //}
 		  
-		  if (!user) {
-				this.log('login', 'warn', 'login authenticate ' + info.message);
+		  //if (!user) {
+				//this.log('login', 'warn', 'login authenticate ' + info.message);
 				
-				res.cookie('bad', true, { maxAge: 99999999, httpOnly: false });
+				//res.cookie('bad', true, { maxAge: 99999999, httpOnly: false });
 				
-				req.flash('error', info.message);
+				//req.flash('error', info.message);
 
-		// 		return res.redirect('/login')
+		//// 		return res.redirect('/login')
 				
-				//res.render(path.join(__dirname, '/views/login'), this.render);
-				res.json({ title: 'Admin app POST', info: info });
-		  }
-		  else{
-				req.logIn(user, function(err) {
-					if (err) {
-					this.log('login', 'error', err);
-					return next(err);
-					}
+				////res.render(path.join(__dirname, '/views/login'), this.render);
+				//res.json({ title: 'Admin app POST', info: info });
+		  //}
+		  //else{
+				//req.logIn(user, function(err) {
+					//if (err) {
+					//this.log('login', 'error', err);
+					//return next(err);
+					//}
 					
-					this.log('login', 'info', 'login authenticate ' + util.inspect(user));
+					//this.log('login', 'info', 'login authenticate ' + util.inspect(user));
 					
-					res.cookie('bad', false, { maxAge: 0, httpOnly: false });
+					//res.cookie('bad', false, { maxAge: 0, httpOnly: false });
 					
-					//return res.redirect('/');
-					return res.json({'login': 'ok'});
+					////return res.redirect('/');
+					//return res.json({'login': 'ok'});
 					
-				}.bind(this));
-		  }
-		}.bind(this));
+				//}.bind(this));
+		  //}
+		//}.bind(this));
 		
 		
   },
@@ -435,6 +438,7 @@ module.exports = new Class({
 				var callbacks = [];
 				route.callbacks.each(function(fn){
 					//console.log('api function:' + fn);
+					//console.log('api function:' + this[fn]);
 					
 					//if(content_type != ''){
 						//~ callbacks.push(this.check_content_type_api.bind(this));
