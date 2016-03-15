@@ -240,7 +240,8 @@ module.exports = new Class({
   },
   
   initialize: function(options){
-
+		throw {err: 'implement accept for content negotiation'};
+		
 		this.setOptions(options);//override default options
 		var app = express();
 		this.app = app;
@@ -573,7 +574,56 @@ module.exports = new Class({
   
   express: function(){
 	  return this.app;
-  }
+  },
+  //required for 'check_authentication', should be 'implement' injected on another module, auto-loaded by authentication?
+  403: function(req, res, next, err){
+		
+		res.status(403);
+		
+		res.format({
+			'text/plain': function(){
+				res.send(err);
+			},
+
+			'text/html': function(){
+				res.send(err);
+			},
+
+			'application/json': function(){
+				res.send(err);
+			},
+
+			'default': function() {
+				// log the request and respond with 406
+				res.status(406).send('Not Acceptable '+ err);
+			}
+		});
+	},
+	//required for 'check_authentication', should be 'implement' injected on another module, auto-loaded by authentication?
+	500: function(req, res, next, err){
+		
+		res.status(500);
+		
+		res.format({
+			'text/plain': function(){
+				res.send(err);
+			},
+
+			'text/html': function(){
+				res.send(err);
+			},
+
+			'application/json': function(){
+				res.send(err);
+			},
+
+			'default': function() {
+				// log the request and respond with 406
+				res.status(406).send('Not Acceptable '+ err);
+			}
+		});
+	},
+	
 });
 
 //app.use('/', router);
