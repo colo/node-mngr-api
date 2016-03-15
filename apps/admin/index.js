@@ -240,7 +240,7 @@ module.exports = new Class({
   },
   
   initialize: function(options){
-		throw {err: 'implement accept for content negotiation'};
+		//throw {err: 'implement accept for content negotiation'};
 		
 		this.setOptions(options);//override default options
 		var app = express();
@@ -498,8 +498,8 @@ module.exports = new Class({
 	  //console.log('check content-type: '+ req.headers['content-type'] +' | ' +content_type.test(req.headers['content-type']));
 	  
 	  if(this.api.force_versioned_path ||//if apt-version path is forced, no checks needed
-			content_type.test(req.headers['content-type']) || //check if content-type match
-			!req.headers['content-type']){//or if no content-type it specified
+			content_type.test(req.get('content-type')) || //check if content-type match
+			!req.get('content-type')){//or if no content-type it specified
 			callback(req, res, next);
 	  }
 	  else{

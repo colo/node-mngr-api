@@ -1,7 +1,9 @@
 'use strict'
 
 var fs = require('fs'),
-	path = require('path');
+	path = require('path'),
+	serveIndex = require('serve-index'),
+    serveStatic = require('serve-static');
 	//express = require('express'),
 	//serveStatic = require('serve-static');
 	
@@ -104,11 +106,21 @@ require("fs").readdirSync(wrk_dir).forEach(function(file) {
 	}
 })
 
-Object.each(apps, function(app, id){
+//Object.each(apps, function(app, id){
 	//console.log('app id: '+id );
-	//console.log('app mount: '+app.mount );
+	////console.log('app mount: '+app.mount );
+	//var tmp_app = null;
+	//if(!app['app'].express){
+		//tmp_app = app['app'];
+	//}
+	//else{
+		//tmp_app = app['app'].express();
+	//}
 	
-})
+	//tmp_app.use('/public/apps/' + id, serveIndex(path.join(__dirname, '/apps/', id, '/assets'), {icons: true}));	
+	//tmp_app.use('/public/apps/' + id, serveStatic(path.join(__dirname, '/apps/', id, '/assets')));
+	
+//})
 
 
 /**
@@ -121,6 +133,7 @@ var root = null;
 Object.each(apps, function(app, id){
 	if(app['mount'] == '/')
 		root = app;
+		
 })
 
 
@@ -133,8 +146,23 @@ if(root){
 			root['app'].use(app['mount'], app['app']);
 			//console.log('app[\'mount\']: '+app['mount']);
 		}
-	})	
+		
+		//var tmp_app = null;
+		//if(!app['app'].express){
+			//tmp_app = app['app'];
+		//}
+		//else{
+			//tmp_app = app['app'].express();
+		//}
+		
+		root.app.use('/public/apps/' + id, serveIndex(path.join(__dirname, '/apps/', id, '/assets'), {icons: true}));	
+		root.app.use('/public/apps/' + id, serveStatic(path.join(__dirname, '/apps/', id, '/assets')));
+	})
+	
+	root.app.use('/public', serveIndex(path.resolve('./public'), {icons: true}));
+	root.app.use('/public', serveStatic(path.resolve('./public')));
 }
+
 
 
 ////root.use('/', routes);
