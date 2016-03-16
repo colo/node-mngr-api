@@ -48,7 +48,7 @@ module.exports = new Class({
     get: [
 		{
 			path: '/:service_action',
-			callbacks: ['get'],
+			callbacks: ['check_authentication', 'get'],
 			content_type: /text\/plain/,
 		},
     ],
@@ -61,7 +61,7 @@ module.exports = new Class({
 	all: [
 	  {
 		path: '',
-		callbacks: ['get']
+		callbacks: ['check_authentication', 'get']
 	  },
 	]
   },
@@ -175,6 +175,11 @@ module.exports = new Class({
 		console.log('req.isAuthenticated');
 		console.log(req.isAuthenticated());
 		
+		console.log('isAuthorized');
+		console.log(this.isAuthorized({ op: 'view', res: 'abm'}));
+		console.log(this.getSession().getRole().getID());
+
+
 		////console.log(Object.getLength(req.params));
 		
 		if(Object.getLength(req.params) == 0){
