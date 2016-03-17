@@ -25,116 +25,147 @@ var Logger = require('node-express-logger'),
 module.exports = new Class({
   Implements: [Options, Events],
   
-  id: 'admin',
-  path: '/admin',
-  
   app: null,
   logger: null,
   authorization:null,
+  authentication: null,
   
   //server: null,
   
   options: {
-  },
-  
-  routes: {
-    /**
-     * @content_type regex to restric allowed req.headers['content-type'], if undefined or '', allow all
-     * can be nested inside each route
-     * http://stackoverflow.com/questions/23190659/expressjs-limit-acceptable-content-types
-	* */
-    content_type: /text\/plain/,
+	  
+	id: 'admin',
+	path: '/admin',
 	
-    get: [
-		{
-			path: '/:service_action',
-			callbacks: ['check_authentication', 'get'],
-			content_type: /text\/plain/,
-		},
-    ],
-	post: [
-	  {
-		path: '',
-		callbacks: ['check_authentication', 'post']
-	  },
-	],
-	all: [
-	  {
-		path: '',
-		callbacks: ['check_authentication', 'get']
-	  },
-	]
-  },
-  
-  params: {
+	logs : { 
+		path: './logs' 
+	},
+	
+	session: {
+		//store: new SessionMemoryStore,
+		//proxy: true,
+		//cookie: { path: '/', httpOnly: true, maxAge: null },
+		cookie : { secure : false, maxAge : (4 * 60 * 60 * 1000) }, // 4 hours
+		secret: 'keyboard cat',
+		resave: true,
+		saveUninitialized: true
+	},
+	
+	authentication: {
+		users : [
+			  { id: 1, username: 'lbueno' , role: 'admin', password: '40bd001563085fc35165329ea1ff5c5ecbdbbeef'}, //sha-1 hash
+			  { id: 2, username: 'test' , role: 'user', password: '123'}
+		],
+	},
+	
+	authorization: {
+		config: 'config/rbac.json',
+	},
+	
+	params: {
 	  service_action: /start|stop/,
-  },
-  
-  api: {
+	},
 	
 	/**
-     * @content_type regex to restric allowed req.headers['content-type'], if undefined or '', allow all
-     * can be nested inside each route
-     * http://stackoverflow.com/questions/23190659/expressjs-limit-acceptable-content-types
+	 * @content_type regex to restric allowed req.headers['content-type'], if undefined or '', allow all
+	 * can be nested inside each route
+	 * http://stackoverflow.com/questions/23190659/expressjs-limit-acceptable-content-types
 	* */
-	content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
-	
-	//path: '/api',
-	
-	version: '1.0.0',
-	
-	//versioned_path: true, //default false
-	
-	force_versioned_path: true, //default true, if false & version_path true, there would be 2 routes, filter with content-type
-	
-	accept_header: 'accept-version',
+	content_type: /text\/plain/,
 	
 	routes: {
+		
 		get: [
-			/*{
-			path: '',
-			callbacks: ['get_api'],
-			content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
-			//version: '1.0.1',
-			},*/
 			{
-			path: ':service_action',
-			callbacks: ['get_api'],
-			content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
-			version: '2.0.0',
-			},
-			{
-			path: ':service_action',
-			callbacks: ['get_api'],
-			content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
-			version: '1.0.1',
+				path: '/:service_action',
+				callbacks: ['check_authentication', 'get'],
+				content_type: /text\/plain/,
 			},
 		],
 		post: [
 		  {
 			path: '',
-			callbacks: ['check_authentication', 'post'],
+			callbacks: ['check_authentication', 'post']
 		  },
 		],
 		all: [
 		  {
-			path: '*',
-			callbacks: ['get_no_version_available'],
-			version: '',
+			path: '',
+			callbacks: ['check_authentication', 'get']
 		  },
 		]
 	},
 	
-	/*doc: {
-		'/': {
-		  type: 'function',
-		  returns: 'array',
-		  description: 'Return an array of registered servers',
-		  example: '{"username":"lbueno","password":"40bd001563085fc35165329ea1ff5c5ecbdbbeef"} / curl -v -L -H "Accept: application/json" -H "Content-type: application/json" -X POST -d \' {"user":"something","password":"app123"}\'  http://localhost:8080/login'
+	api: {
+		
+		/**
+		 * @content_type regex to restric allowed req.headers['content-type'], if undefined or '', allow all
+		 * can be nested inside each route
+		 * http://stackoverflow.com/questions/23190659/expressjs-limit-acceptable-content-types
+		* */
+		content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
+		
+		//path: '/api',
+		
+		version: '1.0.0',
+		
+		versioned_path: false, //default false
+		
+		force_versioned_path: true, //default true, if false & version_path true, there would be 2 routes, filter with content-type
+		
+		accept_header: 'accept-version',
+		
+		routes: {
+			get: [
+				/*{
+				path: '',
+				callbacks: ['get_api'],
+				content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
+				//version: '1.0.1',
+				},*/
+				{
+				path: ':service_action',
+				callbacks: ['get_api'],
+				content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
+				version: '2.0.0',
+				},
+				{
+				path: ':service_action',
+				callbacks: ['get_api'],
+				content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
+				version: '1.0.1',
+				},
+			],
+			post: [
+			  {
+				path: '',
+				callbacks: ['check_authentication', 'post'],
+			  },
+			],
+			all: [
+			  {
+				path: '',
+				callbacks: ['get_no_version_available'],
+				version: '',
+			  },
+			]
+		},
+		
+		/*doc: {
+			'/': {
+			  type: 'function',
+			  returns: 'array',
+			  description: 'Return an array of registered servers',
+			  example: '{"username":"lbueno","password":"40bd001563085fc35165329ea1ff5c5ecbdbbeef"} / curl -v -L -H "Accept: application/json" -H "Content-type: application/json" -X POST -d \' {"user":"something","password":"app123"}\'  http://localhost:8080/login'
 
-		}
-	},*/
+			}
+		},*/
+	},
   },
+  
+  
+  
+  
   
   
 		
@@ -245,82 +276,151 @@ module.exports = new Class({
   },
   
   initialize: function(options){
-		//throw {err: 'implement accept for content negotiation'};
 		
 		this.setOptions(options);//override default options
+		
 		var app = express();
 		this.app = app;
 		
-		app.use(bodyParser.urlencoded({ extended: false }))
+		//app.use(bodyParser.urlencoded({ extended: false }))
+		
 		// parse application/json
-		app.use(bodyParser.json())
+		//app.use(bodyParser.json())
 
 
-		//logger
-		this.logger = new Logger(this, { "path": './logs' });
+		/**
+		 * logger
+		 *  - start
+		 * **/
+		if(this.options.logs && (typeof(this.options.logs) == 'class' || typeof(this.options.logs) == 'function')){
+			this.logger = this.options.logs;
+			this.options.logs = {};
+		}
+		else{
+			this.logger = new Logger(this, this.options.logs);
+		}
+	
 		app.use(this.logger.access());
+		/**
+		 * logger
+		 *  - end
+		 * **/
 		
-		//authentication
-		var SessionMemoryStore = require('express-session/session/memory');//for socket.io / sessions
-		app.use(
-			session(
-				{
-					//store: new SessionMemoryStore,
-					//proxy: true,
-					//cookie: { path: '/', httpOnly: true, maxAge: null },
-					cookie : { secure : false, maxAge : (4 * 60 * 60 * 1000) }, // 4 hours
-					secret: 'keyboard cat',
-					resave: true,
-					saveUninitialized: true
-				}
-			)
-		);
+		//var SessionMemoryStore = require('express-session/session/memory');//for socket.io / sessions
 		
-		var MemoryStore = require('node-authentication').MemoryStore;
+		/**
+		 * session
+		 *  - start
+		 * **/
+		if(this.options.session){
+			
+			var sess_middleware = null;
+			
+			if(typeof(this.options.session) == 'function'){
+				sess_middleware = this.options.session;
+				this.options.session = {};
+			}
+			else{
+				sess_middleware = session(this.options.session);
+			}
+				
+			app.use(sess_middleware);
+		}
+		/**
+		 * session
+		 *  - end
+		 * **/
+		 
 		
-		//----Mockups libs
-		var UsersAuth = require(path.join(__dirname, 'libs/mockups/authentication/type/users'));
-		var users = [
-		  { id: 1, username: 'lbueno' , role: 'admin', password: '40bd001563085fc35165329ea1ff5c5ecbdbbeef'}, //sha-1 hash
-		  { id: 2, username: 'test' , role: 'user', password: '123'}
-		];
+		/**
+		 * authentication
+		 * - start
+		 * */
+		if(this.options.authentication){
+			var authentication = null;
+			
+			if(typeof(this.options.authentication) == 'class' || typeof(this.options.authentication) == 'function'){
+					
+				authentication = this.options.authentication;
+				this.options.authentication = {};
+			}
+			else{
+				
+				var MemoryStore = require('node-authentication').MemoryStore;
+			
+				//----Mockups libs
+				var UsersAuth = require(path.join(__dirname, 'libs/mockups/authentication/type/users'));
+				
+				//var users = [
+				  //{ id: 1, username: 'lbueno' , role: 'admin', password: '40bd001563085fc35165329ea1ff5c5ecbdbbeef'}, //sha-1 hash
+				  //{ id: 2, username: 'test' , role: 'user', password: '123'}
+				//];
 
-		/*
-		 var MemcachedStore = require('connect-memcached')(require('express-session'));
-		 new MemcachedStore({
-			hosts: ['127.0.0.1:11211']
-		})
-		*/
+				/*
+				 var MemcachedStore = require('connect-memcached')(require('express-session'));
+				 new MemcachedStore({
+					hosts: ['127.0.0.1:11211']
+				})
+				*/
+				var users = this.options.authentication.users;
+				
+				authentication = new Authentication(this, {
+										store: new MemoryStore(users),
+										auth: new UsersAuth({users: users}),
+										passport: {session: (this.options.session) ? true : false}
+								  });
+			}
+			
+			if(this.options.authentication.users)//empty users data, as is easy accesible
+				this.options.authentication.users = {};
+			
+			this.authentication = authentication;
+		}
+		/**
+		 * authentication
+		 * - end
+		 * */
 		
-		var authentication = new Authentication(this, {
-								store: new MemoryStore(users),
-								auth: new UsersAuth({users: users}),
-								passport: {session: true}
-						  });
-		
-		this.authentication = authentication;
-		//-------------------------------------
-		
-		//authorization
-		var authorization = new Authorization(this, 
-			JSON.decode(
-				fs.readFileSync(path.join(__dirname, 'config/rbac.json' ), 'ascii')
-			)
-		);
-		// 	authorization.addEvent(authorization.SET_SESSION, this.logAuthorizationSession.bind(this));
-		// 	authorization.addEvent(authorization.IS_AUTHORIZED, this.logAuthorization.bind(this));
-		// 	authentication.addEvent(authentication.ON_AUTH, this.logAuthentication.bind(this));
-		this.authorization = authorization;
-		app.use(this.authorization.session());
-		//-------------------------------------
+		/**
+		 * authorization
+		 * - start
+		 * */
+		 if(this.options.authorization){
+			 var authorization = null;
+			 
+			 if(typeof(this.options.authorization) == 'class' || typeof(this.options.authorization) == 'function'){
+					
+				authorization = this.options.authorization;
+				this.options.authorization = {};
+			}
+			else{
+				var rbac = this.options.authorization.config;
+				
+				if(typeof(this.options.authorization.config) == 'string'){
+					rbac = fs.readFileSync(path.join(__dirname, this.options.authorization.config ), 'ascii');
+					this.options.authorization.config = rbac;
+				}
+				
+				authorization = new Authorization(this, 
+					JSON.decode(
+						rbac
+					)
+				);
+			}
+			
+			this.authorization = authorization;
+			app.use(this.authorization.session());
+		}
+		/**
+		 * authorization
+		 * - end
+		 * */
 		
 		this.profile('app_init');//start profiling
 		
-		if(this.api.versioned_path !== true)
-			this.api.force_versioned_path = false;
-			
-		//console.log('admin.params:');
-		////console.log(Object.clone(this.params));
+		if(this.options.api.versioned_path !== true)
+			this.options.api.force_versioned_path = false;
+
 		
 		this.sanitize_params();
 		
@@ -334,71 +434,76 @@ module.exports = new Class({
 		this.log('admin', 'info', 'app started');
 		
 		/*------------------------------------------*/
-		this.authorization.addEvent(this.authorization.NEW_SESSION, function(obj){
-  
-		//   console.log('event');
-		//   console.log(obj);
-		  
-		  if(!obj.error){
-			
-		// 	web.authorization.processRules({
-		// 	  "subjects":[
-		// 		{
-		// 		  "id": "lbueno",
-		// 		  "roles":["admin"]
-		// 		},
-		// 		{
-		// 		  "id": "test",
-		// 		  "roles":["user"]
-		// 		},
-		// 	  ],
-		// 	});
+		if(this.authorization){
+			// 	authorization.addEvent(authorization.SET_SESSION, this.logAuthorizationSession.bind(this));
+			// 	authorization.addEvent(authorization.IS_AUTHORIZED, this.logAuthorization.bind(this));
+			// 	authentication.addEvent(authentication.ON_AUTH, this.logAuthentication.bind(this));
+			this.authorization.addEvent(this.authorization.NEW_SESSION, function(obj){
+	  
+			//   console.log('event');
+			//   console.log(obj);
+			  
+			  if(!obj.error){
+				
+			// 	web.authorization.processRules({
+			// 	  "subjects":[
+			// 		{
+			// 		  "id": "lbueno",
+			// 		  "roles":["admin"]
+			// 		},
+			// 		{
+			// 		  "id": "test",
+			// 		  "roles":["user"]
+			// 		},
+			// 	  ],
+			// 	});
 
-			this.authorization.processRules({
-			  "subjects": function(){
-				  if(obj.getID() == "test")
-					return [{ "id": "test", "roles":["user"]}];
-				  
-				  if(obj.getID() == "lbueno")
-					return [{ "id": "lbueno", "roles":["admin"]}];
-			  },
-			});
-		  }
-		  
-		}.bind(this));
+				this.authorization.processRules({
+				  "subjects": function(){
+					  if(obj.getID() == "test")
+						return [{ "id": "test", "roles":["user"]}];
+					  
+					  if(obj.getID() == "lbueno")
+						return [{ "id": "lbueno", "roles":["admin"]}];
+				  },
+				});
+			  }
+			  
+			}.bind(this));
+		}
   },
-  /**
+	/**
 	* @params
 	* 
 	* */
   sanitize_params: function(){
-		 
-		var params = Object.clone(this.params);
+	 
+	var params = Object.clone(this.options.params);
+	
+	//console.log(params);
+	
+	if(params){
+		var app = this.app;
 		
-		//console.log(params);
-		
-		if(params){
-			var app = this.app;
+		Object.each(params, function(condition, param){
+			//console.log('param: '+param);
+			//console.log('condition: '+condition);
 			
-			Object.each(params, function(condition, param){
-				//console.log('param: '+param);
-				//console.log('condition: '+condition);
+			app.param(param, function(req, res, next, str){
+				//console.log('app.param: '+param);
+				//console.log(condition.exec(str));
 				
-				app.param(param, function(req, res, next, str){
-					//console.log('app.param: '+param);
-					//console.log(condition.exec(str));
+				if(condition.exec(str) == null)
+					req.params[param] = null;
 					
-					if(condition.exec(str) == null)
-						req.params[param] = null;
-						
-					next();
-				});
+				next();
 			});
-		}
+		});
+	}
   }.protect(),
   
   apply_api_routes: function(){
-	var api = this.api;
+	var api = this.options.api;
 	
 	//~ var content_type = (typeof(api.content_type) !== "undefined") ? api.content_type : '';
 	
@@ -502,7 +607,7 @@ module.exports = new Class({
 	  
 	  //console.log('check content-type: '+ req.headers['content-type'] +' | ' +content_type.test(req.headers['content-type']));
 	  
-	  if(this.api.force_versioned_path ||//if apt-version path is forced, no checks needed
+	  if(this.options.api.force_versioned_path ||//if apt-version path is forced, no checks needed
 			content_type.test(req.get('content-type')) || //check if content-type match
 			!req.get('content-type')){//or if no content-type it specified
 			callback(req, res, next);
@@ -515,9 +620,9 @@ module.exports = new Class({
 	  //console.log('version arg');
 	  //console.log(version);
 	  
-	  //console.log('check api-version: '+ req.headers[this.api.accept_header] +' | ' +semver.satisfies(version, req.headers[this.api.accept_header]));
+	  //console.log('check api-version: '+ req.headers[this.options.api.accept_header] +' | ' +semver.satisfies(version, req.headers[this.options.api.accept_header]));
 	  
-	  var accept_header = (this.api.accept_header) ? this.api.accept_header : 'accept-version';
+	  var accept_header = (this.options.api.accept_header) ? this.options.api.accept_header : 'accept-version';
 	  
 	  //if(version.test(req.headers['accept-version']) || !version){
 	  if(!version ||
@@ -533,20 +638,24 @@ module.exports = new Class({
   },
   apply_routes: function(){
 	  
-	//~ var content_type = (typeof(this.routes.content_type) !== "undefined") ? this.routes.content_type : '';
+	//~ var content_type = (typeof(this.options.routes.content_type) !== "undefined") ? this.options.routes.content_type : '';
+	//console.log('this.options.routes');
+	//console.log(this.options.routes);
 	
-	if(this.routes){
+	if(this.options.routes){
 		var app = this.app;
 		//console.log('routes');
-		//console.log(this.routes);
+		//console.log(this.options.routes);
 		//~ //console.log('routes content-type: '+content_type);	
 		
-		Object.each(this.routes, function(routes, verb){//for each HTTP VERB (get/post/...) there is an arry of routes
+		Object.each(this.options.routes, function(routes, verb){//for each HTTP VERB (get/post/...) there is an arry of routes
 			//console.log('verb routes: '+verb);
 			//console.log(routes);
 			
-			var content_type = (typeof(this.routes.content_type) !== "undefined") ? this.routes.content_type : '';
+			var content_type = (typeof(this.options.content_type) !== "undefined") ? this.options.content_type : '';
 			//console.log('routes content-type: '+content_type);
+			
+			//console.log(typeof(routes));
 			
 			routes.each(function(route){//each array is a route
 				

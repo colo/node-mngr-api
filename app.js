@@ -58,6 +58,7 @@ require("fs").readdirSync(wrk_dir).forEach(function(file) {
 						//console.log(Object.clone(instance.params));*/
 						
 						app = instance.express();
+
 						//apps[app.locals.id || id]['app'] = app;
 					}
 					else{//nodejs module
