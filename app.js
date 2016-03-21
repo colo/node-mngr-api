@@ -1,11 +1,21 @@
 'use strict'
 
-var path = require('path'),
-	serveIndex = require('serve-index'),
-	serveStatic = require('serve-static'),
-  apps = require('node-express-autoload').load(path.join(__dirname, '/apps'));
+var options = {
+	authentication: {
+		users : [
+			  { id: 1, username: 'lbueno' , role: 'admin', password: '40bd001563085fc35165329ea1ff5c5ecbdbbeef'}, //sha-1 hash
+			  { id: 2, username: 'test' , role: 'user', password: '123'}
+		],
+	},
+}
 
-	
+/**
+ * minumun requirement
+ * 
+ * */
+var path = require('path'),
+	apps = require('node-express-autoload').load(path.join(__dirname, '/apps'), options);
+
 var root = null;
 
 /**
@@ -18,7 +28,21 @@ Object.each(apps, function(app, id){
 		
 })
 
+/**
+ * configure root app, every other will inherit
+ * 
+ * */
+var serveIndex = require('serve-index'),
+	serveStatic = require('serve-static'),
+	bodyParser = require('body-parser');
+	
 if(root){
+	// parse application/x-www-form-urlencoded
+	root.app.use(bodyParser.urlencoded({ extended: false }))
+
+	// parse application/json
+	root.app.use(bodyParser.json())
+	  
 	Object.each(apps, function(app, id){
 		
 		if(app['mount'] != root['mount']){
