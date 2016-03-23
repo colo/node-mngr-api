@@ -149,6 +149,9 @@ module.exports = new Class({
   },
   
   initialize: function(options){
+		this.profile('admin_init');//start profiling
+		
+		
 		
 		this.parent(options);//override default options
 		
@@ -190,6 +193,10 @@ module.exports = new Class({
 			  
 			}.bind(this));
 		}
+		
+		this.profile('admin_init');//end profiling
+		
+		this.log('admin', 'info', 'admin started');
   },
 	
 });

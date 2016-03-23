@@ -11,6 +11,10 @@ var App = require('node-express-app'),
 var MyApp = new Class({
   Extends: App,
   
+  ON_LOAD_APP: 'onLoadApp',
+  ON_USE: 'onUse',
+  ON_USE_APP: 'onUseApp',
+  
   app: null,
   logger: null,
   authorization:null,
@@ -20,6 +24,10 @@ var MyApp = new Class({
 	  
 	id: 'root',
 	path: '/',
+	
+	logs: { 
+		path: './logs' 
+	},
 	
 	authentication: {
 		users : [
@@ -107,6 +115,8 @@ var MyApp = new Class({
 		
 		this.parent(options);//override default options
 		
+		this.profile('root_init');//start profiling
+		
 		/*------------------------------------------*/
 		if(this.authorization){
 			// 	authorization.addEvent(authorization.SET_SESSION, this.logAuthorizationSession.bind(this));
@@ -145,10 +155,19 @@ var MyApp = new Class({
 			  
 			}.bind(this));
 		}
+		
+		this.profile('root_init');//end profiling
+		
+		this.log('root', 'info', 'root started');
   },
   use: function(mount, app){
 	console.log('app');
 	console.log(typeOf(app));
+	
+	this.fireEvent(this.ON_USE, [app, this]);
+	
+	if(typeOf(app) == 'class' || typeOf(app) == 'object')
+		this.fireEvent(this.ON_USE_APP, [app, this]);
 	
 	if(typeOf(app) == 'class')
 		app = new app();
@@ -203,6 +222,8 @@ var MyApp = new Class({
 							if(typeOf(app) == 'class'){//mootools class
 								//console.log('class app');
 								
+								this.fireEvent(this.ON_LOAD_APP, [app, this]);
+								
 								app = new app(options);
 								
 								/*//console.log('mootols_app.params:');
@@ -242,6 +263,9 @@ var MyApp = new Class({
 					}
 					
 					if(typeOf(app) == 'class'){//mootools class
+						
+						this.fireEvent(this.ON_LOAD_APP, [app, this]);
+						
 						app = new app(options);
 						//app = instance.express();
 						//id = (instance.id) ? instance.id : id;
