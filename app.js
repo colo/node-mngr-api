@@ -150,6 +150,9 @@ var MyApp = new Class({
 	console.log('app');
 	console.log(typeOf(app));
 	
+	if(typeOf(app) == 'class')
+		app = new app();
+		
 	if(typeOf(app) == 'object'){
 		this.app.use(mount, app.express());
 	}
