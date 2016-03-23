@@ -127,8 +127,7 @@ module.exports = new Class({
 		this.parent(options);//override default options
 		
 		/*------------------------------------------*/
-		/**
-		 * *
+		
 		if(this.authorization){
 			// 	authorization.addEvent(authorization.SET_SESSION, this.logAuthorizationSession.bind(this));
 			// 	authorization.addEvent(authorization.IS_AUTHORIZED, this.logAuthorization.bind(this));
@@ -166,8 +165,7 @@ module.exports = new Class({
 			  
 			}.bind(this));
 		}
-		* 
-		* */
+		
   },
 	
 });
