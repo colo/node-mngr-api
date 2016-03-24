@@ -59,7 +59,7 @@ module.exports = new Class({
 	  this.profile('logout');//start profiling
 	  this.log('logout', 'info', 'logout' + util.inspect( req.user ));
 	  
-	  //req.logout();
+	  req.logout();
 	  
 	  this.profile('logout');//stop profiling
 	}
