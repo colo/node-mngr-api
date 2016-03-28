@@ -7,7 +7,9 @@
   },
   "dependencies": {
     "body-parser": "^1.15.0",
+    "etc-passwd": "^0.1.1",
     "serve-index": "^1.7.3",
-    "serve-static": "^1.10.2"
+    "serve-static": "^1.10.2",
+    "uid-username": "0.0.2"
   }
 }

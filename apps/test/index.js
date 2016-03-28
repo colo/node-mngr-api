@@ -15,8 +15,8 @@ module.exports = new Class({
   
   options: {
 	  
-	id: 'admin',
-	path: '/admin',
+	id: 'test',
+	path: '/test',
 	
 	/*authentication: {
 		users : [
@@ -26,6 +26,7 @@ module.exports = new Class({
 	},*/
 	
 	authorization: {
+		init: false,
 		config: path.join(__dirname,'./config/rbac.json'),
 	},
 	
@@ -101,10 +102,10 @@ module.exports = new Class({
   get_api: function(req, res, next){
 		
 		if(Object.getLength(req.params) == 0){
-			res.json({ title: 'Admin API', version: req.version, content_type: req.get('content-type') });
+			res.json({ title: 'test API', version: req.version, content_type: req.get('content-type') });
 		}
 		else if(req.params.service_action){
-			res.json({ title: 'Admin API', param: req.params, version: req.version, content_type: req.get('content-type') });
+			res.json({ title: 'test API', param: req.params, version: req.version, content_type: req.get('content-type') });
 		}
 		else{
 			next();
@@ -118,7 +119,7 @@ module.exports = new Class({
   },
   
   get: function(req, res, next){
-		console.log('admin get');
+		console.log('test get');
 		console.log('req.isAuthenticated');
 		console.log(req.isAuthenticated());
 		
@@ -128,13 +129,13 @@ module.exports = new Class({
 
 		
 		if(Object.getLength(req.params) == 0){
-			res.json({ title: 'Admin app', content_type: req.get('content-type') });
+			res.json({ title: 'test app', content_type: req.get('content-type') });
 		}
 		else if(req.params.service_action){
-			res.json({ title: 'Admin app', param: req.params, content_type: req.get('content-type') });
+			res.json({ title: 'test app', param: req.params, content_type: req.get('content-type') });
 		}
 		else{
-			//console.log({ title: 'Admin app', param: req.params });
+			//console.log({ title: 'test app', param: req.params });
 			next();
 		}
 		
@@ -142,14 +143,14 @@ module.exports = new Class({
   
   post: function(req, res, next){
 	  
-		console.log('admin post');
+		console.log('test post');
 		//console.log(req.headers);
-		res.json({ title: 'Admin app POST' });
+		res.json({ title: 'test app POST' });
 		
   },
   
   initialize: function(options){
-		this.profile('admin_init');//start profiling
+		this.profile('test_init');//start profiling
 		
 		
 		
@@ -194,9 +195,9 @@ module.exports = new Class({
 			}.bind(this));
 		}
 		
-		this.profile('admin_init');//end profiling
+		this.profile('test_init');//end profiling
 		
-		this.log('admin', 'info', 'admin started');
+		this.log('test', 'info', 'test started');
   },
 	
 });

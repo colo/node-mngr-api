@@ -17,9 +17,9 @@ module.exports = new Class({
 	id: 'logout',
 	path: '/logout',
 	
-	authorization: {
-		//config: path.join(__dirname,'./config/rbac.json'),
-	},
+	//authorization: {
+		////config: path.join(__dirname,'./config/rbac.json'),
+	//},
 	
 	params: {
 	},

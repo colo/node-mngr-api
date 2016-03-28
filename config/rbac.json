@@ -4,7 +4,7 @@
 	  "id": "admin",
 	  "name": "Administrator",
 	  "roles": ["user"],
-	  "permissions":["abmView"]
+	  "permissions":[]
 	},
 	{
 	  "id": "user",
@@ -28,14 +28,6 @@
 	{
 	  "id": "view",
 	  "name": "View"
-	}
-  ],
-  "permissions":[
-	{
-	  "id": "abmView",
-	  "name": "",
-	  "operation": "view",
-	  "resource": "abm"
 	}
   ],
   "constrains":[

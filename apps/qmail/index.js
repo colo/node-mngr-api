@@ -18,9 +18,9 @@ module.exports = new Class({
 	id: 'qmail',
 	path: '/qmail',
 	
-	authorization: {
-		config: path.join(__dirname,'./config/rbac.json'),
-	},
+	//authorization: {
+		//config: path.join(__dirname,'./config/rbac.json'),
+	//},
 	
 	params: {
 	  //route_id: /^[0-9]+$/,
@@ -124,47 +124,9 @@ module.exports = new Class({
   },
   initialize: function(options){
 		
-		this.parent(options);//override default options
+	this.parent(options);//override default options
 		
-		/*------------------------------------------*/
-		
-		if(this.authorization){
-			// 	authorization.addEvent(authorization.SET_SESSION, this.logAuthorizationSession.bind(this));
-			// 	authorization.addEvent(authorization.IS_AUTHORIZED, this.logAuthorization.bind(this));
-			// 	authentication.addEvent(authentication.ON_AUTH, this.logAuthentication.bind(this));
-			this.authorization.addEvent(this.authorization.NEW_SESSION, function(obj){
-	  
-			//   console.log('event');
-			//   console.log(obj);
-			  
-			  if(!obj.error){
-				
-			// 	web.authorization.processRules({
-			// 	  "subjects":[
-			// 		{
-			// 		  "id": "lbueno",
-			// 		  "roles":["admin"]
-			// 		},
-			// 		{
-			// 		  "id": "test",
-			// 		  "roles":["user"]
-			// 		},
-			// 	  ],
-			// 	});
-
-				this.authorization.processRules({
-				  "subjects": function(){
-					  if(obj.getID() == "test")
-						return [{ "id": "test", "roles":["user"]}];
-					  
-					  if(obj.getID() == "lbueno")
-						return [{ "id": "lbueno", "roles":["admin"]}];
-				  },
-				});
-			  }
-			  
-			}.bind(this));
-		}
+	this.log('qmail', 'info', 'qmail started');	
 		
   },
 	
