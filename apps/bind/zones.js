@@ -23,7 +23,7 @@ module.exports = new Class({
   
   options: {
 	
-	zones_dir: path.join(__dirname,'./devel/var/bind/domains'),
+	zones_dir: path.join(__dirname,'./../../devel/var/bind/domains'),
 	zone_file_filter: /^[a-zA-Z0-9_\.-]+$/,
 	zone_file_extension: '.hosts',
 	
