@@ -46,12 +46,12 @@ module.exports = new Class({
 			all: [
 			  {
 				path: ':gid',
-				callbacks: ['get'],
+				callbacks: ['get_group'],
 				version: '',
 			  },
 			  {
 				path: ':gid/:prop',
-				callbacks: ['get'],
+				callbacks: ['get_group'],
 				version: '',
 			  },
 			  {
@@ -64,13 +64,13 @@ module.exports = new Class({
 		
 	},
   },
-  get: function (req, res, next){
-	  console.log('groups param:');
-	  console.log(req.params);
-	  console.log(req.path);
-	  
-	  //res.json({info: 'groups'});
-	  if(req.params.gid){
+  get_group: function (req, res, next){
+	console.log('groups param:');
+	console.log(req.params);
+	console.log(req.path);
+
+	//res.json({info: 'groups'});
+	if(req.params.gid){
 		passwd.getGroup({'groupname': req.params.gid}, function(err, group){
 			if(err){
 				//console.error(err);
@@ -85,8 +85,14 @@ module.exports = new Class({
 				}
 			}
 		});
-	  }
-	  else{
+	}
+	else{
+		//next();
+		res.status(500).json({error: 'Bad group gid param'});
+	}
+  },
+  get: function (req, res, next){
+
 		//console.log('get groups');
 		var groups = passwd.getGroups();
 		var groups_data = [];
@@ -100,8 +106,6 @@ module.exports = new Class({
 		groups.on('end', function() {
 			res.json(groups_data);
 		});
-		
-	  }
   },
   initialize: function(options){
 	

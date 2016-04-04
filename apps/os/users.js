@@ -47,12 +47,12 @@ module.exports = new Class({
 			all: [
 			  {
 				path: ':uid',
-				callbacks: ['get'],
+				callbacks: ['get_user'],
 				version: '',
 			  },
 			  {
 				path: ':uid/:prop',
-				callbacks: ['get'],
+				callbacks: ['get_user'],
 				version: '',
 			  },
 			  {
@@ -65,32 +65,32 @@ module.exports = new Class({
 		
 	},
   },
-  get: function (req, res, next){
-	  console.log('users param:');
-	  console.log(req.params);
-	  console.log(req.path);
-	  
-	  var getUser = function(username){
-		  passwd.getUser({'username': username}, function(err, user){
-			if(err){
-				//console.error(err);
-				res.status(500).json({error: err.message});
+  get_user: function (req, res, next){
+	console.log('users param:');
+	console.log(req.params);
+	console.log(req.path);
+
+	var getUser = function(username){
+	  passwd.getUser({'username': username}, function(err, user){
+		if(err){
+			//console.error(err);
+			res.status(500).json({error: err.message});
+		}
+		else{
+			if(req.params.prop){
+				res.json(user[req.params.prop]);
 			}
 			else{
-				if(req.params.prop){
-					res.json(user[req.params.prop]);
-				}
-				else{
-					res.json(user);
-				}
+				res.json(user);
 			}
-		});
-	  };
-	  
-	  //res.json({info: 'users'});
-	  if(req.params.uid){
+		}
+	});
+	};
+
+	//res.json({info: 'users'});
+	if(req.params.uid){
 		var condition = /^(0|[1-9][0-9]*)$/;//numeric uid
-		
+
 		if(condition.exec(req.params.uid) != null){//uid param is numeric, must detect username
 			uidToUsername(req.params.uid, function (err, username) {
 				//console.log('uidToUsername');
@@ -108,29 +108,38 @@ module.exports = new Class({
 		else{
 			getUser(req.params.uid);
 		}
-	  }
-	  else{
-		//console.log('get users');
-		var users = passwd.getUsers();
-		var users_data = [];
-		
-		users.on('user', function(user) {
-			//console.log('user');
-			//console.log(JSON.stringify(user));
-			users_data.push(user);
-		});
-		
-		users.on('end', function() {
-			res.json(users_data);
-		});
-		
-		//doens't work
-		//passwd.getUsers(function(users) {
-			//console.log('get users func');
-			//console.log(users);
-			//res.json(users);
-		//});
-	  }
+	}
+	else{
+		//next();
+		res.status(500).json({error: 'Bad user uid param'});
+	}
+  },
+  get: function (req, res, next){
+	  console.log('users param:');
+	  console.log(req.params);
+	  console.log(req.path);
+	  
+	  
+	var users = passwd.getUsers();
+	var users_data = [];
+
+	users.on('user', function(user) {
+		//console.log('user');
+		//console.log(JSON.stringify(user));
+		users_data.push(user);
+	});
+
+	users.on('end', function() {
+		res.json(users_data);
+	});
+
+	//doens't work
+	//passwd.getUsers(function(users) {
+		//console.log('get users func');
+		//console.log(users);
+		//res.json(users);
+	//});
+	  
   },
   initialize: function(options){
 	

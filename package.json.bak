@@ -1,0 +1,16 @@
+{
+  "name": "express-test2",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "node-express-app": "git+ssh://git@github.com:colo/node-express-app.git",
+    "body-parser": "^1.15.0",
+    "etc-passwd": "^0.1.1",
+    "serve-index": "^1.7.3",
+    "serve-static": "^1.10.2",
+    "uid-username": "0.0.2"
+  }
+}

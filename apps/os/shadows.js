@@ -47,12 +47,12 @@ module.exports = new Class({
 			all: [
 			  {
 				path: ':uid',
-				callbacks: ['get'],
+				callbacks: ['get_shadow'],
 				version: '',
 			  },
 			  {
 				path: ':uid/:prop',
-				callbacks: ['get'],
+				callbacks: ['get_shadow'],
 				version: '',
 			  },
 			  {
@@ -65,31 +65,31 @@ module.exports = new Class({
 		
 	},
   },
-  get: function (req, res, next){
-	  console.log('shadows param:');
-	  console.log(req.params);
-	  console.log(req.path);
-	  
-	  var getShadow = function(username){
-		  passwd.getShadow({'username': username}, function(err, shadow){
-			if(err){
-				//console.error(err);
-				res.status(500).json({error: err.message});
+  get_shadow: function (req, res, next){
+	console.log('shadows param:');
+	console.log(req.params);
+	console.log(req.path);
+
+	var getShadow = function(username){
+	  passwd.getShadow({'username': username}, function(err, shadow){
+		if(err){
+			//console.error(err);
+			res.status(500).json({error: err.message});
+		}
+		else{
+			if(req.params.prop){
+				res.json(shadow[req.params.prop]);
 			}
 			else{
-				if(req.params.prop){
-					res.json(shadow[req.params.prop]);
-				}
-				else{
-					res.json(shadow);
-				}
+				res.json(shadow);
 			}
-		});
-	  }
-	  //res.json({info: 'shadows'});
-	  if(req.params.uid){
+		}
+	});
+	}
+	//res.json({info: 'shadows'});
+	if(req.params.uid){
 		var condition = /^(0|[1-9][0-9]*)$/;//numeric uid
-		
+
 		if(condition.exec(req.params.uid) != null){//uid param is numeric, must detect username
 			uidToUsername(req.params.uid, function (err, username) {
 				//console.log('uidToUsername');
@@ -107,11 +107,15 @@ module.exports = new Class({
 		else{//uid is string
 			getShadow(req.params.uid);
 		}
-		
-		
-	  }
-	  else{
-		//console.log('get shadows');
+
+
+	}
+	else{
+		//next();
+		res.status(500).json({error: 'Bad shadow uid param'});
+	}
+  },
+  get: function (req, res, next){
 		var shadows = passwd.getShadows();
 		var shadows_data = [];
 		
@@ -131,7 +135,7 @@ module.exports = new Class({
 			//console.log(shadows);
 			//res.json(shadows);
 		//});
-	  }
+
   },
   initialize: function(options){
 	
