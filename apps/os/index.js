@@ -44,7 +44,12 @@ module.exports = new Class({
 		routes: {
 			all: [
 			  {
-				path: '/',
+				path: 'disk',
+				callbacks: ['disk'],
+				version: '',
+			  },
+			  {
+				path: '',
 				callbacks: ['get'],
 				version: '',
 			  },
@@ -52,6 +57,41 @@ module.exports = new Class({
 		},
 		
 	},
+  },
+  disk: function (req, res, next){
+	var df = require('nodejs-disks');
+	df.drives(
+		function (err, drives) {
+			if (err) {
+				return console.log(err);
+			}
+			
+			/* retrieve space information for each drives */
+			df.drivesDetail(
+				drives,
+				function (err, data) {
+					if (err) {
+						return console.log(err);
+					}
+					
+					console.log(data);
+					res.json(data);
+				}
+			);
+			
+			/* or retrieve space information for on drive */
+			//df.driveDetail(
+				//drives[0],
+				//function (err, data) {
+					//if (err) {
+						//return console.log(err);
+					//}
+					
+					//console.log(data);
+				//}
+			//);
+		}
+	);
   },
   get: function (req, res, next){
 	  var json = {};
