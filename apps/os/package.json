@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "etc-passwd": "^0.1.1",
-    "node-diskfree": "^0.1.0",
-    "nodejs-disks": "^0.2.1",
+    "procinfo": "^0.1.4",
+    "q": "^1.4.1",
     "uid-username": "0.0.2"
   },
   "devDependencies": {},
