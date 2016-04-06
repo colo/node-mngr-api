@@ -3,7 +3,6 @@
 var App = require('node-express-app'),
 	path = require('path'),
 	exec = require('child_process').exec,
-	procinfo = require('procinfo'),
 	Q = require('q');
 	
 
@@ -16,7 +15,8 @@ module.exports = new Class({
   authorization:null,
   authentication: null,
   
-  procs: [],
+  //procs: [],
+  command: "ps -eo pid",
   
   options: {
 	  
@@ -28,7 +28,7 @@ module.exports = new Class({
 	//},
 	
 	params: {
-	  prop: /fs|type|bloks|used|available|percentage|proc_point/
+	  //prop: /fs|type|bloks|used|available|percentage|proc_point/
 	},
 	
 	routes: {
@@ -67,16 +67,14 @@ module.exports = new Class({
 		
 	},
   },
-  /**
-   * need to send encoded "/" (%2F)
-   * 
-   * */
   get_proc: function (req, res, next){
 	console.log('procs param:');
 	console.log(req.params);
+	console.log('procs query:');
+	console.log(req.query);
 	
 	if(req.params.proc){
-		this._procs(req.params.proc)
+		this._procs(req.params.proc, req.query.format)
 		.then(function(result){
 			//console.log(result);
 			if(!(typeof(req.params.prop) == 'undefined')){
@@ -105,81 +103,130 @@ module.exports = new Class({
 	}
   },
   get: function (req, res, next){
-	//this._procs()
-	//.then(function(result){
-		//res.json(result);
-	//})
-	//.done();
-	procinfo.fields = ['state', 'etime'];
-	procinfo(new RegExp("\\w+"), function(err, results) {
+	console.log('procs query:');
+	console.log(req.query);
+	
+	this._procs(null, req.query.format)
+	.then(function(result){
+		res.json(result);
+	})
+	.done();
+	//procinfo.fields = ['state', 'etime'];
+	
+	/*procinfo(new RegExp("\\w+"), function(err, results) {
 		// output the pids that have been found (should be just pid: 1) 
 		//console.log(results.pids);
 	   
 		// now output the process details 
 		//console.log(results[19197]);
 		console.log(results);
-	});
+	});*/
 	
-	res.json({});
+	
+
+	//res.json({});
   },
-  _procs: function(proc){
+  _procs: function(pid, format){
 	var deferred = Q.defer();
 	
-	if(proc){//if proc param
-		if(this.procs.length == 0){//if procs[] empty, call without params
-			this._procs()
-			.then(function(){
-				deferred.resolve(this._procs(proc));
-			}.bind(this), function (error) {
-				deferred.reject(error);
-			})
-			.done();
-		}
-		else{
-			this.procs.each(function(item, index){
-				if(item.fs == proc){
-					deferred.resolve(item);
-				}
-			});
-			
-			deferred.reject(new Error('Proc not found'));
+	var command = this.command;
+	if(format){
+		var cond = new RegExp('args|command|comm');
+		
+		if(cond.test(format)){//command (comm, args alias) should be at the end as may have spaces in the column
+			format = format.replace(cond, '');
+			format += ',args';
+			format = format.replace(',,', ',');
 		}
 		
-		
+		command += ','+format;
 	}
 	else{
-		this.procs = [];
-		var child = exec(
-			this.command,
-			function (err, stdout, stderr) {
-				
-				if (err) deferred.reject(err);
-				
-				var data = stdout.split('\n');
+		command += ',args';
+	}
+	
+	console.log('full command');
+	console.log(command);
+	
+	var procs = []
+	var child = exec(
+		command,
+		function (err, stdout, stderr) {
+			
+			if (err) deferred.reject(err);
+			
+			var data = stdout.split('\n');
 
-				//drives.splice(0, 1);
-				//drives.splice(-1, 1);
-				//var procs = [];
+			
+			var proc = {};
+			var saved_proc = null;
+			try{//just to break the "each" if proc is found
 				data.each(function(item, index){
-					if(index != 0 && index != data.length -1 ){
-						//console.log(item.clean().split(' '));
+					//console.log('item');
+					//console.log(item);
+					//console.log(item.clean());
+					//console.log(item.split());
+					//if(index != 0 && index != data.length -1 ){
+					if(index != data.length -1 ){
 						var tmp = item.clean().split(' ');
-						this.procs.push({
-							fs: tmp[0],
-							type: tmp[1],
-							bloks: tmp[2],
-							used: tmp[3],
-							availabe: tmp[4],
-							percentage: tmp[5].substring(0, tmp[5].length - 1),
-							proc_point: tmp[6],
-						})
+						
+						if(index == 0){//use first line columns names as object keys
+							tmp.each(function(column){
+								proc[column.toLowerCase()] = null;
+							});
+						}
+						else{
+							var i = 0;
+							Object.each(proc, function(value, column){
+								//console.log(column);
+								//console.log(tmp[i]);
+								
+								if(column != 'command'){//exclude command column
+									proc[column] = tmp[i];
+								}
+								else{//as may be split in morearray items
+									proc['command'] = [];
+									
+									for(var j = i; j < tmp.length; j++){
+										proc['command'].push(tmp[j]);
+									}
+								}
+								
+								i++;
+							});
+							//console.log(item.clean().split(' '));
+							
+							if(pid && proc['pid'] == pid){
+								saved_proc = Object.clone(proc);
+								throw new Error('Found');//break the each loop
+								//break;
+							}
+							
+							procs.push(Object.clone(proc));
+						}
+						
 					}
 				}.bind(this));
-				
-				deferred.resolve(this.procs);
-			}.bind(this)
-		);
-	}
+			}
+			catch(e){
+				//console.log(e);
+			}
+			
+			if(pid){//retrive one proc
+				if (saved_proc == null){
+					deferred.reject(new Error('Not found'));
+				}
+				else {
+					deferred.resolve(saved_proc);
+				}
+			}
+			else{
+				deferred.resolve(procs);
+			}
+			
+		}.bind(this)
+	);
+	
 	
     return deferred.promise;  
   },
