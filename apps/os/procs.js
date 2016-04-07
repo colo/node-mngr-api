@@ -111,20 +111,7 @@ module.exports = new Class({
 		res.json(result);
 	})
 	.done();
-	//procinfo.fields = ['state', 'etime'];
-	
-	/*procinfo(new RegExp("\\w+"), function(err, results) {
-		// output the pids that have been found (should be just pid: 1) 
-		//console.log(results.pids);
-	   
-		// now output the process details 
-		//console.log(results[19197]);
-		console.log(results);
-	});*/
-	
-	
 
-	//res.json({});
   },
   _procs: function(pid, format){
 	var deferred = Q.defer();
