@@ -81,6 +81,71 @@ module.exports = new Class({
 		
 	  
   },
+  initialize: function(options){
+	
+		//dynamically create routes based on OS module (ex: /os/hostname|/os/cpus|...)
+		Object.each(os, function(item, key){
+			if(key != 'getNetworkInterfaces'){//deprecated func
+				var callbacks = [];
+			
+				if(key == 'networkInterfaces'){//use internal func
+					this[key] = function(req, res, next){
+						console.log('params');
+						console.log(req.params);
+						
+						this._networkInterfaces()
+						.then(function(result){
+							//console.log('ifaces');
+							//console.log(result);
+							if(req.params.prop && result[req.params.prop]){
+								res.json(result[req.params.prop]);
+							}
+							else if(req.params.prop){
+								res.status(500).json({ error: 'Bad property'});
+							}
+							else{
+								res.json(result);
+							}
+							
+						})
+						.done();
+					}
+				}
+				else{
+					this[key] = function(req, res, next){
+						//console.log('params');
+						//console.log(req.params);
+						
+						var result = (typeof(item) == 'function') ? os[key]() : os[key];
+						
+						if(req.params.prop && result[req.params.prop]){
+							res.json(result[req.params.prop]);
+						}
+						else if(req.params.prop){
+							res.status(500).json({ error: 'Bad property'});
+						}
+						else{
+							res.json(result);
+						}
+					}
+				}
+				
+				this.options.api.routes.all.push({
+						path: key,
+						callbacks: [key]
+				});
+				
+				this.options.api.routes.all.push({
+						path: key+'/:prop',
+						callbacks: [key]
+				});
+			}
+		}.bind(this));
+			
+		this.parent(options);//override default options
+		
+		this.log('os', 'info', 'os started');
+  },
   _networkInterfaces: function(){
 		var deferred = Q.defer();
 		var ifaces = os.networkInterfaces();
@@ -145,42 +210,6 @@ module.exports = new Class({
 		
 	
     return deferred.promise;  
-  },
-  initialize: function(options){
-	
-		//dynamically create routes based on OS module (ex: /os/hostname|/os/cpus|...)
-		Object.each(os, function(item, key){
-			if(key != 'getNetworkInterfaces'){//deprecated func
-				var callbacks = [];
-			
-				if(key == 'networkInterfaces'){//use internal func
-					this[key] = function(req, res, next){
-						this._networkInterfaces()
-						.then(function(ifaces){
-							console.log('ifaces');
-							console.log(ifaces);
-							
-							res.json(ifaces);
-						})
-						.done();
-					}
-				}
-				else{
-					this[key] = function(req, res, next){
-						res.json((typeof(item) == 'function') ? os[key]() : os[key]);
-					}
-				}
-				
-				this.options.api.routes.all.push({
-						path: key,
-						callbacks: [key]
-				});
-			}
-		}.bind(this));
-			
-		this.parent(options);//override default options
-		
-		this.log('os', 'info', 'os started');
   },
 	
 });
