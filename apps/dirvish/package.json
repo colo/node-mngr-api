@@ -11,6 +11,7 @@
     "node": ">= 0.10.21"
   },
   "dependencies": {
+    "q": "^1.4.1"
   },
   "devDependencies": {},
   "optionalDependencies": {},
