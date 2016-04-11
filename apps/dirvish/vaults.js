@@ -24,8 +24,8 @@ module.exports = new Class({
   
   options: {
 	  
-		id: 'config',
-		path: '/config',
+		id: 'vaults',
+		path: '/vaults',
 		
 		//authorization: {
 			//config: path.join(__dirname,'./config/rbac.json'),
@@ -79,12 +79,12 @@ module.exports = new Class({
 				
 				//this.config = dirvish.conf(file_path);
 
-				dirvish.conf(file_path)
-				.then(function(config){
-					this.config = config;
+				dirvish.vaults(file_path)
+				.then(function(vaults){
+					this.config = vaults;
 					
-					console.log('this.config');
-					console.log(this.config);
+					console.log('this.vaults');
+					console.log(vaults);
 					
 				}.bind(this))
 				.done();
@@ -99,7 +99,7 @@ module.exports = new Class({
 		}.bind(this));
 		
 		
-		this.log('config', 'info', 'dirvish config started');
+		this.log('vaults', 'info', 'dirvish vaults started');
   },
 
   
