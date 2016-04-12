@@ -19,7 +19,7 @@ module.exports = new Class({
   authentication: null,
   
   files: ["../../devel/etc/dirvish.conf", "../../devel/etc/dirvish/master.conf"],
-  config: {},
+  cfg: {},
   
   
   options: {
@@ -63,8 +63,8 @@ module.exports = new Class({
   },
   get: function (req, res, next){
 		
-		console.log(this.config);
-		res.json(this.config);
+		//console.log(this.cfg);
+		res.json(this.cfg);
 		//res.json({info: 'dirvish config api'});
   },
   initialize: function(options){
@@ -72,19 +72,64 @@ module.exports = new Class({
 		this.parent(options);//override default options
 		
 		this.files.each(function(file, index){
+			
 			var file_path = path.join(__dirname, file);
 			
 			try{
 				fs.accessSync(file_path, fs.R_OK);
 				
 				//this.config = dirvish.conf(file_path);
-
+				
+				console.log('this.vaults');
+				console.log(dirvish.vaults(file_path));
+				
 				dirvish.vaults(file_path)
 				.then(function(vaults){
-					this.config = vaults;
+					this.cfg = vaults;
 					
 					console.log('this.vaults');
-					console.log(vaults);
+					console.log(this.cfg);
+					
+					Object.each(vaults, function(item, key){
+						var callbacks = [];
+						
+						this[key] = function(req, res, next){
+							console.log('params');
+							console.log(req.params);
+							
+							
+							if(req.params.prop && vaults[key][req.params.prop]){
+								res.json(vaults[key][req.params.prop]);
+							}
+							else if(req.params.prop){
+								res.status(500).json({ error: 'Bad property'});
+							}
+							else{
+								res.json(vaults[key]);
+							}
+							
+							
+						}
+						
+						console.log('dirvish-vaults-routes');
+						console.log(key);
+						
+						this.options.api.routes.all.push({
+								path: key,
+								callbacks: [key]
+						});
+						
+						this.options.api.routes.all.push({
+								path: key+'/:prop',
+								callbacks: [key]
+						});
+						
+						
+					}.bind(this));
+					
+					//here is when it really finished the init process
+					this.apply_api_routes();//need to re run this parent.func to apply this routes
+					this.log('vaults', 'info', 'dirvish vaults started');
 					
 				}.bind(this))
 				.done();
@@ -99,7 +144,7 @@ module.exports = new Class({
 		}.bind(this));
 		
 		
-		this.log('vaults', 'info', 'dirvish vaults started');
+		
   },
 
   

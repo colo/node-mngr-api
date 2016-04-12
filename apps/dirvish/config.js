@@ -19,7 +19,7 @@ module.exports = new Class({
   authentication: null,
   
   files: ["../../devel/etc/dirvish.conf", "../../devel/etc/dirvish/master.conf"],
-  config: {},
+  cfg: {},
   
   
   options: {
@@ -63,12 +63,11 @@ module.exports = new Class({
   },
   get: function (req, res, next){
 		
-		console.log(this.config);
-		res.json(this.config);
+		//console.log(this.options.api.routes.all);
+		res.json(this.cfg);
 		//res.json({info: 'dirvish config api'});
   },
   initialize: function(options){
-	
 		this.parent(options);//override default options
 		
 		this.files.each(function(file, index){
@@ -77,15 +76,56 @@ module.exports = new Class({
 			try{
 				fs.accessSync(file_path, fs.R_OK);
 				
-				//this.config = dirvish.conf(file_path);
+				//this.cfg = dirvish.conf(file_path);
 
 				dirvish.conf(file_path)
 				.then(function(config){
-					this.config = config;
+					this.cfg = config;
 					
-					console.log('this.config');
-					console.log(this.config);
+					//console.log('this.cfg');
+					//console.log(this.cfg);
 					
+					Object.each(config, function(item, key){
+						var callbacks = [];
+						
+						this[key] = function(req, res, next){
+							console.log('params');
+							console.log(req.params);
+							
+							
+							if(req.params.prop && config[key][req.params.prop]){
+								res.json(config[key][req.params.prop]);
+							}
+							else if(req.params.prop){
+								res.status(500).json({ error: 'Bad property'});
+							}
+							else{
+								res.json(config[key]);
+							}
+							
+							
+						}
+						
+						console.log('dirvish-config-routes');
+						console.log(key);
+						
+						this.options.api.routes.all.push({
+								path: key,
+								callbacks: [key]
+						});
+						
+						this.options.api.routes.all.push({
+								path: key+'/:prop',
+								callbacks: [key]
+						});
+						
+						
+					}.bind(this));
+					
+					//here is when it really finished the init process
+					this.apply_api_routes();//need to re run this parent.func to apply this routes
+					this.log('config', 'info', 'dirvish config started');
+						
 				}.bind(this))
 				.done();
 				
@@ -99,7 +139,6 @@ module.exports = new Class({
 		}.bind(this));
 		
 		
-		this.log('config', 'info', 'dirvish config started');
   },
 
   
