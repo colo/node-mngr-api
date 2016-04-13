@@ -52,9 +52,19 @@ module.exports = new Class({
 			routes: {
 				all: [
 					{
-					path: '',
-					callbacks: ['get'],
-					version: '',
+						path: ':key',
+						callbacks: ['get'],
+						version: '',
+					},
+					{
+						path: ':key/:prop',
+						callbacks: ['get'],
+						version: '',
+					},
+					{
+						path: '',
+						callbacks: ['get'],
+						version: '',
 					},
 				]
 			},
@@ -62,9 +72,30 @@ module.exports = new Class({
 		},
   },
   get: function (req, res, next){
+		var key = req.params.key;
+		var prop = req.params.prop;
+		
+		if(key && this.cfg[key]){
+			if(prop && this.cfg[key][prop]){
+				res.json(this.cfg[key][prop]);
+			}
+			else if(prop){
+				res.status(500).json({ error: 'Bad property['+prop+'] for key: '+key});
+			}
+			else{
+				res.json(this.cfg[key]);
+			}
+			
+		}
+		else if(key){
+			res.status(500).json({ error: 'Bad config key:'+key});
+		}
+		else{
+			res.json(this.cfg);
+		}
 		
 		//console.log(this.options.api.routes.all);
-		res.json(this.cfg);
+		//res.json(this.cfg);
 		//res.json({info: 'dirvish config api'});
   },
   initialize: function(options){
@@ -85,45 +116,45 @@ module.exports = new Class({
 					//console.log('this.cfg');
 					//console.log(this.cfg);
 					
-					Object.each(config, function(item, key){
-						var callbacks = [];
+					//Object.each(config, function(item, key){
+						//var callbacks = [];
 						
-						this[key] = function(req, res, next){
-							console.log('params');
-							console.log(req.params);
+						//this[key] = function(req, res, next){
+							//console.log('params');
+							//console.log(req.params);
 							
 							
-							if(req.params.prop && config[key][req.params.prop]){
-								res.json(config[key][req.params.prop]);
-							}
-							else if(req.params.prop){
-								res.status(500).json({ error: 'Bad property'});
-							}
-							else{
-								res.json(config[key]);
-							}
+							//if(req.params.prop && config[key][req.params.prop]){
+								//res.json(config[key][req.params.prop]);
+							//}
+							//else if(req.params.prop){
+								//res.status(500).json({ error: 'Bad property'});
+							//}
+							//else{
+								//res.json(config[key]);
+							//}
 							
 							
-						}
+						//}
 						
-						console.log('dirvish-config-routes');
-						console.log(key);
+						//console.log('dirvish-config-routes');
+						//console.log(key);
 						
-						this.options.api.routes.all.push({
-								path: key,
-								callbacks: [key]
-						});
+						//this.options.api.routes.all.push({
+								//path: key,
+								//callbacks: [key]
+						//});
 						
-						this.options.api.routes.all.push({
-								path: key+'/:prop',
-								callbacks: [key]
-						});
+						//this.options.api.routes.all.push({
+								//path: key+'/:prop',
+								//callbacks: [key]
+						//});
 						
 						
-					}.bind(this));
+					//}.bind(this));
 					
-					//here is when it really finished the init process
-					this.apply_api_routes();//need to re run this parent.func to apply this routes
+					////here is when it really finished the init process
+					//this.apply_api_routes();//need to re run this parent.func to apply this routes
 					this.log('config', 'info', 'dirvish config started');
 						
 				}.bind(this))
