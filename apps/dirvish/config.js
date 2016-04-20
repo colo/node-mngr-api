@@ -14,7 +14,7 @@ module.exports = new Class({
   authorization:null,
   authentication: null,
   
-  files: ["../../devel/etc/dirvish.conf", "../../devel/etc/dirvish/master.conf"],
+  files: ["../../devel/etc/dirvish.conf", "../../devel/etc/dirvish/master.conf.example"],
   
   cfg: {},
   
@@ -79,10 +79,32 @@ module.exports = new Class({
 		
 	}, 
   put: function (req, res, next){//update existing config
+		//console.log('put body');
+		//console.log(req.body);
+		//console.log(this.cfg);
 		
-		console.log('put body');
-		console.log(req.body);
+		var appendable = {};
 		
+		Object.each(req.body, function(value, key){
+			//console.log('key: '+key);
+			//console.log(value);
+			//console.log('typeof: '+typeof(value));
+			
+			if(/SET|UNSET|RESET/.test(key) &&
+				typeof(value) != 'array' &&
+				typeof(value) != 'object' ){//the onlye 3 options that don't use colons <:>
+					
+				appendable[key] = value.split(' ');
+			}
+			else{
+				appendable[key] = value;
+			}
+		});
+		
+		
+		Object.append(this.cfg, appendable);
+
+
 		this.files.each(function(file, index){
 			var file_path = path.join(__dirname, file);
 			
@@ -94,6 +116,7 @@ module.exports = new Class({
 				throw new Error('Read: '+ file_path);//break the each loop
 			}
 			catch(e){
+				this.log('dirvish-config', 'error', e.message);
 				console.log(e);
 			}
 			
@@ -146,7 +169,7 @@ module.exports = new Class({
 					
 					
 					////here is when it really finished the init process
-					this.log('config', 'info', 'dirvish config started');
+					this.log('dirvish-config', 'info', 'dirvish config started');
 						
 				}.bind(this))
 				.done();
