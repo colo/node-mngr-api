@@ -6,10 +6,6 @@ var App = require('node-express-app'),
 	fs = require('fs'),
 	dirvish = require('nodejs-dirvish');
 	
-//const readline = require('readline'),
-			//fs = require('fs');
-
-
 module.exports = new Class({
   Extends: App,
   
@@ -19,8 +15,8 @@ module.exports = new Class({
   authentication: null,
   
   files: ["../../devel/etc/dirvish.conf", "../../devel/etc/dirvish/master.conf"],
-  cfg: {},
   
+  cfg: {},
   
   options: {
 	  
@@ -50,6 +46,14 @@ module.exports = new Class({
 			version: '1.0.0',
 			
 			routes: {
+				put: [
+					{
+						path: '',
+						callbacks: ['put'],
+						version: '',
+					}
+				],
+				
 				all: [
 					{
 						path: ':key',
@@ -71,6 +75,35 @@ module.exports = new Class({
 			
 		},
   },
+  post: function (req, res, next){//creates config
+		
+	}, 
+  put: function (req, res, next){//update existing config
+		
+		console.log('put body');
+		console.log(req.body);
+		
+		this.files.each(function(file, index){
+			var file_path = path.join(__dirname, file);
+			
+			try{
+				fs.accessSync(file_path, fs.R_OK);
+				
+				dirvish.save(this.cfg, file_path);
+
+				throw new Error('Read: '+ file_path);//break the each loop
+			}
+			catch(e){
+				console.log(e);
+			}
+			
+			
+		}.bind(this));
+		
+		res.json({status: 'ok'});
+		
+		console.log(this.config);
+	},
   get: function (req, res, next){
 		var key = req.params.key;
 		var prop = req.params.prop;
@@ -94,9 +127,7 @@ module.exports = new Class({
 			res.json(this.cfg);
 		}
 		
-		//console.log(this.options.api.routes.all);
-		//res.json(this.cfg);
-		//res.json({info: 'dirvish config api'});
+
   },
   initialize: function(options){
 		this.parent(options);//override default options
@@ -113,48 +144,8 @@ module.exports = new Class({
 				.then(function(config){
 					this.cfg = config;
 					
-					//console.log('this.cfg');
-					//console.log(this.cfg);
-					
-					//Object.each(config, function(item, key){
-						//var callbacks = [];
-						
-						//this[key] = function(req, res, next){
-							//console.log('params');
-							//console.log(req.params);
-							
-							
-							//if(req.params.prop && config[key][req.params.prop]){
-								//res.json(config[key][req.params.prop]);
-							//}
-							//else if(req.params.prop){
-								//res.status(500).json({ error: 'Bad property'});
-							//}
-							//else{
-								//res.json(config[key]);
-							//}
-							
-							
-						//}
-						
-						//console.log('dirvish-config-routes');
-						//console.log(key);
-						
-						//this.options.api.routes.all.push({
-								//path: key,
-								//callbacks: [key]
-						//});
-						
-						//this.options.api.routes.all.push({
-								//path: key+'/:prop',
-								//callbacks: [key]
-						//});
-						
-						
-					//}.bind(this));
 					
 					////here is when it really finished the init process
-					//this.apply_api_routes();//need to re run this parent.func to apply this routes
 					this.log('config', 'info', 'dirvish config started');
 						
 				}.bind(this))
