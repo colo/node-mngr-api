@@ -19,6 +19,8 @@ module.exports = new Class({
   authentication: null,
   
   files: ["../../devel/etc/dirvish.conf", "../../devel/etc/dirvish/master.conf"],
+  cfg_file: null,
+  
   cfg: {},
   
   
@@ -75,56 +77,44 @@ module.exports = new Class({
 		var key = req.params.key;
 		var prop = req.params.prop;
 		
-		if(key && this.cfg[key]){
-			if(prop && this.cfg[key][prop]){
-				res.json(this.cfg[key][prop]);
+		dirvish.vaults(this.cfg_file)
+		.then(function(config){
+			console.log('this.vaults');
+			console.log(config);
+					
+			this.cfg = config;
+			
+			if(key && this.cfg[key]){
+				if(prop && this.cfg[key][prop]){
+					res.json(this.cfg[key][prop]);
+				}
+				else if(prop){
+					res.status(500).json({ error: 'Bad property['+prop+'] for key: '+key});
+				}
+				else{
+					res.json(this.cfg[key]);
+				}
+				
 			}
-			else if(prop){
-				res.status(500).json({ error: 'Bad property['+prop+'] for key: '+key});
+			else if(key){
+				res.status(500).json({ error: 'Bad config key:'+key});
 			}
 			else{
-				res.json(this.cfg[key]);
+				res.json(this.cfg);
 			}
-			
-		}
-		else if(key){
-			res.status(500).json({ error: 'Bad config key:'+key});
-		}
-		else{
-			res.json(this.cfg);
-		}
-		
-		//console.log(this.cfg);
-		//res.json(this.cfg);
-		//res.json({info: 'dirvish config api'});
+		}.bind(this))
+		.done();
+
   },
   initialize: function(options){
-	
 		this.parent(options);//override default options
 		
 		this.files.each(function(file, index){
-			
 			var file_path = path.join(__dirname, file);
 			
 			try{
 				fs.accessSync(file_path, fs.R_OK);
-				
-				//this.config = dirvish.conf(file_path);
-				
-				console.log('this.vaults');
-				console.log(dirvish.vaults(file_path));
-				
-				dirvish.vaults(file_path)
-				.then(function(vaults){
-					this.cfg = vaults;
-					
-					console.log('this.vaults');
-					console.log(this.cfg);
-					
-					this.log('vaults', 'info', 'dirvish vaults started');
-					
-				}.bind(this))
-				.done();
+				this.cfg_file = file_path;
 				
 				throw new Error('Read: '+ file_path);//break the each loop
 			}
@@ -135,10 +125,9 @@ module.exports = new Class({
 			
 		}.bind(this));
 		
-		
+		this.log('dirvish-vaults', 'info', 'dirvish vaults started');
 		
   },
-
   
 });
 

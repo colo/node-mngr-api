@@ -14,9 +14,11 @@ module.exports = new Class({
   authorization:null,
   authentication: null,
   
-  files: ["../../devel/etc/dirvish.conf", "../../devel/etc/dirvish/master.conf.example"],
+  files: ["../../devel/etc/dirvish.conf", "../../devel/etc/dirvish/master.conf"],
+  cfg_file: null,
   
   cfg: {},
+  
   
   options: {
 	  
@@ -46,6 +48,13 @@ module.exports = new Class({
 			version: '1.0.0',
 			
 			routes: {
+				post: [
+					{
+						path: '',
+						callbacks: ['post'],
+						version: '',
+					}
+				],
 				put: [
 					{
 						path: '',
@@ -75,17 +84,10 @@ module.exports = new Class({
 			
 		},
   },
-  post: function (req, res, next){//creates config
+  format: function(json){
+		var cfg = {};
 		
-	}, 
-  put: function (req, res, next){//update existing config
-		//console.log('put body');
-		//console.log(req.body);
-		//console.log(this.cfg);
-		
-		var appendable = {};
-		
-		Object.each(req.body, function(value, key){
+		Object.each(json, function(value, key){
 			//console.log('key: '+key);
 			//console.log(value);
 			//console.log('typeof: '+typeof(value));
@@ -94,62 +96,84 @@ module.exports = new Class({
 				typeof(value) != 'array' &&
 				typeof(value) != 'object' ){//the onlye 3 options that don't use colons <:>
 					
-				appendable[key] = value.split(' ');
+				cfg[key] = value.split(' ');
 			}
 			else{
-				appendable[key] = value;
+				cfg[key] = value;
 			}
 		});
 		
+		return cfg;
+	},
+	post: function (req, res, next){//discard existing config, create new
 		
-		Object.append(this.cfg, appendable);
-
-
-		this.files.each(function(file, index){
-			var file_path = path.join(__dirname, file);
+		this.cfg = this.format(req.body);
 			
-			try{
-				fs.accessSync(file_path, fs.R_OK);
+		dirvish.save(this.cfg, this.cfg_file);
+			
+		dirvish.conf(this.cfg_file)
+		.then(function(config){//read saved config
 				
-				dirvish.save(this.cfg, file_path);
+			this.cfg = config;
+			res.json(config);
+				
+		}.bind(this))
+		.done();
 
-				throw new Error('Read: '+ file_path);//break the each loop
-			}
-			catch(e){
-				this.log('dirvish-config', 'error', e.message);
-				console.log(e);
-			}
-			
-			
-		}.bind(this));
+	},
+  put: function (req, res, next){//update existing config
 		
-		res.json({status: 'ok'});
+		dirvish.conf(this.cfg_file)
+		.then(function(config){//read config
+			this.cfg = config;
+			
+			var appendable = this.format(req.body);
+			
+			Object.append(this.cfg, appendable);
+			
+			dirvish.save(this.cfg, this.cfg_file);
+			
+			dirvish.conf(this.cfg_file)//re-read saved config
+			.then(function(config){
+				
+				this.cfg = config;
+				res.json(config);
+				
+			}.bind(this))
+			.done();
+			
+		}.bind(this))
+		.done();
 		
-		console.log(this.config);
 	},
   get: function (req, res, next){
 		var key = req.params.key;
 		var prop = req.params.prop;
 		
-		if(key && this.cfg[key]){
-			if(prop && this.cfg[key][prop]){
-				res.json(this.cfg[key][prop]);
+		dirvish.conf(this.cfg_file)
+		.then(function(config){
+			this.cfg = config;
+			
+			if(key && this.cfg[key]){
+				if(prop && this.cfg[key][prop]){
+					res.json(this.cfg[key][prop]);
+				}
+				else if(prop){
+					res.status(500).json({ error: 'Bad property['+prop+'] for key: '+key});
+				}
+				else{
+					res.json(this.cfg[key]);
+				}
+				
 			}
-			else if(prop){
-				res.status(500).json({ error: 'Bad property['+prop+'] for key: '+key});
+			else if(key){
+				res.status(500).json({ error: 'Bad config key:'+key});
 			}
 			else{
-				res.json(this.cfg[key]);
+				res.json(this.cfg);
 			}
-			
-		}
-		else if(key){
-			res.status(500).json({ error: 'Bad config key:'+key});
-		}
-		else{
-			res.json(this.cfg);
-		}
-		
+		}.bind(this))
+		.done();
 
   },
   initialize: function(options){
@@ -160,19 +184,7 @@ module.exports = new Class({
 			
 			try{
 				fs.accessSync(file_path, fs.R_OK);
-				
-				//this.cfg = dirvish.conf(file_path);
-
-				dirvish.conf(file_path)
-				.then(function(config){
-					this.cfg = config;
-					
-					
-					////here is when it really finished the init process
-					this.log('dirvish-config', 'info', 'dirvish config started');
-						
-				}.bind(this))
-				.done();
+				this.cfg_file = file_path;
 				
 				throw new Error('Read: '+ file_path);//break the each loop
 			}
@@ -183,6 +195,7 @@ module.exports = new Class({
 			
 		}.bind(this));
 		
+		this.log('dirvish-config', 'info', 'dirvish config started');
 		
   },
 
