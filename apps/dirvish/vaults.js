@@ -130,6 +130,9 @@ module.exports = new Class({
 	hist: function (req, res, next){
 		var key = req.params.key;
 		
+		console.log('QUERY req.query');
+		console.log(req.query);
+		
 		if(!key){
 			res.status(500).json({ error: 'you must specify a vault'});
 		}
@@ -151,7 +154,54 @@ module.exports = new Class({
 						console.log('HIST');
 						console.log(config);
 						
-						res.json(config);
+						if(req.query.first != undefined){
+							if(req.query.first == '' || !(req.query.first > 0)){
+								console.log('FIRST');
+								res.json(config[0]);
+							}
+							else{
+								var result = [];
+								for(var i = 0; i <= req.query.first - 1; i++){
+									result[i] = config[i];
+								}
+								res.json(result);
+							}
+						}
+						else if(req.query.last != undefined){
+							
+							if(req.query.last == '' || !(req.query.last > 0)){
+								console.log('LAST');
+								res.json(config[config.length - 1]);
+							}
+							else{
+								var result = [];
+								
+								for(var i = config.length - req.query.last; i <= config.length - 1; i++){
+									result.push(config[i]);
+								}
+								res.json(result);
+							}
+							
+						}
+						else if(req.query.start != undefined && req.query.start >= 0){
+							var end = null;
+							
+							if(req.query.end != undefined && req.query.end >= req.query.start){
+								end = req.query.end;
+							}
+							else{
+								end = config.length - 1;
+							}
+							
+							var result = [];
+							for(var i = req.query.start; i <= end; i++){
+								result.push(config[i]);
+							}
+							res.json(result);
+						}
+						else{
+							res.json(config);
+						}
 						
 					}.bind(this))
 					.done();
