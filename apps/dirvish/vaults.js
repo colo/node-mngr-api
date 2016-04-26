@@ -127,6 +127,19 @@ module.exports = new Class({
 		
 		return cfg;
 	},
+	/**
+	 * first precedence param
+	 * @first: return first entry
+	 * @first=n: return first N entries (ex: ?first=7, first 7 entries)
+	 * 
+	 * second precedence param
+	 * @last: return last entry 
+	 * @last=n: return last N entries (ex: ?last=7, last 7 entries)
+	 * 
+	 * third precedence params
+	 * @start=n: return from N entry to last or @end (ex: ?start=0, return all entries)
+	 * @end=n: set last N entry for @start (ex: ?start=0&end=9, return first 10 entries)
+	 * */
 	hist: function (req, res, next){
 		var key = req.params.key;
 		
