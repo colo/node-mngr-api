@@ -4,7 +4,7 @@ var App = require('node-express-app'),
 	path = require('path'),
 	Q = require('q'),
 	fs = require('fs'),
-	dirvish = require('nodejs-dirvish');
+	dirvish = require('node-dirvish');
 	
 module.exports = new Class({
   Extends: App,
