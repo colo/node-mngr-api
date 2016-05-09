@@ -68,15 +68,15 @@ module.exports = new Class({
 	},
   },
   get_proc: function (req, res, next){
-	console.log('procs param:');
-	console.log(req.params);
-	console.log('procs query:');
-	console.log(req.query);
+	//console.log('procs param:');
+	//console.log(req.params);
+	//console.log('procs query:');
+	//console.log(req.query);
 	
 	if(req.params.proc){
 		this._procs(req.params.proc, req.query.format)
 		.then(function(result){
-			//console.log(result);
+			////console.log(result);
 			if(!(typeof(req.params.prop) == 'undefined')){
 				
 				if(result[req.params.prop]){
@@ -92,8 +92,8 @@ module.exports = new Class({
 			}
 			
 		}, function (error) {
-			//console.log('error');
-			//console.log(error);
+			////console.log('error');
+			////console.log(error);
 			res.status(500).json({error: error.message});
 		})
 		.done();
@@ -103,8 +103,8 @@ module.exports = new Class({
 	}
   },
   get: function (req, res, next){
-		console.log('procs query:');
-		console.log(req.query);
+		//console.log('procs query:');
+		//console.log(req.query);
 		
 		this._procs(null, req.query.format)
 		.then(function(result){
@@ -132,8 +132,8 @@ module.exports = new Class({
 			command += ',args';
 		}
 		
-		console.log('full command');
-		console.log(command);
+		//console.log('full command');
+		//console.log(command);
 		
 		var procs = []
 		var child = exec(
@@ -149,10 +149,10 @@ module.exports = new Class({
 				var saved_proc = null;
 				try{//just to break the "each" if proc is found
 					data.each(function(item, index){
-						//console.log('item');
-						//console.log(item);
-						//console.log(item.clean());
-						//console.log(item.split());
+						////console.log('item');
+						////console.log(item);
+						////console.log(item.clean());
+						////console.log(item.split());
 						//if(index != 0 && index != data.length -1 ){
 						if(index != data.length -1 ){
 							var tmp = item.clean().split(' ');
@@ -165,8 +165,8 @@ module.exports = new Class({
 							else{
 								var i = 0;
 								Object.each(proc, function(value, column){
-									//console.log(column);
-									//console.log(tmp[i]);
+									////console.log(column);
+									////console.log(tmp[i]);
 									
 									if(column != 'command'){//exclude command column
 										proc[column] = tmp[i];
@@ -181,7 +181,7 @@ module.exports = new Class({
 									
 									i++;
 								});
-								//console.log(item.clean().split(' '));
+								////console.log(item.clean().split(' '));
 								
 								if(pid && proc['pid'] == pid){
 									saved_proc = Object.clone(proc);
@@ -196,7 +196,7 @@ module.exports = new Class({
 					}.bind(this));
 				}
 				catch(e){
-					//console.log(e);
+					////console.log(e);
 				}
 				
 				if(pid){//retrive one proc

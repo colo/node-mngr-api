@@ -88,9 +88,9 @@ module.exports = new Class({
 		var cfg = {};
 		
 		Object.each(json, function(value, key){
-			//console.log('key: '+key);
-			//console.log(value);
-			//console.log('typeof: '+typeof(value));
+			////console.log('key: '+key);
+			////console.log(value);
+			////console.log('typeof: '+typeof(value));
 			
 			if(/SET|UNSET|RESET/.test(key) &&
 				typeof(value) != 'array' &&
@@ -189,7 +189,7 @@ module.exports = new Class({
 				throw new Error('Read: '+ file_path);//break the each loop
 			}
 			catch(e){
-				console.log(e);
+				//console.log(e);
 			}
 			
 			

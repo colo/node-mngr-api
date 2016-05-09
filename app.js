@@ -83,13 +83,13 @@ var MyApp = new Class({
   },
   
   get: function(req, res, next){
-		console.log('root get');
-		console.log('req.isAuthenticated');
-		console.log(req.isAuthenticated());
+		//console.log('root get');
+		//console.log('req.isAuthenticated');
+		//console.log(req.isAuthenticated());
 		
-		console.log('isAuthorized');
-		console.log(this.isAuthorized({ op: 'view', res: 'abm'}));
-		console.log(this.getSession().getRole().getID());
+		//console.log('isAuthorized');
+		//console.log(this.isAuthorized({ op: 'view', res: 'abm'}));
+		//console.log(this.getSession().getRole().getID());
 
 		
 		if(Object.getLength(req.params) == 0){
@@ -99,7 +99,7 @@ var MyApp = new Class({
 			res.json({ title: 'Root app', param: req.params, content_type: req.get('content-type') });
 		}
 		else{
-			//console.log({ title: 'Admin app', param: req.params });
+			////console.log({ title: 'Admin app', param: req.params });
 			next();
 		}
 		
@@ -107,8 +107,8 @@ var MyApp = new Class({
   
   post: function(req, res, next){
 	  
-		console.log('root post');
-		//console.log(req.headers);
+		//console.log('root post');
+		////console.log(req.headers);
 		res.json({ title: 'Root POST' });
 		
   },
@@ -126,8 +126,8 @@ var MyApp = new Class({
 			// 	authentication.addEvent(authentication.ON_AUTH, this.logAuthentication.bind(this));
 			this.authorization.addEvent(this.authorization.NEW_SESSION, function(obj){
 	  
-			//   console.log('event');
-			//   console.log(obj);
+			//   //console.log('event');
+			//   //console.log(obj);
 			  
 			  if(!obj.error){
 				

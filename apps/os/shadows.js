@@ -66,9 +66,9 @@ module.exports = new Class({
 	},
   },
   get_shadow: function (req, res, next){
-	console.log('shadows param:');
-	console.log(req.params);
-	console.log(req.path);
+	//console.log('shadows param:');
+	//console.log(req.params);
+	//console.log(req.path);
 
 	var getShadow = function(username){
 	  passwd.getShadow({'username': username}, function(err, shadow){
@@ -92,9 +92,9 @@ module.exports = new Class({
 
 		if(condition.exec(req.params.uid) != null){//uid param is numeric, must detect username
 			uidToUsername(req.params.uid, function (err, username) {
-				//console.log('uidToUsername');
+				////console.log('uidToUsername');
 				//console.error(err);
-				//console.log(username);
+				////console.log(username);
 				if(err){
 					//console.error(err);
 					res.status(500).json({error: err.message});
@@ -120,8 +120,8 @@ module.exports = new Class({
 		var shadows_data = [];
 		
 		shadows.on('shadow', function(shadow) {
-			//console.log('user');
-			//console.log(JSON.stringify(user));
+			////console.log('user');
+			////console.log(JSON.stringify(user));
 			shadows_data.push(shadow);
 		});
 		
@@ -131,8 +131,8 @@ module.exports = new Class({
 		
 		//doens't work
 		//passwd.getShadows(function(shadows) {
-			//console.log('get shadows func');
-			//console.log(shadows);
+			////console.log('get shadows func');
+			////console.log(shadows);
 			//res.json(shadows);
 		//});
 

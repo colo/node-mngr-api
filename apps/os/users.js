@@ -66,9 +66,9 @@ module.exports = new Class({
 	},
   },
   get_user: function (req, res, next){
-	console.log('users param:');
-	console.log(req.params);
-	console.log(req.path);
+	//console.log('users param:');
+	//console.log(req.params);
+	//console.log(req.path);
 
 	var getUser = function(username){
 	  passwd.getUser({'username': username}, function(err, user){
@@ -93,9 +93,9 @@ module.exports = new Class({
 
 		if(condition.exec(req.params.uid) != null){//uid param is numeric, must detect username
 			uidToUsername(req.params.uid, function (err, username) {
-				//console.log('uidToUsername');
+				////console.log('uidToUsername');
 				//console.error(err);
-				//console.log(username);
+				////console.log(username);
 				if(err){
 					//console.error(err);
 					res.status(500).json({error: err.message});
@@ -115,17 +115,17 @@ module.exports = new Class({
 	}
   },
   get: function (req, res, next){
-	  console.log('users param:');
-	  console.log(req.params);
-	  console.log(req.path);
+	  //console.log('users param:');
+	  //console.log(req.params);
+	  //console.log(req.path);
 	  
 	  
 	var users = passwd.getUsers();
 	var users_data = [];
 
 	users.on('user', function(user) {
-		//console.log('user');
-		//console.log(JSON.stringify(user));
+		////console.log('user');
+		////console.log(JSON.stringify(user));
 		users_data.push(user);
 	});
 
@@ -135,8 +135,8 @@ module.exports = new Class({
 
 	//doens't work
 	//passwd.getUsers(function(users) {
-		//console.log('get users func');
-		//console.log(users);
+		////console.log('get users func');
+		////console.log(users);
 		//res.json(users);
 	//});
 	  

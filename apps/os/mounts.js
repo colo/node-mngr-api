@@ -72,13 +72,13 @@ module.exports = new Class({
    * 
    * */
   get_mount: function (req, res, next){
-	console.log('mounts param:');
-	console.log(req.params);
+	//console.log('mounts param:');
+	//console.log(req.params);
 	
 	if(req.params.mount){
 		this._mounts(req.params.mount)
 		.then(function(result){
-			//console.log(result);
+			////console.log(result);
 			if(!(typeof(req.params.prop) == 'undefined')){
 				
 				if(result[req.params.prop]){
@@ -94,8 +94,8 @@ module.exports = new Class({
 			}
 			
 		}, function (error) {
-			//console.log('error');
-			//console.log(error);
+			////console.log('error');
+			////console.log(error);
 			res.status(500).json({error: error.message});
 		})
 		.done();
@@ -152,7 +152,7 @@ module.exports = new Class({
 				//var mounts = [];
 				data.each(function(item, index){
 					if(index != 0 && index != data.length -1 ){
-						//console.log(item.clean().split(' '));
+						////console.log(item.clean().split(' '));
 						var tmp = item.clean().split(' ');
 						this.mounts.push({
 							fs: tmp[0],

@@ -65,9 +65,9 @@ module.exports = new Class({
 	},
   },
   get_group: function (req, res, next){
-	console.log('groups param:');
-	console.log(req.params);
-	console.log(req.path);
+	//console.log('groups param:');
+	//console.log(req.params);
+	//console.log(req.path);
 
 	//res.json({info: 'groups'});
 	if(req.params.gid){
@@ -93,13 +93,13 @@ module.exports = new Class({
   },
   get: function (req, res, next){
 
-		//console.log('get groups');
+		////console.log('get groups');
 		var groups = passwd.getGroups();
 		var groups_data = [];
 		
 		groups.on('group', function(group) {
-			//console.log('user');
-			//console.log(JSON.stringify(user));
+			////console.log('user');
+			////console.log(JSON.stringify(user));
 			groups_data.push(group);
 		});
 		

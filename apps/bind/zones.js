@@ -82,9 +82,9 @@ module.exports = new Class({
 		
 		try{
 			if(fs.statSync(full_path).isFile()){
-				console.log('get_zone');
-				console.log(req.params.zone);
-				console.log(full_path);
+				//console.log('get_zone');
+				//console.log(req.params.zone);
+				//console.log(full_path);
 				
 				// executes `pwd`
 				child = exec(zonefile + ' -p '+full_path, function (error, stdout, stderr) {
@@ -96,8 +96,8 @@ module.exports = new Class({
 				  
 				  var json = JSON.decode(stdout);
 				  
-				  //console.log('prop '+req.params.prop);
-				  //console.log(json);
+				  ////console.log('prop '+req.params.prop);
+				  ////console.log(json);
 				  
 				  if(req.params.prop){
 					if(!json[req.params.prop])
@@ -112,7 +112,7 @@ module.exports = new Class({
 				});
 				//var text = fs.readFileSync(full_path, 'utf8');
 				
-				//console.log(text);
+				////console.log(text);
 				
 				
 			}
@@ -145,11 +145,11 @@ module.exports = new Class({
 					  if(this.options.zone_file_extension && path.extname(file) == this.options.zone_file_extension){
 						file = file.replace(this.options.zone_file_extension, '');
 						zones_files.push(file);
-						console.log('file: '+file);
+						//console.log('file: '+file);
 					  }
 					  else if(!this.options.zone_file_extension){
 						zones_files.push(file);
-						console.log('file: '+file);
+						//console.log('file: '+file);
 					  }
 			
 					  

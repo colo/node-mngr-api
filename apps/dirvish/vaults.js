@@ -110,9 +110,9 @@ module.exports = new Class({
 		var cfg = {};
 		
 		Object.each(json, function(value, key){
-			//console.log('key: '+key);
-			//console.log(value);
-			//console.log('typeof: '+typeof(value));
+			////console.log('key: '+key);
+			////console.log(value);
+			////console.log('typeof: '+typeof(value));
 			
 			if(/SET|UNSET|RESET/.test(key) &&
 				typeof(value) != 'array' &&
@@ -143,8 +143,8 @@ module.exports = new Class({
 	hist: function (req, res, next){
 		var key = req.params.key;
 		
-		console.log('QUERY req.query');
-		console.log(req.query);
+		//console.log('QUERY req.query');
+		//console.log(req.query);
 		
 		if(!key){
 			res.status(500).json({ error: 'you must specify a vault'});
@@ -152,11 +152,11 @@ module.exports = new Class({
 		else{
 			dirvish.vaults(this.cfg_file)
 			.then(function(config){//read config
-				console.log('HIST this.vaults');
-				console.log(config);
+				//console.log('HIST this.vaults');
+				//console.log(config);
 						
 				this.cfg = config;
-				console.log(this.cfg);
+				//console.log(this.cfg);
 				
 				if(this.cfg[key] && this.cfg[key]['hist']){
 					//res.json(config);
@@ -164,12 +164,12 @@ module.exports = new Class({
 					.then(function(config){
 						//this.cfg = config;
 						//res.json(config);
-						console.log('HIST');
-						console.log(config);
+						//console.log('HIST');
+						//console.log(config);
 						
 						if(req.query.first != undefined){
 							if(req.query.first == '' || !(req.query.first > 0)){
-								console.log('FIRST');
+								//console.log('FIRST');
 								res.json(config[0]);
 							}
 							else{
@@ -183,7 +183,7 @@ module.exports = new Class({
 						else if(req.query.last != undefined){
 							
 							if(req.query.last == '' || !(req.query.last > 0)){
-								console.log('LAST');
+								//console.log('LAST');
 								res.json(config[config.length - 1]);
 							}
 							else{
@@ -243,11 +243,11 @@ module.exports = new Class({
 		
 		dirvish.vaults(this.cfg_file)
 		.then(function(config){//read config
-			console.log('POST this.vaults');
-			console.log(config);
+			//console.log('POST this.vaults');
+			//console.log(config);
 					
 			this.cfg = config;
-			console.log(this.cfg);
+			//console.log(this.cfg);
 			
 			Object.each(this.cfg, function(value, key){
 				this.cfg[key]['config'] = appendable[key]['config'];//discard old config, set value to new one
@@ -279,13 +279,13 @@ module.exports = new Class({
 		
 		dirvish.vaults(this.cfg_file)
 		.then(function(config){//read config
-			console.log('PUT this.vaults');
-			console.log(config);
+			//console.log('PUT this.vaults');
+			//console.log(config);
 					
 			//this.cfg = config;
 			this.cfg = Object.merge(config, appendable);
 			
-			console.log(this.cfg);
+			//console.log(this.cfg);
 			
 			Object.each(this.cfg, function(value, key){
 				dirvish.save(value['config'], value['path']);
@@ -311,8 +311,8 @@ module.exports = new Class({
 		
 		dirvish.vaults(this.cfg_file)
 		.then(function(config){
-			console.log('this.vaults');
-			console.log(config);
+			//console.log('this.vaults');
+			//console.log(config);
 					
 			this.cfg = config;
 			
@@ -357,7 +357,7 @@ module.exports = new Class({
 				throw new Error('Read: '+ file_path);//break the each loop
 			}
 			catch(e){
-				console.log(e);
+				//console.log(e);
 			}
 			
 			

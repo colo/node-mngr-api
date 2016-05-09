@@ -55,8 +55,8 @@ module.exports = new Class({
 	},
   },
   login: function(req, res, next){
-	console.log('Login Request');
-	console.log(req.headers.authorization);
+	//console.log('Login Request');
+	//console.log(req.headers.authorization);
 	
 	this.authenticate(req, res, next,  function(err, user, info) {
 	  
@@ -68,7 +68,7 @@ module.exports = new Class({
 		return next(err)
 	  }
 	  if (!user) {
-		console.log('info: '+info);
+		//console.log('info: '+info);
 		this.log('login', 'warn', 'login authenticate ' + info);
 		
 		res.cookie('bad', true, { maxAge: 99999999, httpOnly: false });
@@ -144,8 +144,8 @@ module.exports = new Class({
 			// 	authentication.addEvent(authentication.ON_AUTH, this.logAuthentication.bind(this));
 			this.authorization.addEvent(this.authorization.NEW_SESSION, function(obj){
 	  
-			//   console.log('event');
-			//   console.log(obj);
+			//   //console.log('event');
+			//   //console.log(obj);
 			  
 			  if(!obj.error){
 				

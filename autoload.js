@@ -8,8 +8,8 @@ var apps = {};
 module.exports.load = function(wrk_dir, options){
 	options = options || {};
 	
-	//console.log('load.options');
-	//console.log(options);
+	////console.log('load.options');
+	////console.log(options);
 	
 	fs.readdirSync(wrk_dir).forEach(function(file) {
 
@@ -17,16 +17,16 @@ module.exports.load = function(wrk_dir, options){
 		
 		
 		if(! (file.charAt(0) == '.')){//ommit 'hiden' files
-			//console.log('-------');
+			////console.log('-------');
 			
-			//console.log('app load: '+ file);
+			////console.log('app load: '+ file);
 			var app = null;
 			var id = '';//app id
 			var mount = '';
 			
 			if(fs.statSync(full_path).isDirectory() == true){//apps inside dir
 				
-				//console.log('dir app: '+full_path);
+				////console.log('dir app: '+full_path);
 				
 				var dir = file;//is dir
 				
@@ -34,7 +34,7 @@ module.exports.load = function(wrk_dir, options){
 					
 					if(path.extname(file) == '.js' && ! (file.charAt(0) == '.')){
 						
-						//console.log('app load js: '+ file);
+						////console.log('app load js: '+ file);
 						app = require(path.join(full_path, file));
 						
 						if(file == 'index.js'){
@@ -46,19 +46,19 @@ module.exports.load = function(wrk_dir, options){
 						}
 						
 						if(typeOf(app) == 'class'){//mootools class
-							//console.log('class app');
+							////console.log('class app');
 							
 							var instance = new app(options);
 							
-							/*//console.log('mootols_app.params:');
-							//console.log(Object.clone(instance.params));*/
+							/*////console.log('mootols_app.params:');
+							////console.log(Object.clone(instance.params));*/
 							
 							app = instance.express();
 							id = (instance.id) ? instance.id : id;
 							//apps[app.locals.id || id]['app'] = app;
 						}
 						else{//nodejs module
-							//console.log('express app...nothing to do');
+							////console.log('express app...nothing to do');
 						}
 						
 						mount = '/'+mount;
@@ -72,8 +72,8 @@ module.exports.load = function(wrk_dir, options){
 
 			}
 			else if(path.extname( file ) == '.js'){// single js apps
-				//console.log('file app: '+full_path);
-				//console.log('basename: '+path.basename(file, '.js'));
+				////console.log('file app: '+full_path);
+				////console.log('basename: '+path.basename(file, '.js'));
 				
 				app = require(full_path);
 				id = path.basename(file, '.js');
@@ -91,7 +91,7 @@ module.exports.load = function(wrk_dir, options){
 					id = (instance.id) ? instance.id : id;
 				}
 				else{//nodejs module
-					//console.log('express app...nothing to do');
+					////console.log('express app...nothing to do');
 				}
 				
 				

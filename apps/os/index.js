@@ -58,13 +58,13 @@ module.exports = new Class({
   get: function (req, res, next){
 		this._networkInterfaces()
 		.then(function(ifaces){
-			//console.log('result');
-			//console.log(ifaces);
+			////console.log('result');
+			////console.log(ifaces);
 			
 			var json = {};
 			Object.each(os, function(item, key){
-				console.log('OS.'+key);
-				//console.log('OS.'+item);
+				//console.log('OS.'+key);
+				////console.log('OS.'+item);
 				if(key != 'getNetworkInterfaces' && key != 'networkInterfaces')//deprecated func && use internal func
 					json[key] = (typeof(item) == 'function') ? os[key]() : os[key];
 				
@@ -74,7 +74,7 @@ module.exports = new Class({
 				
 			}.bind(this));
 			
-			//console.log('OS.'+json);
+			////console.log('OS.'+json);
 			res.json(json);
 		})
 		.done();
@@ -90,13 +90,13 @@ module.exports = new Class({
 			
 				if(key == 'networkInterfaces'){//use internal func
 					this[key] = function(req, res, next){
-						console.log('params');
-						console.log(req.params);
+						//console.log('params');
+						//console.log(req.params);
 						
 						this._networkInterfaces()
 						.then(function(result){
-							//console.log('ifaces');
-							//console.log(result);
+							////console.log('ifaces');
+							////console.log(result);
 							if(req.params.prop && result[req.params.prop]){
 								res.json(result[req.params.prop]);
 							}
@@ -113,8 +113,8 @@ module.exports = new Class({
 				}
 				else{
 					this[key] = function(req, res, next){
-						//console.log('params');
-						//console.log(req.params);
+						////console.log('params');
+						////console.log(req.params);
 						
 						var result = (typeof(item) == 'function') ? os[key]() : os[key];
 						
@@ -150,7 +150,7 @@ module.exports = new Class({
 		var deferred = Q.defer();
 		var ifaces = os.networkInterfaces();
 		
-		console.log(ifaces);
+		//console.log(ifaces);
 		
 		var child = exec(
 			'cat /proc/net/dev',
@@ -164,13 +164,13 @@ module.exports = new Class({
 				data.splice(-1, 1);
 				
 				data.each(function(item, index){
-					console.log('iface item '+item);
+					//console.log('iface item '+item);
 					//if(index != 0 && index != data.length -1 ){
-						//console.log(item.clean().split(' '));
+						////console.log(item.clean().split(' '));
 						var tmp = item.clean().split(' ');
 						tmp[0] = tmp[0].replace(':', ''); //removes : from iface name
 						var name = tmp[0];
-						console.log(tmp);
+						//console.log(tmp);
 						
 						if(ifaces[name]){
 							var tmp_data = ifaces[name];

@@ -78,8 +78,8 @@ module.exports = new Class({
   },
   smtp_routes: function (req, res, next){
   
-	console.log('req.params');
-	console.log(req.params);
+	//console.log('req.params');
+	//console.log(req.params);
 	
 	if(req.method == 'GET'){
 		if(req.params.route){//devuelve la ruta especificada x el indice
@@ -101,8 +101,8 @@ module.exports = new Class({
   },
   smtp_allow: function (req, res, next){
   
-	console.log('req.params');
-	console.log(req.params);
+	//console.log('req.params');
+	//console.log(req.params);
 	
 	if(req.method == 'GET'){
 		if(req.params.route){//devuelve la ruta especificada x el indice
