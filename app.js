@@ -5,7 +5,8 @@ var App = require('node-express-app'),
 	fs = require('fs'),
 	bodyParser = require('body-parser'),
 	multer = require('multer'), // v1.0.5
-	upload = multer(); // for parsing multipart/form-data
+	upload = multer(), // for parsing multipart/form-data
+	cors = require('cors');
 	
 
 	//AdminApp = require(path.join(__dirname,'apps/admin/'));
@@ -160,6 +161,7 @@ var MyApp = new Class({
 		
 		this.express().use(bodyParser.json()); // for parsing application/json
 		this.express().use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+		this.express().use(cors());
 		
 		this.profile('root_init');//end profiling
 		
