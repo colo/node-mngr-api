@@ -178,6 +178,8 @@ module.exports = new Class({
 						
 						var URI = req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/';
 						
+						var status = 206; //206 partial list | 200 full list
+						
 						var result = [];
 						var links = {};
 						links.first = URI+'?first';
@@ -186,6 +188,9 @@ module.exports = new Class({
 						links.next = null;
 						links.prev = null;
 						
+						var range_start = 0;
+						var range_end = 0;
+						
 						if(req.query.first != undefined){
 							
 							
@@ -193,16 +198,16 @@ module.exports = new Class({
 							//console.log(this.express().mountpath);
 							
 							if(req.query.first == '' || !(req.query.first > 0)){
-								//console.log('FIRST');
-								//res.status(201).links({
-									//next: req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/?start=1&end=2'
-								//}).json([zones_files[0]]);
 								
 								links.next = URI+'?start=1&end=2';
 								links.prev = links.last;
+								
+								range_start = 0;
+								range_end = 0;
+						
 								result.push(zones_files[0]);
 								
-								//console.log(process.env.PORT);
+								
 							}
 							else{
 								var first = (new Number(req.query.first) < zones_files.length) ? new Number(req.query.first) : zones_files.length - 1;
@@ -221,9 +226,9 @@ module.exports = new Class({
 								links.next = URI+'?start='+next.start+'&end='+next.end;
 								links.prev = links.last+'='+req.query.first;
 								
-								//res.status(201).links({
-									//next: req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/?start='+start+'&end='+end
-								//}).json(result);
+								range_start = 0;
+								range_end = result.length - 1;
+								
 							}
 						}
 						else if(req.query.last != undefined){
@@ -234,14 +239,14 @@ module.exports = new Class({
 								var prev = {};
 								prev.start = prev.end = zones_files.length - 2;
 								
-								//res.status(201).links({
-									//prev: req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/?start='+prev.start+'&end='+prev.end
-								//}).json([zones_files[zones_files.length - 1]]);
-								
 								links.next = links.first;
 								links.prev = URI+'?start='+prev.start+'&end='+prev.end;
 								
 								result.push(zones_files[zones_files.length - 1]);
+								
+								range_start = zones_files.length - 1;
+								range_end = zones_files.length - 1;
+								
 							}
 							else{
 								var last = (new Number(req.query.last) < zones_files.length) ? new Number(req.query.last) : zones_files.length - 1;
@@ -257,9 +262,9 @@ module.exports = new Class({
 								links.next = links.first+'='+last;
 								links.prev = URI+'?start='+prev.start+'&end='+prev.end;
 								
-								//res.status(201).links({
-									//prev: req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/?start='+prev.start+'&end='+prev.end
-								//}).json(result);
+								range_start = zones_files.length - last;
+								range_end = zones_files.length - 1;
+								
 							}
 							
 						}
@@ -289,19 +294,24 @@ module.exports = new Class({
 							
 							links.next = URI+'?start='+next.start+'&end='+next.end;
 							links.prev = URI+'?start='+prev.start+'&end='+prev.end;
-							//res.status(201).links({
-									//next: req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/?start='+next.start+'&end='+next.end
-							//}).json(result);
+							
+							range_start = start;
+							range_end = end;
 						}
 						else{
 							
 							links.next = links.last;
 							links.prev = links.first;
 							
+							status = 200;
 							result = zones_files;
 						}
 						
-						res.status(201).links(links).json(result);
+						if(status != 200){//set range Header
+							res.set('Content-Range', range_start+'-'+range_end+'/'+zones_files.length);
+						}
+						
+						res.status(status).links(links).json(result);
 					}
 						
 					count++;

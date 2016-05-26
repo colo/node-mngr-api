@@ -161,7 +161,9 @@ var MyApp = new Class({
 		
 		this.express().use(bodyParser.json()); // for parsing application/json
 		this.express().use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
-		this.express().use(cors());
+		this.express().use(cors({
+			'exposedHeaders': ['Link', 'Content-Range']
+		}));
 		
 		this.profile('root_init');//end profiling
 		
