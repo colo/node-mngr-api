@@ -175,67 +175,133 @@ module.exports = new Class({
 					//res.status(201).links({ next: req.protocol+'://'+req.hostname+':8080/'}).json({'status': 'ok'});
 					
 					if(count == files.length - 1 ){//finish loading files
+						
+						var URI = req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/';
+						
+						var result = [];
+						var links = {};
+						links.first = URI+'?first';
+						links.last = URI+'?last';
+						
+						links.next = null;
+						links.prev = null;
+						
 						if(req.query.first != undefined){
 							
-							console.log(req.baseUrl);
-							console.log(this.express().mountpath);
+							
+							//console.log(req.baseUrl);
+							//console.log(this.express().mountpath);
 							
 							if(req.query.first == '' || !(req.query.first > 0)){
 								//console.log('FIRST');
-								res.status(201).links({
-									next: req.protocol+'://'+req.hostname+':'+process.env.PORT+req.path+'/?first=1'
-								}).json(zones_files[0]);
+								//res.status(201).links({
+									//next: req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/?start=1&end=2'
+								//}).json([zones_files[0]]);
+								
+								links.next = URI+'?start=1&end=2';
+								links.prev = links.last;
+								result.push(zones_files[0]);
 								
 								//console.log(process.env.PORT);
 							}
 							else{
-								var result = [];
-								for(var i = 0; i <= req.query.first - 1; i++){
+								var first = (new Number(req.query.first) < zones_files.length) ? new Number(req.query.first) : zones_files.length - 1;
+								
+								for(var i = 0; i <= first; i++){
 									result[i] = zones_files[i];
 								}
-								var start = new Number(req.query.first) + 1;
 								
-								res.status(201).links({
-									next: req.protocol+'://'+req.hostname+':'+process.env.PORT+req.path+'/?start='+start
-								}).json(result);
+								var next = {};
+								next.start = first;
+								
+								var next_end = next.start + next.start - 1;
+								next.end = (next_end < zones_files.length) ? next_end : zones_files.length - 1;
+								
+								
+								links.next = URI+'?start='+next.start+'&end='+next.end;
+								links.prev = links.last+'='+req.query.first;
+								
+								//res.status(201).links({
+									//next: req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/?start='+start+'&end='+end
+								//}).json(result);
 							}
 						}
 						else if(req.query.last != undefined){
 							
 							if(req.query.last == '' || !(req.query.last > 0)){
 								//console.log('LAST');
-								res.json(zones_files[zones_files.length - 1]);
+								
+								var prev = {};
+								prev.start = prev.end = zones_files.length - 2;
+								
+								//res.status(201).links({
+									//prev: req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/?start='+prev.start+'&end='+prev.end
+								//}).json([zones_files[zones_files.length - 1]]);
+								
+								links.next = links.first;
+								links.prev = URI+'?start='+prev.start+'&end='+prev.end;
+								
+								result.push(zones_files[zones_files.length - 1]);
 							}
 							else{
-								var result = [];
+								var last = (new Number(req.query.last) < zones_files.length) ? new Number(req.query.last) : zones_files.length - 1;
 								
-								for(var i = zones_files.length - req.query.last; i <= zones_files.length - 1; i++){
+								for(var i = zones_files.length - last; i <= zones_files.length - 1; i++){
 									result.push(zones_files[i]);
 								}
-								res.json(result);
+								
+								var prev = {};
+								prev.end = zones_files.length - last - 1 ;
+								prev.start = ((prev.end - last + 1) > 0) ? (prev.end - last + 1) : 0;
+								
+								links.next = links.first+'='+last;
+								links.prev = URI+'?start='+prev.start+'&end='+prev.end;
+								
+								//res.status(201).links({
+									//prev: req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/?start='+prev.start+'&end='+prev.end
+								//}).json(result);
 							}
 							
 						}
 						else if(req.query.start != undefined && req.query.start >= 0){
 							var end = null;
+							var start = (new Number(req.query.start) < zones_files.length) ? new Number(req.query.start) : zones_files.length - 1;
 							
-							if(req.query.end != undefined && req.query.end >= req.query.start){
-								end = req.query.end;
+							if(req.query.end != undefined && new Number(req.query.end) >= start){
+								end = (new Number(req.query.end) < zones_files.length) ? new Number(req.query.end) : zones_files.length -1;
 							}
 							else{
 								end = zones_files.length - 1;
 							}
 							
-							var result = [];
-							for(var i = req.query.start; i <= end; i++){
+							for(var i = start; i <= end; i++){
 								result.push(zones_files[i]);
 							}
-							res.json(result);
+							
+							var next = {};
+							next.start = ((end + 1) < zones_files.length) ? (end + 1) : 0;
+							next.end = (next.start + (end - start) < zones_files.length) ? next.start + (end - start) : zones_files.length -1;
+							
+							var prev = {};
+							prev.end = start - 1;
+							prev.start = (prev.end - (end - start) > 0) ? prev.end - (end - start) : 0;
+							
+							
+							links.next = URI+'?start='+next.start+'&end='+next.end;
+							links.prev = URI+'?start='+prev.start+'&end='+prev.end;
+							//res.status(201).links({
+									//next: req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/?start='+next.start+'&end='+next.end
+							//}).json(result);
 						}
 						else{
-							res.json(zones_files);
+							
+							links.next = links.last;
+							links.prev = links.first;
+							
+							result = zones_files;
 						}
 						
+						res.status(201).links(links).json(result);
 					}
 						
 					count++;
