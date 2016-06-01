@@ -212,7 +212,7 @@ module.exports = new Class({
 							else{
 								var first = (new Number(req.query.first) < zones_files.length) ? new Number(req.query.first) : zones_files.length - 1;
 								
-								for(var i = 0; i <= first; i++){
+								for(var i = 0; i < first; i++){
 									result[i] = zones_files[i];
 								}
 								
