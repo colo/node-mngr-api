@@ -307,6 +307,9 @@ module.exports = new Class({
 							result = zones_files;
 						}
 						
+						if(result.length == zones_files.length)//when 'start=0&end=zones_files.length'
+							status = 200;
+						
 						if(status != 200){//set range Header
 							res.set('Content-Range', range_start+'-'+range_end+'/'+zones_files.length);
 						}
