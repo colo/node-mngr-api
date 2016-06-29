@@ -20,164 +20,164 @@ module.exports = new Class({
   
   options: {
 	  
-	id: 'mounts',
-	path: '/os/mounts',
-	
-	//authorization: {
-		//config: path.join(__dirname,'./config/rbac.json'),
-	//},
-	
-	params: {
-	  prop: /fs|type|bloks|used|available|percentage|mount_point/
-	},
-	
-	routes: {
+		id: 'mounts',
+		path: '/os/mounts',
 		
-		/*all: [
-		  {
-			path: '',
-			callbacks: ['get']
-		  },
-		]*/
-	},
-	
-	api: {
+		//authorization: {
+			//config: path.join(__dirname,'./config/rbac.json'),
+		//},
 		
-		version: '1.0.0',
-		
-		routes: {
-			all: [
-			  {
-				path: ':mount',
-				callbacks: ['get_mount'],
-				version: '',
-			  },
-			  {
-				path: ':mount/:prop',
-				callbacks: ['get_mount'],
-				version: '',
-			  },
-			  {
-				path: '',
-				callbacks: ['get'],
-				version: '',
-			  },
-			]
+		params: {
+			prop: /fs|type|bloks|used|available|percentage|mount_point/
 		},
 		
-	},
+		routes: {
+			
+			/*all: [
+				{
+				path: '',
+				callbacks: ['get']
+				},
+			]*/
+		},
+		
+		api: {
+			
+			version: '1.0.0',
+			
+			routes: {
+				all: [
+					{
+						path: ':mount',
+						callbacks: ['get_mount'],
+						version: '',
+					},
+					{
+						path: ':mount/:prop',
+						callbacks: ['get_mount'],
+						version: '',
+					},
+					{
+						path: '',
+						callbacks: ['get'],
+						version: '',
+					},
+				]
+			},
+			
+		},
   },
   /**
    * need to send encoded "/" (%2F)
    * 
    * */
   get_mount: function (req, res, next){
-	//console.log('mounts param:');
-	//console.log(req.params);
-	
-	if(req.params.mount){
-		this._mounts(req.params.mount)
-		.then(function(result){
-			////console.log(result);
-			if(!(typeof(req.params.prop) == 'undefined')){
-				
-				if(result[req.params.prop]){
-					res.json(result[req.params.prop]);
+		//console.log('mounts param:');
+		//console.log(req.params);
+		
+		if(req.params.mount){
+			this._mounts(req.params.mount)
+			.then(function(result){
+				////console.log(result);
+				if(!(typeof(req.params.prop) == 'undefined')){
+					
+					if(result[req.params.prop]){
+						res.json(result[req.params.prop]);
+					}
+					else{
+						res.status(500).json({error: 'bad mount property'});
+					}
+					
 				}
 				else{
-					res.status(500).json({error: 'bad mount property'});
+					res.json(result);
 				}
 				
-			}
-			else{
-				res.json(result);
-			}
-			
-		}, function (error) {
-			////console.log('error');
-			////console.log(error);
-			res.status(500).json({error: error.message});
-		})
-		.done();
-	}
-	else{
-		res.status(500).json({error: 'bad mount param'});
-	}
-  },
-  get: function (req, res, next){
-	this._mounts()
-	.then(function(result){
-		res.json(result);
-	})
-	.done();
-	
-  },
-  _mounts: function(mount){
-	var deferred = Q.defer();
-	
-	if(mount){//if mount param
-		if(this.mounts.length == 0){//if mounts[] empty, call without params
-			this._mounts()
-			.then(function(){
-				deferred.resolve(this._mounts(mount));
-			}.bind(this), function (error) {
-				deferred.reject(error);
+			}, function (error) {
+				////console.log('error');
+				////console.log(error);
+				res.status(500).json({error: error.message});
 			})
 			.done();
 		}
 		else{
-			this.mounts.each(function(item, index){
-				if(item.fs == mount){
-					deferred.resolve(item);
-				}
-			});
-			
-			deferred.reject(new Error('Mount not found'));
+			res.status(500).json({error: 'bad mount param'});
 		}
+  },
+  get: function (req, res, next){
+		this._mounts()
+		.then(function(result){
+			res.json(result);
+		})
+		.done();
 		
+  },
+  _mounts: function(mount){
+		var deferred = Q.defer();
 		
-	}
-	else{
-		this.mounts = [];
-		var child = exec(
-			this.command,
-			function (err, stdout, stderr) {
-				
-				if (err) deferred.reject(err);
-				
-				var data = stdout.split('\n');
-
-				//drives.splice(0, 1);
-				//drives.splice(-1, 1);
-				//var mounts = [];
-				data.each(function(item, index){
-					if(index != 0 && index != data.length -1 ){
-						////console.log(item.clean().split(' '));
-						var tmp = item.clean().split(' ');
-						this.mounts.push({
-							fs: tmp[0],
-							type: tmp[1],
-							bloks: tmp[2],
-							used: tmp[3],
-							availabe: tmp[4],
-							percentage: tmp[5].substring(0, tmp[5].length - 1),
-							mount_point: tmp[6],
-						})
+		if(mount){//if mount param
+			if(this.mounts.length == 0){//if mounts[] empty, call without params
+				this._mounts()
+				.then(function(){
+					deferred.resolve(this._mounts(mount));
+				}.bind(this), function (error) {
+					deferred.reject(error);
+				})
+				.done();
+			}
+			else{
+				this.mounts.each(function(item, index){
+					if(item.fs == mount){
+						deferred.resolve(item);
 					}
-				}.bind(this));
+				});
 				
-				deferred.resolve(this.mounts);
-			}.bind(this)
-		);
-	}
+				deferred.reject(new Error('Mount not found'));
+			}
+			
+			
+		}
+		else{
+			this.mounts = [];
+			var child = exec(
+				this.command,
+				function (err, stdout, stderr) {
+					
+					if (err) deferred.reject(err);
+					
+					var data = stdout.split('\n');
+
+					//drives.splice(0, 1);
+					//drives.splice(-1, 1);
+					//var mounts = [];
+					data.each(function(item, index){
+						if(index != 0 && index != data.length -1 ){
+							////console.log(item.clean().split(' '));
+							var tmp = item.clean().split(' ');
+							this.mounts.push({
+								fs: tmp[0],
+								type: tmp[1],
+								bloks: tmp[2],
+								used: tmp[3],
+								availabe: tmp[4],
+								percentage: tmp[5].substring(0, tmp[5].length - 1),
+								mount_point: tmp[6],
+							})
+						}
+					}.bind(this));
+					
+					deferred.resolve(this.mounts);
+				}.bind(this)
+			);
+		}
 	
     return deferred.promise;  
   },
   initialize: function(options){
 	
-	this.parent(options);//override default options
-	
-	this.log('os-mounts', 'info', 'os-mounts started');
+		this.parent(options);//override default options
+		
+		this.log('os-mounts', 'info', 'os-mounts started');
   },
 	
 });
