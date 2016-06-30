@@ -144,11 +144,17 @@ module.exports = new Class({
 							
 							var disk = /[A-Za-z]*/.exec(file);//return string device only
 							//this.devices[disk]['partitions'] = {};
+							if(!this.devices[disk]){
+								this.devices[disk] = {};
+							}
 							this.devices[disk]['partitions'][file] = info;
 						}
 						else{
 							info.partitions = {};
-							this.devices[file] = info;
+							if(!this.devices[file])
+								this.devices[file] = {};
+								
+							this.devices[file] = Object.merge(this.devices[file], info);
 						}
 						
 					}.bind(this));
