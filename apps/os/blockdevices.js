@@ -19,8 +19,8 @@ module.exports = new Class({
   devices: {},
   options: {
 	  
-		id: 'blocks',
-		path: '/os/blocks',
+		id: 'blockdevices',
+		path: '/os/blockdevices',
 		
 		//scan_dirs: ['/dev/', '/dev/vol0'],
 		//scan: /^(hd|sd|xvd)([^0-9]*)$/,
@@ -165,7 +165,7 @@ module.exports = new Class({
 			}.bind(this));
 		}.bind(this));
 		
-		this.log('os-blocks', 'info', 'os-blocks started');
+		this.log('os-blockdevices', 'info', 'os-blockdevices started');
   },
 	
 });
