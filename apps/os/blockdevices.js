@@ -133,29 +133,34 @@ module.exports = new Class({
 								
 							//console.log('size: ' + size);
 							info['size'] = size;
-							
+						
+							info['blockSize'] = device.blockSize;
+						
+							if(/([0-9])+$/.test(file)){//partition number
+								//console.log('block device string: '+/[A-Za-z]*/.exec(file));
+								//console.log('block device: '+file);
+								
+								var disk = /[A-Za-z]*/.exec(file);//return string device only
+								//this.devices[disk]['partitions'] = {};
+								if(!this.devices[disk]){
+									this.devices[disk] = {};
+								}
+								//console.log(this.devices);
+								if(!this.devices[disk]['partitions'])
+									this.devices[disk]['partitions'] = {};
+									
+								this.devices[disk]['partitions'][file] = info;
+							}
+							else{
+								info.partitions = {};
+								if(!this.devices[file])
+									this.devices[file] = {};
+									
+								this.devices[file] = Object.merge(this.devices[file], info);
+							}
 						}.bind(this));
 						
-						info['blockSize'] = device.blockSize;
 						
-						if(/([0-9])+$/.test(file)){//partition number
-							//console.log('block device string: '+/[A-Za-z]*/.exec(file));
-							//console.log('block device: '+file);
-							
-							var disk = /[A-Za-z]*/.exec(file);//return string device only
-							//this.devices[disk]['partitions'] = {};
-							if(!this.devices[disk]){
-								this.devices[disk] = {};
-							}
-							this.devices[disk]['partitions'][file] = info;
-						}
-						else{
-							info.partitions = {};
-							if(!this.devices[file])
-								this.devices[file] = {};
-								
-							this.devices[file] = Object.merge(this.devices[file], info);
-						}
 						
 					}.bind(this));
 					
