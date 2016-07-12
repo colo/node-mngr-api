@@ -51,26 +51,26 @@ module.exports = new Class({
 	},
   },
   logout: function(req, res, next){
-	//console.log('logout');
-	
-	if (req.isAuthenticated()) {
-		//console.log('logout-authenticated');
+		//console.log('logout');
 		
-	  this.profile('logout');//start profiling
-	  this.log('logout', 'info', 'logout' + util.inspect( req.user ));
-	  
-	  req.logout();
-	  
-	  this.profile('logout');//stop profiling
-	}
-	
+		if (req.isAuthenticated()) {
+			//console.log('logout-authenticated');
+			
+			this.profile('logout');//start profiling
+			this.log('logout', 'info', 'logout' + util.inspect( req.user ));
+			
+			req.logout();
+			
+			this.profile('logout');//stop profiling
+		}
+		
 
-	if(req.is('application/json') || req.path.indexOf('/api') == 0){
-	  res.send({'status': 'success'});
-	}
-	else{
-	  res.redirect('/');
-	}
+		if(req.is('application/json') || req.path.indexOf('/api') == 0){
+			res.send({'status': 'success'});
+		}
+		else{
+			res.redirect('/');
+		}
 	
   },
   initialize: function(options){

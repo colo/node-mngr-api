@@ -108,7 +108,8 @@ var MyApp = new Class({
   
   post: function(req, res, next){
 	  
-		//console.log('root post');
+		console.log('root post');
+		console.log(req.user);
 		////console.log(req.headers);
 		res.json({ title: 'Root POST' });
 		
