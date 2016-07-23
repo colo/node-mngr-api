@@ -1,6 +1,7 @@
 'use strict'
 
 var App = require('node-express-app'),
+	os = require('os'),
 	path = require('path'),
 	fs = require('fs'),
 	bodyParser = require('body-parser'),
@@ -25,62 +26,62 @@ var MyApp = new Class({
   
   options: {
 	  
-	id: 'root',
-	path: '/',
-	
-	logs: { 
-		path: './logs' 
-	},
-	
-	authentication: {
-		users : [
-			  //{ id: 1, username: 'lbueno' , role: 'admin', password: '40bd001563085fc35165329ea1ff5c5ecbdbbeef'}, //sha-1 hash
-			  { id: 1, username: 'lbueno' , role: 'admin', password: '123'}, //sha-1 hash
-			  { id: 2, username: 'test' , role: 'user', password: '123'}
-		],
-	},
-	
-	authorization: {
-		config: path.join(__dirname,'./config/rbac.json'),
-	},
-	
-	routes: {
+		id: os.hostname(),
+		path: '/',
 		
-		post: [
-		  {
-			path: '',
-			callbacks: ['check_authentication', 'post']
-		  },
-		],
-		all: [
-		  {
-			path: '',
-			callbacks: ['get']
-		  },
-		]
-	},
-	
-	api: {
-		
-		version: '1.0.0',
-		
-		routes: {
-			post: [
-			  {
-				path: '',
-				callbacks: ['check_authentication', 'post'],
-			  },
-			],
-			all: [
-			  {
-				path: '',
-				callbacks: ['get'],
-				version: '',
-			  },
-			]
+		logs: { 
+			path: './logs' 
 		},
 		
-	},
+		authentication: {
+			users : [
+					//{ id: 1, username: 'lbueno' , role: 'admin', password: '40bd001563085fc35165329ea1ff5c5ecbdbbeef'}, //sha-1 hash
+					{ id: 1, username: 'lbueno' , role: 'admin', password: '123'}, //sha-1 hash
+					{ id: 2, username: 'test' , role: 'user', password: '123'}
+			],
+		},
+		
+		authorization: {
+			config: path.join(__dirname,'./config/rbac.json'),
+		},
+		
+		routes: {
+			
+			//post: [
+				//{
+				//path: '',
+				//callbacks: ['check_authentication', 'post']
+				//},
+			//],
+			//all: [
+				//{
+				//path: '',
+				//callbacks: ['get']
+				//},
+			//]
+		},
+		
+		api: {
+			
+			version: '1.0.0',
+			
+			routes: {
+				//post: [
+					//{
+					//path: '',
+					//callbacks: ['check_authentication', 'post'],
+					//},
+				//],
+				all: [
+					{
+					path: '',
+					callbacks: ['get'],
+					version: '',
+					},
+				]
+			},
+			
+		},
   },
   
   get: function(req, res, next){
@@ -93,27 +94,29 @@ var MyApp = new Class({
 		//console.log(this.getSession().getRole().getID());
 
 		
-		if(Object.getLength(req.params) == 0){
-			res.json({ title: 'Root app', content_type: req.get('content-type') });
-		}
-		else if(req.params.service_action){
-			res.json({ title: 'Root app', param: req.params, content_type: req.get('content-type') });
-		}
-		else{
-			////console.log({ title: 'Admin app', param: req.params });
-			next();
-		}
+		//if(Object.getLength(req.params) == 0){
+			//res.json({ title: 'Root app', content_type: req.get('content-type') });
+			
+		//}
+		//else if(req.params.service_action){
+			////res.json({ title: 'Root app', param: req.params, content_type: req.get('content-type') });
+		//}
+		//else{
+			//////console.log({ title: 'Admin app', param: req.params });
+			//next();
+		//}
 		
+		res.json({ id: this.options.id });
   },
   
-  post: function(req, res, next){
+  //post: function(req, res, next){
 	  
-		console.log('root post');
-		console.log(req.user);
-		////console.log(req.headers);
-		res.json({ title: 'Root POST' });
+		//console.log('root post');
+		//console.log(req.user);
+		//////console.log(req.headers);
+		//res.json({ title: 'Root POST' });
 		
-  },
+  //},
   
   initialize: function(options){
 		

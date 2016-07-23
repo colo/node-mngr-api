@@ -107,8 +107,8 @@ module.exports = new Class({
   },
   
   get: function (req, res, next){
-		console.log('req.query');
-		console.log(req.query);
+		//console.log('req.query');
+		//console.log(req.query);
 		
 		if(req.query && req.query.updated != null){
 			this._update_devices(true, req, res, next);//will follow events and return data on "ALL_DEVICES_CLOSED
