@@ -85,6 +85,9 @@ var MyApp = new Class({
   },
   
   get: function(req, res, next){
+		console.log(this.authentication.options.store.users);
+		console.log(this.authentication.options.auth.users);
+		
 		//console.log('root get');
 		//console.log('req.isAuthenticated');
 		//console.log(req.isAuthenticated());
@@ -172,6 +175,8 @@ var MyApp = new Class({
 		this.profile('root_init');//end profiling
 		
 		this.log('root', 'info', 'root started');
+		
+		this.express().set('authentication',this.authentication);
   },
   
 	
