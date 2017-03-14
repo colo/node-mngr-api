@@ -16,7 +16,7 @@ module.exports = new Class({
   options: {
 	  
 		id: 'authentication',
-		path: '/authentication',
+		path: '/admin/authentication',
 		
 		params: {
 		},
