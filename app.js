@@ -85,8 +85,8 @@ var MyApp = new Class({
   },
   
   get: function(req, res, next){
-		console.log(this.authentication.options.store.options.users);
-		console.log(this.authentication.options.auth.options.users);
+		console.log(this.authentication.store.users);
+		console.log(this.authentication.auth.users);
 		
 		//console.log('root get');
 		//console.log('req.isAuthenticated');

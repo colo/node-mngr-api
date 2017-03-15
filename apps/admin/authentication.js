@@ -113,23 +113,23 @@ module.exports = new Class({
   get: function(req, res, next){
 		
 		console.log('this.authentication');
-		console.log(this.express().get('authentication').options.store.options.users);
+		console.log(this.express().get('authentication').store.users);
 		
-		this.express().get('authentication').options.store.options.users.push(
+		this.express().get('authentication').store.users.push(
 			{ id: 3, username: 'colo' , role: 'user', password: '456'}
 		);
 		
-		console.log(this.express().get('authentication').options.store.options.users);
+		console.log(this.express().get('authentication').store.users);
 		
 		console.log('-------------------------------------------------------');
 		
-		console.log(this.express().get('authentication').options.auth.options.users);
+		console.log(this.express().get('authentication').auth.users);
 		
-		this.express().get('authentication').options.auth.options.users.push(
+		this.express().get('authentication').auth.users.push(
 			{ id: 3, username: 'colo' , role: 'user', password: '456'}
 		);
 		
-		console.log(this.express().get('authentication').options.auth.options.users);
+		console.log(this.express().get('authentication').auth.users);
 		
 		res.status(200);
 			
