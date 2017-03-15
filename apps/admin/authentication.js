@@ -19,16 +19,20 @@ module.exports = new Class({
 		path: '/admin/authentication',
 		
 		params: {
+			//id: /^(0|[1-9][0-9]*)$/,
+			//username:
+			//role:
+			//password:
 		},
 		
 		routes: {
 			
-			all: [
-				{
-				path: '',
-				callbacks: ['get']
-				},
-			]
+			//all: [
+				//{
+				//path: '',
+				//callbacks: ['get']
+				//},
+			//]
 		},
 		
 		api: {
@@ -36,13 +40,30 @@ module.exports = new Class({
 			version: '1.0.0',
 			
 			routes: {
-				/*post: [
+				post: [
 					{
+					//path: ':user',
 					path: '',
-					callbacks: ['authentication'],
+					//callbacks: ['check_authentication', 'add'],
+					callbacks: ['add'],
 					version: '',
 					},
-				],*/
+				],
+				put: [
+					{
+					path: ':user',
+					//callbacks: ['check_authentication', 'add'],
+					callbacks: ['update'],
+					version: '',
+					},
+				],
+				get: [
+					{
+					path: ':user',
+					callbacks: ['get'],
+					version: '',
+					},
+				],
 				all: [
 					{
 					path: '',
@@ -54,104 +75,92 @@ module.exports = new Class({
 			
 		},
   },
-  
-  /*authentication: function(req, res, next){
-		//console.log('Login Request');
-		//console.log(req.headers.authorization);
+  //find: function(user){
+		//user = this.express().get('authentication').store.findByID(user);
+			
+		//if(!user){
+			//user = this.express().get('authentication').store.findByUserName(user);
+		//}
 		
-		this.authenticate(req, res, next,  function(err, user, info) {
+		//return user;
+	//},
+  add: function(req, res, next){
+		console.log(req.params);
+		
+		Object.each(req.body, function(value, key){
+			console.log(key);
+			console.log(value);
+		}.bind(this));
+		
+		res.json({});
+	
+  },
+  update: function(req, res, next){
+		console.log(req.params);
+		console.log(req.body);
+		
+		var user = null;
+		
+		if(req.params.user){
+			user = this.express().get('authentication').store.findByID(req.params.user);
 			
-			this.profile('authentication_authenticate');
-			
-			if (err) {
-			this.log('authentication', 'error', err);
-
-			return next(err)
-			}
-			if (!user) {
-			//console.log('info: '+info);
-			this.log('authentication', 'warn', 'authentication authenticate ' + info);
-			
-			res.cookie('bad', true, { maxAge: 99999999, httpOnly: false });
-			
-			//req.flash('error', info);
-			res.send({'status': 'error', 'error': info});
-
+			if(!user){
+				user = this.express().get('authentication').store.findByUserName(req.params.user);
+				
+				user = Object.merge(user, req.body);
+				this.express().get('authentication').store.updateByUserName(user);
+				
 			}
 			else{
-			req.logIn(user, function(err) {
-				if (err) {
-				this.log('authentication', 'error', err);
-				return next(err);
-				}
-				
-				this.log('authentication', 'info', 'authentication authenticate ' + util.inspect(user));
-				
-				////add subjects dinamically
-		// 		this.server.authorization.processRules({
-		// 		  "subjects":[
-		// 			{
-		// 			  "id": "lbueno",
-		// 			  "roles":["admin"]
-		// 			},
-		// 			{
-		// 			  "id": "test",
-		// 			  "roles":["user"]
-		// 			},
-		// 		  ],
-		// 		});
-				res.cookie('bad', false, { maxAge: 0, httpOnly: false });
-				
-				res.send({'status': 'ok'});
-				
-			}.bind(this));
+				user = Object.merge(user, req.body);
+				this.express().get('authentication').store.updateByID(user);
 			}
-		}.bind(this));
-	
-	
-  },*/
-  get: function(req, res, next){
-		
-		console.log('this.authentication');
-		console.log(this.express().get('authentication').store.users);
-		
-		this.express().get('authentication').store.users.push(
-			{ id: 3, username: 'colo' , role: 'user', password: '456'}
-		);
-		
-		console.log(this.express().get('authentication').store.users);
-		
-		console.log('-------------------------------------------------------');
-		
-		console.log(this.express().get('authentication').auth.users);
-		
-		this.express().get('authentication').auth.users.push(
-			{ id: 3, username: 'colo' , role: 'user', password: '456'}
-		);
-		
-		console.log(this.express().get('authentication').auth.users);
-		
-		res.status(200);
 			
-		res.format({
-			'text/plain': function(){
-				res.send('authentication app');
-			},
-
-			'text/html': function(){
-				res.send('<h1>authentication app</h1');
-			},
-
-			'application/json': function(){
-				res.send({info: 'authentication app'});
-			},
-
-			'default': function() {
-				// log the request and respond with 406
-				res.status(406).send('Not Acceptable');
+			res.json(user);
+		}
+		else{
+			res.json({});
+		}
+		
+  },
+  get: function(req, res, next){
+		console.log(req.params);
+		
+		var user = null;
+		
+		if(req.params.user){
+			user = this.express().get('authentication').store.findByID(req.params.user);
+			
+			if(!user){
+				user = this.express().get('authentication').store.findByUserName(req.params.user);
 			}
-		});
-	
+			
+			res.json(user);
+		}
+		else{
+			
+			res.status(200);
+				
+			res.format({
+				'text/plain': function(){
+					res.send('authentication app');
+				},
+
+				'text/html': function(){
+					res.send('<h1>authentication app</h1');
+				},
+
+				'application/json': function(){
+					res.send({info: 'authentication app'});
+				},
+
+				'default': function() {
+					// log the request and respond with 406
+					res.status(406).send('Not Acceptable');
+				}
+			});
+			
+		}
   },
   initialize: function(options){
 		this.profile('authentication_init');//start profiling
