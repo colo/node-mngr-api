@@ -60,6 +60,11 @@ module.exports = new Class({
 			routes: {
 				all: [
 					{
+						path: ':uri',
+						callbacks: ['get'],
+						version: '',
+					},
+					{
 					path: '',
 					callbacks: ['get'],
 					version: '',
@@ -70,7 +75,93 @@ module.exports = new Class({
 		},
   },
 	
-	read_vhosts: function(file, callback){
+	conf_to_obj: function(conf){
+		console.log('---conf_to_obj----');
+		
+		var cfg = {};
+		Object.each(conf, function(value, prop){
+			
+			if(prop.charAt(0) != '_' && prop != 'toString'){
+				console.log('prop: '+prop);
+				console.log('value: '+value._value);
+			
+				cfg[prop] = value._value;
+			}
+			
+		});
+		
+		return cfg;
+	},
+	read_vhost: function(vhost, file, callback){
+		var cfg = null;
+		
+		nginx.create(file, function(err, conf) {
+			if (err) {
+				console.log(err);
+				return;
+			}
+		 
+			//don't write to disk when something changes 
+			conf.die(file);
+			
+			//console.log('read_vhost');
+			//console.log(conf.nginx.server);
+			
+			//Array.each(conf.nginx.server, function(server){
+				//console.log(server.server_name._value.clean().split(" "));
+			//});
+			
+			var all_uris = [];
+			
+			if(conf.nginx.server instanceof Array){
+				cfg = [];
+				
+				Array.each(conf.nginx.server, function(server){
+					all_uris = server.server_name._value.clean().split(" ");
+					
+					
+					//var tmp_cfg = {};
+					
+					Array.each(all_uris, function(uri){
+						
+						if(vhost == uri){
+							//tmp_cfg = {
+								//server_name: uri,
+								//listen: server.listen._value,
+							//};
+							
+							cfg.push(this.conf_to_obj(server));
+							
+						}
+						
+						
+						
+					}.bind(this));
+
+				}.bind(this));
+			}
+			else{
+				all_uris = conf.nginx.server.server_name._value.clean().split(" ");
+				var server = conf.nginx.server;
+				
+				Array.each(all_uris, function(uri){
+						
+					if(vhost == uri){
+						cfg = this.conf_to_obj(server);
+					}
+					
+				}.bind(this));
+
+			}
+			
+			//console.log(cfg);
+			callback(cfg);
+			
+		}.bind(this));
+			
+		//});
+	},
+	read_vhosts_simple: function(file, callback){
 		var vhosts = [];
 		
 		nginx.create(file, function(err, conf) {
@@ -123,7 +214,8 @@ module.exports = new Class({
 		if(fs.statSync(conf_path).isDirectory() == true){
 			
 			var files = fs.readdirSync(conf_path);
-
+			var vhosts = [];
+			
 			Array.each(files, function(file, index) {
 				
 
@@ -136,9 +228,18 @@ module.exports = new Class({
 				)
 				{
 					
-					//console.log(file);
+					this.read_vhosts_simple(full_conf_path, function(cfg){
+						//console.log(cfg);
+						vhosts = vhosts.concat(cfg);
+						
+						//console.log(file);
 					
-					this.read_vhosts(full_conf_path, callback);
+						if(index == files.length - 1){
+							callback(vhosts);
+						}
+					});
+					
+					
 					
 				}
 				
@@ -146,7 +247,7 @@ module.exports = new Class({
 			}.bind(this));
 		}
 		else if(fs.statSync(conf_path).isFile() == true){
-			this.read_vhosts(full_conf_path, callback);
+			this.read_vhosts_simple(full_conf_path, callback);
 		}
 		
 	},
@@ -161,6 +262,8 @@ module.exports = new Class({
 					function(cfg){
 						vhosts = vhosts.concat(cfg);
 						if(index == this.options.conf_path.available.length - 1){
+							//console.log('index: '+index);
+							//console.log(vhosts);
 							
 							callback(vhosts);
 							
@@ -182,20 +285,83 @@ module.exports = new Class({
 		}
 	},
   get: function(req, res, next){
+		console.log(req.params);
 		
 		this.sync_vhosts(function(vhosts){
 			//console.log('----SCANNED---');
 			//console.log(vhosts);
 			//console.log(vhosts.length);
-			var send = [];
 			
-			for(var i = 0; i < vhosts.length; i++){
-				if(send.indexOf(vhosts[i].uri) == -1)//not found
-					send.push(vhosts[i].uri);
+			var send = null;
+			
+			if(req.params.uri){
+				
+				//try{
+					
+					var tmp_files = [];
+					for(var i = 0; i < vhosts.length; i++){
+						
+						if(vhosts[i].uri == req.params.uri){//found
+							
+							if(tmp_files.indexOf(vhosts[i].file) == -1){
+								console.log('----FILE----');
+								console.log(vhosts[i].file);
+								
+								//cambiar por una "read_vhosts_full", donde se lean todos los uri:files y el callback se ejecute al final	
+								this.read_vhost(vhosts[i].uri, vhosts[i].file, function(cfg){
+									console.log(arguments);
+									
+									console.log('----cfg----');
+									console.log(i);
+									console.log(cfg);
+									
+									
+									
+									if(send == null){
+										send = cfg;
+									}
+									else if(send instanceof Array){
+										send.push(cfg);
+									}
+									else{
+										var tmp = send;
+										send = [tmp, cfg];
+										
+									}
+									
+										
+									//if(i == vhosts.length){
+										//console.log(vhosts.length);
+										//console.log(i);
+										
+									res.json(send);
+									//}
+
+								});
+							}
+							
+							tmp_files.push(vhosts[i].file);
+							//throw new Error('found');
+						}
+							
+					}
+				//}
+				//catch(e){}
+			}
+			else{//complete vhosts list
+				send = [];
+				
+				for(var i = 0; i < vhosts.length; i++){
+					if(send.indexOf(vhosts[i].uri) == -1)//not found
+						send.push(vhosts[i].uri);
+				}
+				
+				res.json(send);
+
 			}
 			
-			res.json(send);
-		});
+			
+		}.bind(this));
 		
 		
 		//res.status(200);
