@@ -65,6 +65,11 @@ module.exports = new Class({
 						version: '',
 					},
 					{
+						path: ':uri/:prop',
+						callbacks: ['get'],
+						version: '',
+					},
+					{
 					path: '',
 					callbacks: ['get'],
 					version: '',
@@ -87,17 +92,37 @@ module.exports = new Class({
 				//console.log('value: '+value._value);
 				
 				if(value instanceof Array){
+					cfg[prop] = [];
+					
 					Array.each(value, function(val){
-						cfg[prop] = [];
-						cfg[prop].push(val._value);
-					});
+						
+						//cfg[prop].push(val._value);
+						var properties = this.conf_to_obj(val);
+						
+						if(Object.getLength(properties) > 0){
+							
+							cfg[prop].push(
+								Object.merge({
+									value : val._value
+								},
+								properties)
+							);
+							
+						}
+						else{
+							cfg[prop].push(val._value);
+						}
+						
+					}.bind(this));
 				}
 				//else if(!value._value){
 					//cfg[prop] = this.conf_to_obj(value);
 				//}
 				else{
 					var properties = this.conf_to_obj(value);
+					
 					//console.log(properties);
+					
 					if(Object.getLength(properties) > 0){
 						cfg[prop] = Object.merge({
 							value : value._value
@@ -343,24 +368,31 @@ module.exports = new Class({
 			
 			if(req.params.uri){
 					
-					var tmp_files = [];
-					var read_vhosts = [];
+				var tmp_files = [];
+				var read_vhosts = [];
+				
+				for(var i = 0; i < vhosts.length; i++){
 					
-					for(var i = 0; i < vhosts.length; i++){
+					if(vhosts[i].uri == req.params.uri){//found
 						
-						if(vhosts[i].uri == req.params.uri){//found
-							
-							if(tmp_files.indexOf(vhosts[i].file) == -1){//if file was not include already, include vhost
-								read_vhosts.push(vhosts[i]);
-							}
-							
-							tmp_files.push(vhosts[i].file);
+						if(tmp_files.indexOf(vhosts[i].file) == -1){//if file was not include already, include vhost
+							read_vhosts.push(vhosts[i]);
 						}
-							
+						
+						tmp_files.push(vhosts[i].file);
 					}
+						
+				}
 				
 				this.read_vhosts_full(read_vhosts, function(cfg){
-					res.json(cfg);
+					
+					if(req.params.prop){
+						
+					}
+					else{
+						res.json(cfg);
+					}
+					
 				});
 			}
 			else{//complete vhosts list
