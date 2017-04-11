@@ -65,6 +65,21 @@ module.exports = new Class({
 						version: '',
 					},
 					{
+						path: 'enabled/:uri',
+						callbacks: ['get'],
+						version: '',
+					},
+					{
+						path: 'enabled/:uri/:prop_or_index',
+						callbacks: ['get'],
+						version: '',
+					},
+					{
+						path: 'enabled/:uri/:prop_or_index/:prop',
+						callbacks: ['get'],
+						version: '',
+					},
+					{
 						path: ':uri',
 						callbacks: ['get'],
 						version: '',
@@ -245,26 +260,61 @@ module.exports = new Class({
 		}	//else
 		
 	},
-	read_vhosts_simple: function(file, callback){
+	read_vhosts_simple: function(files, callback){
 		var vhosts = [];
 		
-		nginx.create(file, function(err, conf) {
-			if (err) {
-				console.log(err);
-				return;
-			}
-		 
-			//don't write to disk when something changes 
-			conf.die(file);
+		if(files instanceof Array){
+			var tmp_cfg = [];
+			Array.each(files, function(file, index){
+				
+				this.read_vhosts_simple(file, function(cfg){
+					console.log('---recursive----');
+					
+					
+					tmp_cfg = tmp_cfg.concat(cfg);
+					
+					if(index == files.length - 1){
+						console.log(cfg);
+						callback(tmp_cfg);
+					}
+				});
+				
+			}.bind(this));
 			
-			var all_uris = [];
-			
-			if(conf.nginx.server instanceof Array){
-				Array.each(conf.nginx.server, function(server){
-					all_uris = server.server_name._value.clean().split(" ");
+		}
+		else{
+			var file = files;
+			nginx.create(file, function(err, conf) {
+				if (err) {
+					console.log(err);
+					return;
+				}
+			 
+				//don't write to disk when something changes 
+				conf.die(file);
+				
+				var all_uris = [];
+				
+				if(conf.nginx.server instanceof Array){
+					Array.each(conf.nginx.server, function(server){
+						all_uris = server.server_name._value.clean().split(" ");
+						
+						Array.each(all_uris, function(uri){
+							
+							vhosts.push({
+								uri: uri,
+								file: file
+							});
+							
+						});
+
+					});
+				}
+				else{
+					all_uris = conf.nginx.server.server_name._value.clean().split(" ");
 					
 					Array.each(all_uris, function(uri){
-						
+							
 						vhosts.push({
 							uri: uri,
 							file: file
@@ -272,26 +322,12 @@ module.exports = new Class({
 						
 					});
 
-				});
-			}
-			else{
-				all_uris = conf.nginx.server.server_name._value.clean().split(" ");
+				}
 				
-				Array.each(all_uris, function(uri){
-						
-					vhosts.push({
-						uri: uri,
-						file: file
-					});
-					
-				});
-
-			}
-			
-			callback(vhosts);
-			
-		}.bind(this));
-		
+				callback(vhosts);
+				
+			}.bind(this));
+		}
 	},
 	scan_vhosts: function(conf_path, ext, callback){
 		
@@ -302,7 +338,7 @@ module.exports = new Class({
 		if(fs.statSync(conf_path).isDirectory() == true){
 			
 			var files = fs.readdirSync(conf_path);
-			var vhosts = [];
+			var vhosts_full_conf_path = [];
 			
 			Array.each(files, function(file, index) {
 				
@@ -322,19 +358,21 @@ module.exports = new Class({
 					file.charAt(0) != '.'
 				)
 				{
+					console.log('---full_conf_path---');
+					console.log(full_conf_path);
 					
-					this.read_vhosts_simple(full_conf_path, function(cfg){
-						//console.log(cfg);
-						vhosts = vhosts.concat(cfg);
+					vhosts_full_conf_path.push(full_conf_path);
+					
+					
+				}
+				
+				if(index == files.length - 1){
+					console.log('----this.read_vhosts_simple----');
+					console.log(full_conf_path);
+					this.read_vhosts_simple(vhosts_full_conf_path, function(cfg){
 						
-						//console.log(file);
-					
-						if(index == files.length - 1){
-							callback(vhosts);
-						}
+						callback(cfg);
 					});
-					
-					
 					
 				}
 				//else{
