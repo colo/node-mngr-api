@@ -65,7 +65,12 @@ module.exports = new Class({
 						version: '',
 					},
 					{
-						path: ':uri/:prop',
+						path: ':uri/:prop_or_index',
+						callbacks: ['get'],
+						version: '',
+					},
+					{
+						path: ':uri/:prop_or_index/:prop',
 						callbacks: ['get'],
 						version: '',
 					},
@@ -149,8 +154,8 @@ module.exports = new Class({
 			Array.each(vhosts, function(vhost, index){
 				
 				this.read_vhosts_full(vhost, function(cfg){
-					console.log('---recursive----');
-					console.log(cfg);
+					//console.log('---recursive----');
+					//console.log(cfg);
 					
 					tmp_cfg = tmp_cfg.concat(cfg);
 					
@@ -222,7 +227,9 @@ module.exports = new Class({
 						}
 						
 					}.bind(this));
-
+					
+					//console.log('---NO ARRAY----');
+					//console.log(cfg);
 				}
 				
 				//console.log(cfg);
@@ -384,10 +391,70 @@ module.exports = new Class({
 						
 				}
 				
+				if(read_vhosts.length == 1)//if only one match, should return a vhost {}, not an [] of vhosts
+					read_vhosts = read_vhosts[0];
+					
 				this.read_vhosts_full(read_vhosts, function(cfg){
 					
-					if(req.params.prop){
+					if(req.params.prop_or_index){
 						
+						// mootols 1.6 vs 1.5
+						var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
+						var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
+						
+						console.log('INDEX');
+						console.log(index);
+						console.log(prop);
+						
+						if(cfg instanceof Array){
+							
+							if(index){
+								if(cfg[index]){
+									if(prop && cfg[index][prop]){
+										res.json(cfg[index][prop]);
+									}
+									else if(prop && !cfg[index][prop]){
+										res.status(404).json({error: 'Property Not Found'});
+									}
+									else{
+										res.json(cfg[index]);
+									}
+								}
+								else{
+									res.status(404).json({error: 'Index Not Found'});
+								}
+							}
+							else{
+								var props = [];
+								Array.each(cfg, function(vhost, index){
+										if(vhost[prop]){
+											props[index] = vhost[prop];
+										}
+								});
+								
+								if(props.length > 0){
+									res.json(props);
+								}
+								else{
+									res.status(404).json({error: 'Property Not Found'});
+								}
+							}
+						}
+						else{
+							if(index == 0 && !prop){//if there is only one vhost and index=0, return that vhost
+								res.json(cfg);
+							}
+							else{	
+								
+								if(cfg[prop]){
+									res.json(cfg[prop]);
+								}
+								else{
+									res.status(404).json({error: 'Property Not Found'});
+								}
+							}
+							
+						}
 					}
 					else{
 						res.json(cfg);
