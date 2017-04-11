@@ -23,7 +23,7 @@ module.exports = new Class({
 				path.join(__dirname,"../../devel/etc/nginx/sites-available/redirects/"),
 				path.join(__dirname,"../../devel/etc/nginx/sites-available/ssl/"),
 			],
-			enabled: (__dirname,"../../devel/etc/nginx/sites-enabled/"),
+			enabled: path.join(__dirname,"../../devel/etc/nginx/sites-enabled/"),
 		},
 		
 		conf_ext: {
@@ -59,6 +59,11 @@ module.exports = new Class({
 			
 			routes: {
 				all: [
+					{
+						path: 'enabled',
+						callbacks: ['get'],
+						version: '',
+					},
 					{
 						path: ':uri',
 						callbacks: ['get'],
@@ -290,6 +295,10 @@ module.exports = new Class({
 	},
 	scan_vhosts: function(conf_path, ext, callback){
 		
+		console.log('----conf_path---');
+		console.log(conf_path);
+		
+		//try{
 		if(fs.statSync(conf_path).isDirectory() == true){
 			
 			var files = fs.readdirSync(conf_path);
@@ -300,8 +309,15 @@ module.exports = new Class({
 
 				var full_conf_path = path.join(conf_path, file);
 				
+				var isFile = false;
+				
+				try{
+					isFile = fs.statSync(full_conf_path).isFile();
+				}
+				catch(e){}
+				
 				if(
-					fs.statSync(full_conf_path).isFile() == true &&
+					isFile == true &&
 					( ext == null || path.extname(file).match(ext) )&&
 					file.charAt(0) != '.'
 				)
@@ -321,26 +337,36 @@ module.exports = new Class({
 					
 					
 				}
-				
+				//else{
+					//if(index == files.length - 1){
+						//callback(vhosts);
+					//}
+				//}
 			
 			}.bind(this));
 		}
 		else if(fs.statSync(conf_path).isFile() == true){
 			this.read_vhosts_simple(full_conf_path, callback);
 		}
-		
+		//}
+		//catch(e){
+		//}
 	},
-	sync_vhosts: function(callback){
-		if(this.options.conf_path.available instanceof Array){
+	/**
+	 * sync = available || enbaled
+	 * */
+	sync_vhosts: function(sync, callback){
+		
+		if(this.options.conf_path[sync] instanceof Array){
 			var vhosts = [];
 			
-			Array.each(this.options.conf_path.available, function(dir, index){
+			Array.each(this.options.conf_path[sync], function(dir, index){
 				this.scan_vhosts(
 					dir,
-					this.options.conf_ext.available,
+					this.options.conf_ext[sync],
 					function(cfg){
 						vhosts = vhosts.concat(cfg);
-						if(index == this.options.conf_path.available.length - 1){
+						if(index == this.options.conf_path[sync].length - 1){
 							//console.log('index: '+index);
 							//console.log(vhosts);
 							
@@ -356,17 +382,19 @@ module.exports = new Class({
 			
 		}
 		else{
+			//console.log(this.options.conf_path[sync]);
 			this.scan_vhosts(
-				dir,
-				this.options.conf_ext.available,
+				this.options.conf_path[sync],
+				this.options.conf_ext[sync],
 				callback
 			);
 		}
 	},
   get: function(req, res, next){
+		console.log(req.path);
 		console.log(req.params);
 		
-		this.sync_vhosts(function(vhosts){
+		var callback = function(vhosts){
 			//console.log('----SCANNED---');
 			//console.log(vhosts);
 			//console.log(vhosts.length);
@@ -391,76 +419,87 @@ module.exports = new Class({
 						
 				}
 				
-				if(read_vhosts.length == 1)//if only one match, should return a vhost {}, not an [] of vhosts
-					read_vhosts = read_vhosts[0];
+				console.log('---read_vhosts---');
+				console.log(read_vhosts);
+				
+				if(read_vhosts.length == 0){//no match
+					res.status(404).json({error: 'URI/server_name Not Found'});
+				}
+				else{
 					
-				this.read_vhosts_full(read_vhosts, function(cfg){
-					
-					if(req.params.prop_or_index){
+					if(read_vhosts.length == 1)//if only one match, should return a vhost {}, not an [] of vhosts
+						read_vhosts = read_vhosts[0];
 						
-						// mootols 1.6 vs 1.5
-						var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
-						var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
+					this.read_vhosts_full(read_vhosts, function(cfg){
 						
-						console.log('INDEX');
-						console.log(index);
-						console.log(prop);
-						
-						if(cfg instanceof Array){
+						if(req.params.prop_or_index){
 							
-							if(index){
-								if(cfg[index]){
-									if(prop && cfg[index][prop]){
-										res.json(cfg[index][prop]);
-									}
-									else if(prop && !cfg[index][prop]){
-										res.status(404).json({error: 'Property Not Found'});
+							// mootols 1.6 vs 1.5
+							var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
+							var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
+							//prop = (prop == undefined) ? null : prop;
+							
+							console.log('INDEX');
+							console.log(index);
+							console.log(prop);
+							
+							if(cfg instanceof Array){
+								
+								if(index != null){
+									if(cfg[index]){
+										if(prop && cfg[index][prop]){
+											res.json(cfg[index][prop]);
+										}
+										else if(prop != undefined && !cfg[index][prop]){
+											res.status(404).json({error: 'Property Not Found'});
+										}
+										else{
+											res.json(cfg[index]);
+										}
 									}
 									else{
-										res.json(cfg[index]);
+										res.status(404).json({error: 'Index Not Found'});
 									}
 								}
 								else{
-									res.status(404).json({error: 'Index Not Found'});
+									var props = [];
+									Array.each(cfg, function(vhost, index){
+											if(vhost[prop]){
+												props[index] = vhost[prop];
+											}
+									});
+									
+									if(props.length > 0){
+										res.json(props);
+									}
+									else{
+										res.status(404).json({error: 'Property Not Found'});
+									}
 								}
 							}
 							else{
-								var props = [];
-								Array.each(cfg, function(vhost, index){
-										if(vhost[prop]){
-											props[index] = vhost[prop];
-										}
-								});
+								if(index == 0 && !prop){//if there is only one vhost and index=0, return that vhost
+									res.json(cfg);
+								}
+								else{	
+									
+									if(cfg[prop]){
+										res.json(cfg[prop]);
+									}
+									else{
+										res.status(404).json({error: 'Property Not Found'});
+									}
+								}
 								
-								if(props.length > 0){
-									res.json(props);
-								}
-								else{
-									res.status(404).json({error: 'Property Not Found'});
-								}
 							}
 						}
 						else{
-							if(index == 0 && !prop){//if there is only one vhost and index=0, return that vhost
-								res.json(cfg);
-							}
-							else{	
-								
-								if(cfg[prop]){
-									res.json(cfg[prop]);
-								}
-								else{
-									res.status(404).json({error: 'Property Not Found'});
-								}
-							}
-							
+							res.json(cfg);
 						}
-					}
-					else{
-						res.json(cfg);
-					}
-					
-				});
+						
+					});
+				
+				}
 			}
 			else{//complete vhosts list
 				send = [];
@@ -475,7 +514,10 @@ module.exports = new Class({
 			}
 			
 			
-		}.bind(this));
+		}.bind(this);
+		
+		var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
+		this.sync_vhosts(sync, callback);
 		
 		
 		//res.status(200);
