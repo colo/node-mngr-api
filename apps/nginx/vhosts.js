@@ -60,7 +60,25 @@ module.exports = new Class({
 			routes: {
 				post: [
 					{
+						path: 'enabled',
+						//callbacks: ['check_authentication', 'add'],
+						callbacks: ['add'],
+						version: '',
+					},
+					{
+						path: 'enabled/:uri',
+						//callbacks: ['check_authentication', 'add'],
+						callbacks: ['add'],
+						version: '',
+					},
+					{
 						path: ':uri',
+						//callbacks: ['check_authentication', 'add'],
+						callbacks: ['add'],
+						version: '',
+					},
+					{
+						path: '',
 						//callbacks: ['check_authentication', 'add'],
 						callbacks: ['add'],
 						version: '',
@@ -201,15 +219,151 @@ module.exports = new Class({
   },
 	
 	add: function(req, res, next){
+		var prop = req.body;
+		var cfg = {};
+		
+		if(req.params.uri){//if vhost uri sent
+			
+			//convert prop to nginx.conf and save
+			cfg = Object.merge(cfg, Object.clone(prop));
+			res.json(cfg);
+									
+			//var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
+			
+			//console.log('---read_vhosts---');
+			//console.log(read_vhosts);
+			
+			//if(read_vhosts.length == 0){//no match
+				//res.status(404).json({error: 'URI/server_name Not Found'});
+			//}
+			//else{
+				
+				//if(read_vhosts.length == 1)//if only one match, should return a vhost {}, not an [] of vhosts
+					//read_vhosts = read_vhosts[0];
+				
+				////with {uri,file} info, read whole vhost config	
+				//this.read_vhosts_full(read_vhosts, function(cfg){
+					
+					//if(req.params.prop_or_index){
+						
+						//// is Numberic index or a property String - mootols 1.6 vs 1.5
+						//var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
+						
+						////if index was String, take it as property
+						////var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
+						////var prop = req.body;
+						
+						////console.log('INDEX');
+						////console.log(index);
+						////console.log(prop);
+						
+						//if(cfg instanceof Array){//multiple vhosts
+							
+							//if(index != null){//seacrh for vhost matching index on []
+								
+								//if(cfg[index]){//exist
+									
+									////if(prop && cfg[index][prop]){//property exists
+										////res.json(cfg[index][prop]);
+									////}
+									////else if(prop != undefined && !cfg[index][prop]){
+										////res.status(404).json({error: 'Property Not Found'});
+									////}
+									////else{// property param wasn't set at all, return vhost matching index on []
+										////res.json(cfg[index]);
+									////}
+									
+									////convert prop to nginx.conf and save
+									//cfg[index] = Object.merge(cfg[index], Object.clone(prop));
+									//res.json(cfg[index]);
+								//}
+								//else{//index doens't exist
+									//res.status(404).json({error: 'Index Not Found'});
+								//}
+							//}
+							//else{//no index sent, search for matching property on every vhost on []
+								////var props = [];
+								//Array.each(cfg, function(vhost, index){
+									////convert prop to nginx.conf and save
+									//vhost = Object.merge(vhost, Object.clone(prop));
+								//});
+								
+								//res.json(cfg);
+								
+								////if(props.length > 0){
+									////res.json(props);
+								////}
+								////else{
+									////res.status(404).json({error: 'Property Not Found'});
+								////}
+							//}
+						//}
+						//else{//single vhosts
+							
+							//if(index == 0 || index == null){//if there is only one vhost and index=0, return that vhost
+								////convert prop to nginx.conf and save
+								//cfg = Object.merge(cfg, prop);
+								//res.json(cfg);
+							//}
+							//else{	
+								//res.status(404).json({error: 'No matching vhost'});
+							//}
+							
+							
+						//}
+					//}
+					//else{//no 'prop_or_index' param sent, return full vhost or []
+						
+						//if(cfg instanceof Array){
+							////for(var index = 0; index < cfg.length; index++ ){
+								//////convert prop to nginx.conf and save
+								////cfg[index] = Object.merge(cfg[index], Object.clone(prop));
+								////console.log('----VHOST-----');
+								////console.log(cfg[index]);
+								////console.log(Object.clone(prop));
+								
+							////}
+							//Array.each(cfg, function(vhost, index){
+								////convert prop to nginx.conf and save
+								//cfg[index] = Object.merge(cfg[index], Object.clone(prop));
+								
+								////console.log('----VHOST-----');
+								////console.log(cfg[index]);
+								////console.log(prop);
+							//});
+							
+							////console.log('----NO INDEX----');
+							////console.log(cfg);
+							//res.json(cfg);
+						//}
+						//else{
+							//cfg = Object.merge(cfg, prop);
+							//res.json(cfg);
+						//}
+					//}
+					
+				//});
+			
+			//}
+		}
+		else{//no uri sent, that's an error
+			res.status(500).json({error: 'Vhost not specified.'});
+		}
+		
 		/**
 		 * per default will add on 'available' vhosts, unless request path is /vhosts/enabled/
 		 * if added on "enabled", automatically will add it to "available"
 		 * */
-		var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
-		this.sync_vhosts(sync, callback);
+		//var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
+		//this.sync_vhosts(sync, callback);
 		
-		res.json({});
+		
 	},
+	/**
+	 * &listen=108.163.170.178:80&server_name=campus.apci.org.ar&location[value]=\&location[limit_req]=zone=default burst=4
+	 * &include[]=/etc/nginx/conf.d/no_log.conf2&include[]=/etc/nginx/conf.d/errors.conf
+	 *  
+	 * */
 	update: function(req, res, next){
 		console.log(req.body);
 		
@@ -911,6 +1065,16 @@ module.exports = new Class({
 		
 		return cfg;
 	},
+	
+	//obt_to_conf: function(cfg, original){
+		//original = original || {};
+		//var conf = {};
+		
+		//Object.each(cfg, function(value, prop){
+		//}
+		
+		//return cfg;
+	//}, 
 	/**
 	 * vhosts: {uri, file}
 	 * uri: vhost to search
