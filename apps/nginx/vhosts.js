@@ -225,7 +225,15 @@ module.exports = new Class({
 		if(req.params.uri){//if vhost uri sent
 			
 			//convert prop to nginx.conf and save
-			cfg = Object.merge(cfg, Object.clone(prop));
+			//cfg = Object.merge(cfg, Object.clone(prop));
+			if(prop['server_name']){
+				prop['server_name'] = req.params.uri+' '+prop['server_name'];
+			}
+			else{
+				prop['server_name'] = req.params.uri;
+			}
+				
+			cfg = this.obj_to_conf(prop);
 			res.json(cfg);
 									
 			//var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
@@ -422,7 +430,8 @@ module.exports = new Class({
 										//}
 										
 										//convert prop to nginx.conf and save
-										cfg[index] = Object.merge(cfg[index], Object.clone(prop));
+										//cfg[index] = Object.merge(cfg[index], Object.clone(prop));
+										cfg[index] = this.cfg_merge(cfg[index], prop);
 										res.json(cfg[index]);
 									}
 									else{//index doens't exist
@@ -431,12 +440,14 @@ module.exports = new Class({
 								}
 								else{//no index sent, search for matching property on every vhost on []
 									//var props = [];
+									var vhosts = []
 									Array.each(cfg, function(vhost, index){
 										//convert prop to nginx.conf and save
-										vhost = Object.merge(vhost, Object.clone(prop));
-									});
+										//vhost = Object.merge(vhost, Object.clone(prop));
+										vhosts.push(this.cfg_merge(vhost, prop));
+									}.bind(this));
 									
-									res.json(cfg);
+									res.json(vhosts);
 									
 									//if(props.length > 0){
 										//res.json(props);
@@ -450,7 +461,8 @@ module.exports = new Class({
 								
 								if(index == 0 || index == null){//if there is only one vhost and index=0, return that vhost
 									//convert prop to nginx.conf and save
-									cfg = Object.merge(cfg, prop);
+									//cfg = Object.merge(cfg, prop);
+									cfg = this.cfg_merge(cfg, prop);
 									res.json(cfg);
 								}
 								else{	
@@ -461,7 +473,7 @@ module.exports = new Class({
 							}
 						}
 						else{//no 'prop_or_index' param sent, return full vhost or []
-							
+							var vhosts = [];
 							if(cfg instanceof Array){
 								//for(var index = 0; index < cfg.length; index++ ){
 									////convert prop to nginx.conf and save
@@ -473,24 +485,27 @@ module.exports = new Class({
 								//}
 								Array.each(cfg, function(vhost, index){
 									//convert prop to nginx.conf and save
-									cfg[index] = Object.merge(cfg[index], Object.clone(prop));
+									
+									//cfg[index] = Object.merge(cfg[index], Object.clone(prop));
+									vhosts.push(this.cfg_merge(cfg[index], prop));
 									
 									//console.log('----VHOST-----');
 									//console.log(cfg[index]);
 									//console.log(prop);
-								});
+								}.bind(this));
 								
 								//console.log('----NO INDEX----');
 								//console.log(cfg);
-								res.json(cfg);
+								res.json(vhosts);
 							}
 							else{
-								cfg = Object.merge(cfg, prop);
+								//cfg = Object.merge(cfg, prop);
+								cfg = this.cfg_merge(cfg, prop);
 								res.json(cfg);
 							}
 						}
 						
-					});
+					}.bind(this));
 				
 				}
 			}
@@ -1027,7 +1042,7 @@ module.exports = new Class({
 							
 							cfg[prop].push(
 								Object.merge({
-									value : val._value
+									'_value' : val._value
 								},
 								propertys)
 							);
@@ -1049,7 +1064,7 @@ module.exports = new Class({
 					
 					if(Object.getLength(propertys) > 0){
 						cfg[prop] = Object.merge({
-							value : value._value
+							'_value' : value._value
 						},
 						propertys);
 					}
@@ -1066,15 +1081,23 @@ module.exports = new Class({
 		return cfg;
 	},
 	
-	//obt_to_conf: function(cfg, original){
-		//original = original || {};
-		//var conf = {};
+	obj_to_conf: function(cfg){
+		return cfg;
+	}, 
+	cfg_merge: function(orig, cfg){
+		var config = {};
 		
-		//Object.each(cfg, function(value, prop){
-		//}
+		config = Object.merge(orig, cfg);
 		
-		//return cfg;
-	//}, 
+		Object.each(cfg, function(value, prop){
+			if(!value || value == '')
+				delete config[prop];
+				//delete cfg[prop];
+		});
+		
+		
+		return config;
+	},
 	/**
 	 * vhosts: {uri, file}
 	 * uri: vhost to search
