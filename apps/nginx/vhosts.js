@@ -1,9 +1,11 @@
 'use strict'
 
 var App = require('node-express-app'),
+	os = require('os'),
 	path = require('path'),
 	util = require('util'),
-	fs = require('fs'),
+	//fs = require('fs'),
+	fs = require('fs-ext'),
 	nginx = require('nginx-conf').NginxConfFile;
 
 
@@ -14,6 +16,8 @@ module.exports = new Class({
   logger: null,
   //authorization:null,
   //authentication: null,
+  
+  comments: true,
   
   options: {
 		conf_path: {
@@ -222,6 +226,8 @@ module.exports = new Class({
 		var prop = req.body;
 		var cfg = {};
 		
+		this.comments = (req.query && req.query.comments == "false") ? false : true;
+		
 		if(req.params.uri){//if vhost uri sent
 			
 			//convert prop to nginx.conf and save
@@ -375,9 +381,140 @@ module.exports = new Class({
 	update: function(req, res, next){
 		console.log(req.body);
 		
+		this.comments = (req.query && req.query.comments == "false") ? false : true;
+		
+		var save = function(conf, file, index){
+			//console.log('save');
+			//console.log(arguments);
+			//console.log(conf.toString());
+			
+			//fs.access(file, fs.constants.W_OK, (err) => {
+				//if(err && ! err.code === 'ENOENT')//can't write
+					//throw err;
+					
+				fs.open(file, 'wx', (err, fd) => {
+				//var fd = fs.openSync(file, 'wx');
+				
+					if (err) {
+						if(err.code === 'EEXIST'){
+							console.log('exists....');
+							
+							//fs.flock(fd, 'ex', function (err) {
+							fs.fcntl(fd, 'setfd', fs.FD_CLOEXEC,function(err, result) { 
+								if (err) {
+										return console.log("Couldn't lock file");
+								}
+								// file is locked
+									
+							
+								nginx.create(file, function(err, original_conf) {
+									if (err) {
+										console.log(err);
+										return;
+									}
+								 
+									//don't write to disk when something changes 
+									//conf.die(file);
+									
+									if(original_conf.nginx.server instanceof Array){
+										console.log('original_conf.nginx.server instanceof Array');
+										//Array.each(conf.nginx.server, function(server){
+											//all_uris = server.server_name._value.clean().split(" ");
+											
+											//Array.each(all_uris, function(uri){
+												
+												//vhosts.push({
+													//uri: uri,
+													//file: file
+												//});
+												
+											//});
+
+										//});
+									}
+									else{
+										console.log('-------');
+										console.log(conf.nginx.server.toString());
+										console.log(original_conf.nginx);
+										console.log('-------');
+										
+										if(!original_conf.nginx.server){
+											//original_conf.die(file);
+											
+											original_conf.nginx._add('server');
+											original_conf.nginx.server = conf.nginx.server;
+											
+											//console.log(original_conf.nginx);
+											original_conf.flush();
+										}
+										else{
+											//console.log('original_conf.nginx.server');
+											//console.log(original_conf.nginx.server);
+											////original_conf.nginx._add('server', conf);
+											////console.log(original_conf.nginx.server);
+											
+											
+											////original_conf.nginx.server[index] = conf;
+											
+											//original_conf.flush();
+											////all_uris = conf.nginx.server.server_name._value.clean().split(" ");
+											
+											////Array.each(all_uris, function(uri){
+													
+												////vhosts.push({
+													////uri: uri,
+													////file: file
+												////});
+												
+											////});
+										}
+									}
+									
+									
+									
+								});
+								
+							});//file lock
+						}
+						else{
+							throw err;
+						}
+					}
+					else{//if no exist, it's safe to write
+						//fs.close(fd);
+						
+						//fs.writeFile(os.tmpdir()+'/nginx-conf', '', (err) => {//create empty
+							
+							//if (err) throw err;
+							
+							fs.flock(fd, 'ex', function (err) {
+									if (err) {
+											return console.log("Couldn't lock file");
+									}
+									// file is locked
+									conf.live(file);
+									conf.flush();
+									
+									fs.close(fd);
+							});
+							
+							
+						//});
+						
+						
+					}
+
+				});
+				
+			//});
+			
+			
+		};
+		
 		var callback = function(vhosts){
-			//console.log('----SCANNED---');
-			//console.log(vhosts);
+			console.log('----SCANNED---');
+			console.log(vhosts);
+			
 			//console.log(vhosts.length);
 			var prop = req.body;
 			var send = null;
@@ -405,33 +542,21 @@ module.exports = new Class({
 							// is Numberic index or a property String - mootols 1.6 vs 1.5
 							var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
 							
-							//if index was String, take it as property
-							//var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
-							//var prop = req.body;
-							
-							//console.log('INDEX');
-							//console.log(index);
-							//console.log(prop);
-							
 							if(cfg instanceof Array){//multiple vhosts
 								
 								if(index != null){//seacrh for vhost matching index on []
 									
 									if(cfg[index]){//exist
 										
-										//if(prop && cfg[index][prop]){//property exists
-											//res.json(cfg[index][prop]);
-										//}
-										//else if(prop != undefined && !cfg[index][prop]){
-											//res.status(404).json({error: 'Property Not Found'});
-										//}
-										//else{// property param wasn't set at all, return vhost matching index on []
-											//res.json(cfg[index]);
-										//}
-										
-										//convert prop to nginx.conf and save
-										//cfg[index] = Object.merge(cfg[index], Object.clone(prop));
+										/**
+										 * convert prop to nginx.conf and save
+										 * */
 										cfg[index] = this.cfg_merge(cfg[index], prop);
+										
+										var conf = this.obj_to_conf(cfg[index], function (conf){
+											save(conf, '/tmp/nginx-conf', index);
+										});
+										
 										res.json(cfg[index]);
 									}
 									else{//index doens't exist
@@ -442,9 +567,15 @@ module.exports = new Class({
 									//var props = [];
 									var vhosts = []
 									Array.each(cfg, function(vhost, index){
-										//convert prop to nginx.conf and save
-										//vhost = Object.merge(vhost, Object.clone(prop));
-										vhosts.push(this.cfg_merge(vhost, prop));
+										/**
+										 * convert prop to nginx.conf and save
+										 * */
+										vhost = this.cfg_merge(vhost, prop)
+										var conf = this.obj_to_conf(vhost,  function (conf){
+											save(conf, '/tmp/nginx-conf', index);
+										});
+										
+										vhosts.push(vhost);
 									}.bind(this));
 									
 									res.json(vhosts);
@@ -460,9 +591,14 @@ module.exports = new Class({
 							else{//single vhosts
 								
 								if(index == 0 || index == null){//if there is only one vhost and index=0, return that vhost
-									//convert prop to nginx.conf and save
-									//cfg = Object.merge(cfg, prop);
+									/**
+									 * convert prop to nginx.conf and save
+									 * */
 									cfg = this.cfg_merge(cfg, prop);
+									var conf = this.obj_to_conf(cfg,  function (conf){
+										save(conf, '/tmp/nginx-conf', 0);
+									});
+									
 									res.json(cfg);
 								}
 								else{	
@@ -475,19 +611,17 @@ module.exports = new Class({
 						else{//no 'prop_or_index' param sent, return full vhost or []
 							var vhosts = [];
 							if(cfg instanceof Array){
-								//for(var index = 0; index < cfg.length; index++ ){
-									////convert prop to nginx.conf and save
-									//cfg[index] = Object.merge(cfg[index], Object.clone(prop));
-									//console.log('----VHOST-----');
-									//console.log(cfg[index]);
-									//console.log(Object.clone(prop));
-									
-								//}
+								
 								Array.each(cfg, function(vhost, index){
-									//convert prop to nginx.conf and save
+									/**
+									 * convert prop to nginx.conf and save
+									 * */
+									cfg[index] = this.cfg_merge(cfg[index], prop)
+									var conf = this.obj_to_conf(cfg[index],  function (conf){
+										save(conf, '/tmp/nginx-conf', index);
+									});
 									
-									//cfg[index] = Object.merge(cfg[index], Object.clone(prop));
-									vhosts.push(this.cfg_merge(cfg[index], prop));
+									vhosts.push(cfg[index]);
 									
 									//console.log('----VHOST-----');
 									//console.log(cfg[index]);
@@ -499,8 +633,13 @@ module.exports = new Class({
 								res.json(vhosts);
 							}
 							else{
-								//cfg = Object.merge(cfg, prop);
+								/**
+								 * convert prop to nginx.conf and save
+								 * */
 								cfg = this.cfg_merge(cfg, prop);
+								var conf = this.obj_to_conf(cfg,  function (conf){
+									save(conf, '/tmp/nginx-conf', 0);
+								});
 								res.json(cfg);
 							}
 						}
@@ -618,11 +757,18 @@ module.exports = new Class({
 		
 		//res.json({});
 	},
+	/**
+	 * query with no comments: ?comments=false
+	 * */
 	get: function(req, res, next){
 		console.log(req.path);
 		console.log(req.params);
+		console.log(req.query);
 		
+		this.comments = (req.query && req.query.comments == "false") ? false : true;
 		
+		//console.log('comments');
+		//console.log(this.comments);
 		
 		var callback = function(vhosts){
 			//console.log('----SCANNED---');
@@ -664,11 +810,18 @@ module.exports = new Class({
 							
 							if(cfg instanceof Array){//multiple vhosts
 								
-								if(index != null){//seacrh for vhost matching index on []
+								if(index != null){//search for vhost matching index on []
 									
 									if(cfg[index]){//exist
 										
 										if(prop && cfg[index][prop]){//property exists
+											//if(!comments){
+												//delete cfg[index][prop]['_comments'];
+												
+												//if(Object.getLength(cfg[index][prop]) == 1)//if there is only _value, return that
+													//cfg[index][prop] = cfg[index][prop]['_value'];
+											//}
+											
 											res.json(cfg[index][prop]);
 										}
 										else if(prop != undefined && !cfg[index][prop]){
@@ -707,6 +860,15 @@ module.exports = new Class({
 								else{	
 									
 									if(cfg[prop]){
+										//if(!comments){
+											
+											//delete cfg[prop]['_comments'];
+											//if(Object.getLength(cfg[prop]) == 1)//if there is only _value, return that
+												//cfg[prop] = cfg[prop]['_value'];
+												
+										//}
+										//console.log(cfg[prop]);
+										
 										res.json(cfg[prop]);
 									}
 									else{
@@ -892,14 +1054,15 @@ module.exports = new Class({
 				var all_uris = [];
 				
 				if(conf.nginx.server instanceof Array){
-					Array.each(conf.nginx.server, function(server){
+					Array.each(conf.nginx.server, function(server, index){
 						all_uris = server.server_name._value.clean().split(" ");
 						
 						Array.each(all_uris, function(uri){
 							
 							vhosts.push({
 								uri: uri,
-								file: file
+								file: file,
+								index: index
 							});
 							
 						});
@@ -913,7 +1076,8 @@ module.exports = new Class({
 							
 						vhosts.push({
 							uri: uri,
-							file: file
+							file: file,
+							index: 0
 						});
 						
 					});
@@ -1025,10 +1189,10 @@ module.exports = new Class({
 		
 		var cfg = {};
 		Object.each(conf, function(value, prop){
-			
+			//console.log('prop: '+prop);
 			if(prop.charAt(0) != '_' && prop != 'toString'){
 				//console.log('prop: '+prop);
-				//console.log('value: '+value._value);
+				//console.log('value: '+value._comments);
 				
 				if(value instanceof Array){
 					cfg[prop] = [];
@@ -1062,15 +1226,22 @@ module.exports = new Class({
 					
 					//console.log(propertys);
 					
-					if(Object.getLength(propertys) > 0){
+					//if(Object.getLength(propertys) > 0){
 						cfg[prop] = Object.merge({
 							'_value' : value._value
 						},
 						propertys);
-					}
-					else{
-						cfg[prop] = value._value;
-					}
+						
+						if(this.comments && value._comments && value._comments.length > 0)//if there are comments, attach it
+							cfg[prop]['_comments'] = value._comments;
+							
+						if(Object.getLength(cfg[prop]) == 1)//if there are no other keys, except "_value", return it as property = value
+							cfg[prop] = cfg[prop]['_value'];
+						
+					//}
+					//else{
+						//cfg[prop] = value._value;
+					//}
 					
 					//console.log(this.conf_to_obj(value));
 				}
@@ -1081,8 +1252,65 @@ module.exports = new Class({
 		return cfg;
 	},
 	
-	obj_to_conf: function(cfg){
-		return cfg;
+	obj_to_conf: function(obj, callback){
+		
+		console.log('obj_to_conf');
+		console.log(obj);
+		
+		fs.writeFile(os.tmpdir()+'/nginx-conf', '', (err) => {
+			if (err) throw err;
+			
+			nginx.create(os.tmpdir()+'/nginx-conf', function(err, conf) {
+				if (err) {
+					console.log(err);
+					return;
+				}
+				
+				conf.die(os.tmpdir()+'/nginx-conf');
+				
+				//console.log(conf.toString());
+				conf.nginx._add('server');
+				
+				Object.each(obj, function(value, prop){
+					//console.log('prop: '+prop);
+					//console.log(value);
+					
+					if(value instanceof Array){
+						Array.each(value, function(val, index){
+							conf.nginx.server._add(prop, val);
+						});
+					}
+					else if(value instanceof Object){
+						conf.nginx.server._add(prop);
+						
+						Object.each(value, function(val, key){
+							if(key == '_value'){
+								conf.nginx.server[prop]._value = val;
+							}
+							else if(key == '_comments'){
+								Array.each(val, function(comment){
+									conf.nginx.server[prop]._comments.push(comment);
+								});
+							}
+							else{
+								conf.nginx.server[prop]._add(key, val);
+							}	
+						});
+					}
+					else{
+						conf.nginx.server._add(prop, value);
+					}
+				});
+				
+				//console.log(conf);
+				
+				callback(conf);
+			});
+			
+		});
+
+		
+
 	}, 
 	cfg_merge: function(orig, cfg){
 		var config = {};
