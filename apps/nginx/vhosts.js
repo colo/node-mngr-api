@@ -4,9 +4,9 @@ var App = require('node-express-app'),
 	os = require('os'),
 	path = require('path'),
 	util = require('util'),
-	//fs = require('fs'),
-	fs = require('fs-ext'),
-	nginx = require('nginx-conf').NginxConfFile;
+	fs = require('fs'),
+	nginx = require('nginx-conf').NginxConfFile,
+	lockFile = require('lockfile');
 
 
 module.exports = new Class({
@@ -384,6 +384,13 @@ module.exports = new Class({
 		this.comments = (req.query && req.query.comments == "false") ? false : true;
 		
 		var save = function(conf, file, index){
+			var original_file = path.posix.basename(file);
+			var original_path = path.dirname(file);
+			var lock = os.tmpdir()+ '/.' + original_file + '.lock';
+			file = os.tmpdir()+ '/.' + original_file + '_' + new Date().getTime();
+			
+			console.log('FILE '+file);
+			
 			//console.log('save');
 			//console.log(arguments);
 			//console.log(conf.toString());
@@ -393,127 +400,132 @@ module.exports = new Class({
 					//throw err;
 					
 				fs.open(file, 'wx', (err, fd) => {
-				//var fd = fs.openSync(file, 'wx');
 				
-					if (err) {
-						if(err.code === 'EEXIST'){
-							console.log('exists....');
+					lockFile.lock(lock, {wait: 1000} ,function (lock_err) {
+						
+						if(lock_err)
+							throw lock_err;
 							
-							//fs.flock(fd, 'ex', function (err) {
-							fs.fcntl(fd, 'setfd', fs.FD_CLOEXEC,function(err, result) { 
-								if (err) {
-										return console.log("Couldn't lock file");
-								}
-								// file is locked
-									
-							
-								nginx.create(file, function(err, original_conf) {
-									if (err) {
-										console.log(err);
-										return;
-									}
-								 
-									//don't write to disk when something changes 
-									//conf.die(file);
-									
-									if(original_conf.nginx.server instanceof Array){
-										console.log('original_conf.nginx.server instanceof Array');
-										//Array.each(conf.nginx.server, function(server){
-											//all_uris = server.server_name._value.clean().split(" ");
-											
-											//Array.each(all_uris, function(uri){
-												
-												//vhosts.push({
-													//uri: uri,
-													//file: file
-												//});
-												
-											//});
-
-										//});
-									}
-									else{
-										console.log('-------');
-										console.log(conf.nginx.server.toString());
-										console.log(original_conf.nginx);
-										console.log('-------');
+				
+						if (err) {
+							if(err.code === 'EEXIST'){
+								console.log('exists....');
+								
+								
+									nginx.create(file, function(err, original_conf) {
+										if (err) {
+											console.log(err);
+											return;
+										}
+									 
+										//don't write to disk when something changes 
+										//conf.die(file);
 										
-										if(!original_conf.nginx.server){
-											//original_conf.die(file);
-											
-											original_conf.nginx._add('server');
-											original_conf.nginx.server = conf.nginx.server;
-											
-											//console.log(original_conf.nginx);
-											original_conf.flush();
+										if(original_conf.nginx.server instanceof Array){
+											console.log('original_conf.nginx.server instanceof Array');
+											//Array.each(conf.nginx.server, function(server){
+												//all_uris = server.server_name._value.clean().split(" ");
+												
+												//Array.each(all_uris, function(uri){
+													
+													//vhosts.push({
+														//uri: uri,
+														//file: file
+													//});
+													
+												//});
+
+											//});
 										}
 										else{
-											//console.log('original_conf.nginx.server');
-											//console.log(original_conf.nginx.server);
-											////original_conf.nginx._add('server', conf);
-											////console.log(original_conf.nginx.server);
+											console.log('-------');
+											console.log(conf.nginx.server.toString());
+											console.log(original_conf.nginx);
+											console.log('-------');
 											
-											
-											////original_conf.nginx.server[index] = conf;
-											
-											//original_conf.flush();
-											////all_uris = conf.nginx.server.server_name._value.clean().split(" ");
-											
-											////Array.each(all_uris, function(uri){
-													
-												////vhosts.push({
-													////uri: uri,
-													////file: file
-												////});
+											if(!original_conf.nginx.server){
+												//original_conf.die(file);
 												
-											////});
+												original_conf.nginx._add('server');
+												original_conf.nginx.server = conf.nginx.server;
+												
+												//console.log(original_conf.nginx);
+												//original_conf.flush();
+											}
+											else{
+												//console.log('original_conf.nginx.server');
+												//console.log(original_conf.nginx.server);
+												////original_conf.nginx._add('server', conf);
+												////console.log(original_conf.nginx.server);
+												
+												
+												////original_conf.nginx.server[index] = conf;
+												
+												//original_conf.flush();
+												////all_uris = conf.nginx.server.server_name._value.clean().split(" ");
+												
+												////Array.each(all_uris, function(uri){
+														
+													////vhosts.push({
+														////uri: uri,
+														////file: file
+													////});
+													
+												////});
+											}
 										}
-									}
+										
+										
+										
+									});
 									
-									
-									
-								});
 								
-							});//file lock
+							}
+							else{
+								throw err;
+							}
 						}
-						else{
-							throw err;
-						}
-					}
-					else{//if no exist, it's safe to write
-						//fs.close(fd);
-						
-						//fs.writeFile(os.tmpdir()+'/nginx-conf', '', (err) => {//create empty
+						else{//if no exist, it's safe to write
+							fs.close(fd);
 							
-							//if (err) throw err;
-							
-							fs.flock(fd, 'ex', function (err) {
-									if (err) {
-											return console.log("Couldn't lock file");
-									}
-									// file is locked
-									conf.live(file);
-									conf.flush();
-									
-									fs.close(fd);
+							fs.writeFile(file, '', (err) => {//create empty
+								
+								//if (err) throw err;
+								
+								//fs.flock(fd, 'ex', function (err) {
+										//if (err) {
+												//return console.log("Couldn't lock file");
+										//}
+										// file is locked
+										conf.live(file);
+										conf.flush();
+										
+										//fs.close(fd);
+								//});
+								
+								
 							});
 							
 							
-						//});
-						
-						
-					}
+						}
 
-				});
+					lockFile.unlock(lock, function (lock_err) {
+							if(lock_err)
+							throw lock_err;
+							
+						});
+					});
+					
+				});//open
 				
 			//});
 			
 			
 		};
 		
-		var callback = function(vhosts){
+		var callback = function(scaned_vhosts){
 			console.log('----SCANNED---');
-			console.log(vhosts);
+			console.log(scaned_vhosts);
 			
 			//console.log(vhosts.length);
 			var prop = req.body;
@@ -521,10 +533,10 @@ module.exports = new Class({
 			
 			if(req.params.uri){//if vhost uri sent
 					
-				var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
+				var read_vhosts = this.search_vhost(scaned_vhosts, req.params.uri);
 				
-				//console.log('---read_vhosts---');
-				//console.log(read_vhosts);
+				console.log('---read_vhosts---');
+				console.log(read_vhosts);
 				
 				if(read_vhosts.length == 0){//no match
 					res.status(404).json({error: 'URI/server_name Not Found'});
@@ -537,6 +549,9 @@ module.exports = new Class({
 					//with {uri,file} info, read whole vhost config	
 					this.read_vhosts_full(read_vhosts, function(cfg){
 						
+						console.log('---read_vhosts_full---');
+						console.log(cfg);
+				
 						if(req.params.prop_or_index){
 							
 							// is Numberic index or a property String - mootols 1.6 vs 1.5
@@ -554,7 +569,10 @@ module.exports = new Class({
 										cfg[index] = this.cfg_merge(cfg[index], prop);
 										
 										var conf = this.obj_to_conf(cfg[index], function (conf){
-											save(conf, '/tmp/nginx-conf', index);
+											console.log('saving...');
+											//console.log(cfg[index]);
+											//console.log(scaned_vhosts);
+											//save(conf, '/tmp/nginx-conf', index);
 										});
 										
 										res.json(cfg[index]);
@@ -572,7 +590,10 @@ module.exports = new Class({
 										 * */
 										vhost = this.cfg_merge(vhost, prop)
 										var conf = this.obj_to_conf(vhost,  function (conf){
-											save(conf, '/tmp/nginx-conf', index);
+											console.log('saving...');
+											//console.log(vhost);
+											//console.log(scaned_vhosts);
+											//save(conf, '/tmp/nginx-conf', index);
 										});
 										
 										vhosts.push(vhost);
@@ -596,7 +617,10 @@ module.exports = new Class({
 									 * */
 									cfg = this.cfg_merge(cfg, prop);
 									var conf = this.obj_to_conf(cfg,  function (conf){
-										save(conf, '/tmp/nginx-conf', 0);
+										console.log('saving...');
+										//console.log(cfg);
+										//console.log(scaned_vhosts);
+										//save(conf, '/tmp/nginx-conf', 0);
 									});
 									
 									res.json(cfg);
@@ -618,7 +642,10 @@ module.exports = new Class({
 									 * */
 									cfg[index] = this.cfg_merge(cfg[index], prop)
 									var conf = this.obj_to_conf(cfg[index],  function (conf){
-										save(conf, '/tmp/nginx-conf', index);
+										console.log('saving...');
+										//console.log(cfg[index]);
+										//console.log(scaned_vhosts);
+										//save(conf, '/tmp/nginx-conf', index);
 									});
 									
 									vhosts.push(cfg[index]);
@@ -638,7 +665,10 @@ module.exports = new Class({
 								 * */
 								cfg = this.cfg_merge(cfg, prop);
 								var conf = this.obj_to_conf(cfg,  function (conf){
-									save(conf, '/tmp/nginx-conf', 0);
+									console.log('saving...');
+									//console.log(cfg);
+									//console.log(scaned_vhosts);
+									//save(conf, '/tmp/nginx-conf', 0);
 								});
 								res.json(cfg);
 							}
@@ -674,7 +704,9 @@ module.exports = new Class({
 			if(req.params.uri){//if vhost uri sent
 					
 				
-				var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
+				//var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
+				var read_vhosts = this.search_vhost(vhosts, req.params.uri);
+				
 				
 				//console.log('---read_vhosts---');
 				//console.log(read_vhosts);
@@ -779,7 +811,8 @@ module.exports = new Class({
 			
 			if(req.params.uri){//if vhost uri sent
 					
-				var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
+				//var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
+				var read_vhosts = this.search_vhost(vhosts, req.params.uri);
 				
 				//console.log('---read_vhosts---');
 				//console.log(read_vhosts);
@@ -1026,7 +1059,7 @@ module.exports = new Class({
 			Array.each(files, function(file, index){
 				
 				this.read_vhosts_simple(file, function(cfg){
-					console.log('---recursive----');
+					//console.log('---recursive----');
 					
 					
 					tmp_cfg = tmp_cfg.concat(cfg);
@@ -1094,7 +1127,22 @@ module.exports = new Class({
 		
 		if(vhosts instanceof Array){
 			var tmp_cfg = [];
-			Array.each(vhosts, function(vhost, index){
+			
+			//for(var i = 0; i < vhosts.length; i++){
+				//var vhost = vhosts[i];
+				
+				//this.read_vhosts_full(vhost, function(cfg){
+					//console.log('---recursive----');
+					//console.log(i);
+					
+					//tmp_cfg = tmp_cfg.concat(cfg);
+					
+					//if(i == vhosts.length){
+						//callback(tmp_cfg);
+					//}
+				//});
+			//}
+			Array.each(vhosts, function(vhost, i){
 				
 				this.read_vhosts_full(vhost, function(cfg){
 					//console.log('---recursive----');
@@ -1102,7 +1150,7 @@ module.exports = new Class({
 					
 					tmp_cfg = tmp_cfg.concat(cfg);
 					
-					if(index == vhosts.length - 1){
+					if(tmp_cfg.length == vhosts.length){
 						callback(tmp_cfg);
 					}
 				});
@@ -1113,6 +1161,7 @@ module.exports = new Class({
 		else{
 			var file = vhosts.file;
 			var vhost = vhosts.uri;
+			var index = vhosts.index;
 			
 			nginx.create(file, function(err, conf) {
 				if (err) {
@@ -1132,7 +1181,7 @@ module.exports = new Class({
 				
 				var all_uris = [];
 				
-				if(conf.nginx.server instanceof Array){
+				if(conf.nginx.server instanceof Array && index == undefined){
 					cfg = [];
 					
 					Array.each(conf.nginx.server, function(server){
@@ -1160,8 +1209,10 @@ module.exports = new Class({
 					}.bind(this));
 				}
 				else{
-					all_uris = conf.nginx.server.server_name._value.clean().split(" ");
-					var server = conf.nginx.server;
+					var server = (index != undefined) ? conf.nginx.server[index] : conf.nginx.server;
+						
+					all_uris = server.server_name._value.clean().split(" ");
+					
 					
 					Array.each(all_uris, function(uri){
 							
@@ -1171,8 +1222,8 @@ module.exports = new Class({
 						
 					}.bind(this));
 					
-					//console.log('---NO ARRAY----');
-					//console.log(cfg);
+					console.log('---NO ARRAY----');
+					console.log(server.server_name._value);
 				}
 				
 				//console.log(cfg);
@@ -1254,8 +1305,8 @@ module.exports = new Class({
 	
 	obj_to_conf: function(obj, callback){
 		
-		console.log('obj_to_conf');
-		console.log(obj);
+		//console.log('obj_to_conf');
+		//console.log(obj);
 		
 		fs.writeFile(os.tmpdir()+'/nginx-conf', '', (err) => {
 			if (err) throw err;
@@ -1327,6 +1378,7 @@ module.exports = new Class({
 		return config;
 	},
 	/**
+	 * return just 1 match of vhosts, even if it is multiple times in a file, 
 	 * vhosts: {uri, file}
 	 * uri: vhost to search
 	 * */
@@ -1343,6 +1395,24 @@ module.exports = new Class({
 				}
 				
 				tmp_files.push(vhosts[i].file);
+			}
+				
+		}
+		
+		return read_vhosts;
+	},
+	/**
+	 * return every match of vhost
+	 * vhosts: {uri, file}
+	 * uri: vhost to search
+	 * */
+	search_vhost: function(vhosts, uri){
+		var read_vhosts = [];
+		
+		for(var i = 0; i < vhosts.length; i++){//search uri on all vhosts, there may be multiple matchs on same or diferent files
+			
+			if(vhosts[i].uri == uri){//found
+				read_vhosts.push(vhosts[i]);
 			}
 				
 		}
