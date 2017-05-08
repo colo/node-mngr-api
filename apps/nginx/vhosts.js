@@ -387,6 +387,8 @@ module.exports = new Class({
 			var original_file = path.posix.basename(file);
 			var original_path = path.dirname(file);
 			var lock = os.tmpdir()+ '/.' + original_file + '.lock';
+			
+			//test
 			file = os.tmpdir()+ '/.' + original_file + '_' + new Date().getTime();
 			
 			console.log('FILE '+file);
@@ -410,72 +412,82 @@ module.exports = new Class({
 						if (err) {
 							if(err.code === 'EEXIST'){
 								console.log('exists....');
+								console.log(conf.nginx.server);
 								
-								
+									//var server = null;
+									
 									nginx.create(file, function(err, original_conf) {
 										if (err) {
 											console.log(err);
 											return;
 										}
-									 
-										//don't write to disk when something changes 
-										//conf.die(file);
 										
-										if(original_conf.nginx.server instanceof Array){
-											console.log('original_conf.nginx.server instanceof Array');
-											//Array.each(conf.nginx.server, function(server){
-												//all_uris = server.server_name._value.clean().split(" ");
-												
-												//Array.each(all_uris, function(uri){
-													
-													//vhosts.push({
-														//uri: uri,
-														//file: file
-													//});
-													
-												//});
-
-											//});
-										}
-										else{
-											console.log('-------');
-											console.log(conf.nginx.server.toString());
-											console.log(original_conf.nginx);
-											console.log('-------');
+										conf.die(file);
+										
+										if(original_conf.nginx.server){
+											//don't write to disk when something changes 
 											
-											if(!original_conf.nginx.server){
-												//original_conf.die(file);
-												
-												original_conf.nginx._add('server');
-												original_conf.nginx.server = conf.nginx.server;
-												
-												//console.log(original_conf.nginx);
-												//original_conf.flush();
+											
+											//console.log(original_conf.nginx.server);
+											
+											if(original_conf.nginx.server instanceof Array){
+												console.log('original_conf.nginx.server instanceof Array');
 											}
 											else{
-												//console.log('original_conf.nginx.server');
-												//console.log(original_conf.nginx.server);
-												////original_conf.nginx._add('server', conf);
-												////console.log(original_conf.nginx.server);
+												console.log('original_conf.nginx.server NO Array');
 												
+												if(index == 0){
+													original_conf.nginx.server = conf.nginx.server;
+												}
+												else{
+													original_conf.nginx.server._add('server');
+													original_conf.nginx.server[1] = conf.nginx.server;
+												}
+												//server._add('server');
 												
-												////original_conf.nginx.server[index] = conf;
+												//var tmp_server = server[0];
+												//server[0] = conf.nginx.server;
 												
-												//original_conf.flush();
-												////all_uris = conf.nginx.server.server_name._value.clean().split(" ");
+												//if(server[index]){
+												//}
 												
-												////Array.each(all_uris, function(uri){
-														
-													////vhosts.push({
-														////uri: uri,
-														////file: file
-													////});
+												//if(!original_conf.nginx.server){
+													////original_conf.die(file);
 													
-												////});
+													//original_conf.nginx._add('server');
+													//original_conf.nginx.server = conf.nginx.server;
+													
+													////console.log(original_conf.nginx);
+													//original_conf.flush();
+												//}
+												//else{
+													
+													//console.log('-------');
+													//console.log(conf.nginx.server.toString());
+													//console.log(original_conf.nginx.toString());
+													//console.log('-------');
+												
+													//if(original_conf.nginx.server[index]){
+														//var tmp_server = original_conf.nginx.server[index];
+														//original_conf.nginx.server[index] = conf.nginx.server;
+														//original_conf.nginx.server.push(tmp_server);
+													//}
+													//else{
+														//original_conf.nginx.server[index] = conf.nginx.server;
+													//}
+													
+													
+													
+													
+												//}
 											}
+											
+											original_conf.flush();
 										}
-										
-										
+										else{
+											console.log(original_conf.nginx);
+											throw new Error('case where vhosts are on original_conf.nginx.http....');
+										}
 										
 									});
 									
@@ -569,8 +581,8 @@ module.exports = new Class({
 										cfg[index] = this.cfg_merge(cfg[index], prop);
 										
 										var conf = this.obj_to_conf(cfg[index], function (conf){
-											console.log('saving...');
-											//console.log(cfg[index]);
+											console.log('saving with index...');
+											console.log(cfg[index]);
 											//console.log(scaned_vhosts);
 											//save(conf, '/tmp/nginx-conf', index);
 										});
@@ -590,8 +602,8 @@ module.exports = new Class({
 										 * */
 										vhost = this.cfg_merge(vhost, prop)
 										var conf = this.obj_to_conf(vhost,  function (conf){
-											console.log('saving...');
-											//console.log(vhost);
+											console.log('saving multiple vhosts...');
+											console.log(vhost);
 											//console.log(scaned_vhosts);
 											//save(conf, '/tmp/nginx-conf', index);
 										});
@@ -617,8 +629,8 @@ module.exports = new Class({
 									 * */
 									cfg = this.cfg_merge(cfg, prop);
 									var conf = this.obj_to_conf(cfg,  function (conf){
-										console.log('saving...');
-										//console.log(cfg);
+										console.log('saving single vhosts...');
+										console.log(cfg);
 										//console.log(scaned_vhosts);
 										//save(conf, '/tmp/nginx-conf', 0);
 									});
@@ -636,16 +648,20 @@ module.exports = new Class({
 							var vhosts = [];
 							if(cfg instanceof Array){
 								
+								console.log(read_vhosts);
+								
 								Array.each(cfg, function(vhost, index){
 									/**
 									 * convert prop to nginx.conf and save
 									 * */
 									cfg[index] = this.cfg_merge(cfg[index], prop)
 									var conf = this.obj_to_conf(cfg[index],  function (conf){
-										console.log('saving...');
+										console.log('saving single vhosts 2...');
+										//console.log(index);
 										//console.log(cfg[index]);
-										//console.log(scaned_vhosts);
-										//save(conf, '/tmp/nginx-conf', index);
+										//console.log(read_vhosts[index]);
+										
+										save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
 									});
 									
 									vhosts.push(cfg[index]);
@@ -665,8 +681,8 @@ module.exports = new Class({
 								 * */
 								cfg = this.cfg_merge(cfg, prop);
 								var conf = this.obj_to_conf(cfg,  function (conf){
-									console.log('saving...');
-									//console.log(cfg);
+									console.log('saving single vhosts 3...');
+									console.log(cfg);
 									//console.log(scaned_vhosts);
 									//save(conf, '/tmp/nginx-conf', 0);
 								});
@@ -960,13 +976,22 @@ module.exports = new Class({
 		if(this.options.conf_path[sync] instanceof Array){
 			var vhosts = [];
 			
+			var tmp = [];
 			Array.each(this.options.conf_path[sync], function(dir, index){
+				
 				this.scan_vhosts(
 					dir,
 					this.options.conf_ext[sync],
 					function(cfg){
+						
 						vhosts = vhosts.concat(cfg);
-						if(index == this.options.conf_path[sync].length - 1){
+						
+						tmp.push(dir);
+						//console.log('---TMP----');
+						//console.log(tmp);
+						//console.log(this.options.conf_path[sync]);
+						//if(index == this.options.conf_path[sync].length - 1){
+						if(tmp.length == this.options.conf_path[sync].length){
 							//console.log('index: '+index);
 							//console.log(vhosts);
 							
@@ -975,7 +1000,6 @@ module.exports = new Class({
 						}
 					}.bind(this)
 				);
-				
 				
 					
 			}.bind(this));
@@ -1001,48 +1025,59 @@ module.exports = new Class({
 			var files = fs.readdirSync(conf_path);
 			var vhosts_full_conf_path = [];
 			
-			Array.each(files, function(file, index) {
-				
-
-				var full_conf_path = path.join(conf_path, file);
-				
-				var isFile = false;
-				
-				try{
-					isFile = fs.statSync(full_conf_path).isFile();
-				}
-				catch(e){}
-				
-				if(
-					isFile == true &&
-					( ext == null || path.extname(file).match(ext) )&&
-					file.charAt(0) != '.'
-				)
-				{
-					console.log('---full_conf_path---');
-					console.log(full_conf_path);
-					
-					vhosts_full_conf_path.push(full_conf_path);
-					
-					
-				}
-				
-				if(index == files.length - 1){
-					console.log('----this.read_vhosts_simple----');
-					console.log(full_conf_path);
-					this.read_vhosts_simple(vhosts_full_conf_path, function(cfg){
-						
-						callback(cfg);
-					});
-					
-				}
-				//else{
-					//if(index == files.length - 1){
-						//callback(vhosts);
-					//}
-				//}
+			//console.log('----FILES-----');
+			//console.log(files);
 			
-			}.bind(this));
+			if(files.length > 0){
+				
+				files.sort();//ensure always the same order
+				
+				Array.each(files, function(file, index) {
+					
+
+					var full_conf_path = path.join(conf_path, file);
+					
+					var isFile = false;
+					
+					try{
+						isFile = fs.statSync(full_conf_path).isFile();
+					}
+					catch(e){}
+					
+					if(
+						isFile == true &&
+						( ext == null || path.extname(file).match(ext) )&&
+						file.charAt(0) != '.'
+					)
+					{
+						console.log('---full_conf_path---');
+						console.log(full_conf_path);
+						
+						vhosts_full_conf_path.push(full_conf_path);
+						
+						
+					}
+					
+					if(index == files.length - 1){
+						console.log('----this.read_vhosts_simple----');
+						console.log(full_conf_path);
+						this.read_vhosts_simple(vhosts_full_conf_path, function(cfg){
+							
+							callback(cfg);
+						});
+						
+					}
+					//else{
+						//if(index == files.length - 1){
+							//callback(vhosts);
+						//}
+					//}
+					
+				}.bind(this));
+			}
+			else{
+				callback([]);
+			}
 		}
 		else if(fs.statSync(conf_path).isFile() == true){
 			this.read_vhosts_simple(full_conf_path, callback);
@@ -1056,6 +1091,10 @@ module.exports = new Class({
 		
 		if(files instanceof Array){
 			var tmp_cfg = [];
+			var tmp_files = [];
+			
+			files.sort();//ensure always the same order
+			
 			Array.each(files, function(file, index){
 				
 				this.read_vhosts_simple(file, function(cfg){
@@ -1064,7 +1103,13 @@ module.exports = new Class({
 					
 					tmp_cfg = tmp_cfg.concat(cfg);
 					
-					if(index == files.length - 1){
+					tmp_files.push(file);
+					
+					//console.log('----tmp_cfg-----');
+					//console.log(tmp_cfg);
+					
+					//if(index == files.length - 1){
+					if(tmp_files.length == files.length){
 						console.log(cfg);
 						callback(tmp_cfg);
 					}
@@ -1125,6 +1170,7 @@ module.exports = new Class({
 	read_vhosts_full: function(vhosts, callback){
 		var cfg = null;
 		
+					
 		if(vhosts instanceof Array){
 			var tmp_cfg = [];
 			
@@ -1142,20 +1188,39 @@ module.exports = new Class({
 					//}
 				//});
 			//}
-			Array.each(vhosts, function(vhost, i){
+			
+			//Array.each(vhosts, function(vhost, i){
+			//var not_full_array = true;
+			
+			for(var i = 0; i < vhosts.length; i++){
+				var vhost = vhosts[i];
 				
-				this.read_vhosts_full(vhost, function(cfg){
-					//console.log('---recursive----');
-					//console.log(cfg);
+				this.read_vhosts_full(vhost, function(cfg, vhost){
 					
-					tmp_cfg = tmp_cfg.concat(cfg);
+					//console.log(recursive_index);
 					
-					if(tmp_cfg.length == vhosts.length){
+					
+					var index = vhosts.indexOf(vhost);
+					console.log('---recursive----');
+					console.log(vhost);
+					console.log(index);
+					
+					//tmp_cfg = tmp_cfg.concat(cfg);
+					tmp_cfg[index] = Object.clone(cfg);
+					
+					console.log(tmp_cfg);
+					
+					//not_full_array = tmp_cfg.contains(undefined);
+					
+					if(tmp_cfg.clean().length == vhosts.length){
+						
+						
+						//console.log(tmp_cfg);
 						callback(tmp_cfg);
 					}
 				});
-				
-			}.bind(this));
+			}	
+			//}.bind(this));
 			
 		}
 		else{
@@ -1209,7 +1274,12 @@ module.exports = new Class({
 					}.bind(this));
 				}
 				else{
-					var server = (index != undefined) ? conf.nginx.server[index] : conf.nginx.server;
+					if(conf.nginx.server instanceof Array){
+						var server = (index != undefined) ? conf.nginx.server[index] : conf.nginx.server;
+					}
+					else{
+						var server = conf.nginx.server;
+					}
 						
 					all_uris = server.server_name._value.clean().split(" ");
 					
@@ -1227,7 +1297,7 @@ module.exports = new Class({
 				}
 				
 				//console.log(cfg);
-				callback(cfg);
+				callback(cfg, vhosts);
 				
 			}.bind(this));
 			
