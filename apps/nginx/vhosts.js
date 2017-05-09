@@ -244,8 +244,8 @@ module.exports = new Class({
 									
 			//var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
 			
-			//console.log('---read_vhosts---');
-			//console.log(read_vhosts);
+			////console.log('---read_vhosts---');
+			////console.log(read_vhosts);
 			
 			//if(read_vhosts.length == 0){//no match
 				//res.status(404).json({error: 'URI/server_name Not Found'});
@@ -267,9 +267,9 @@ module.exports = new Class({
 						////var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
 						////var prop = req.body;
 						
-						////console.log('INDEX');
-						////console.log(index);
-						////console.log(prop);
+						//////console.log('INDEX');
+						//////console.log(index);
+						//////console.log(prop);
 						
 						//if(cfg instanceof Array){//multiple vhosts
 							
@@ -332,22 +332,22 @@ module.exports = new Class({
 							////for(var index = 0; index < cfg.length; index++ ){
 								//////convert prop to nginx.conf and save
 								////cfg[index] = Object.merge(cfg[index], Object.clone(prop));
-								////console.log('----VHOST-----');
-								////console.log(cfg[index]);
-								////console.log(Object.clone(prop));
+								//////console.log('----VHOST-----');
+								//////console.log(cfg[index]);
+								//////console.log(Object.clone(prop));
 								
 							////}
 							//Array.each(cfg, function(vhost, index){
 								////convert prop to nginx.conf and save
 								//cfg[index] = Object.merge(cfg[index], Object.clone(prop));
 								
-								////console.log('----VHOST-----');
-								////console.log(cfg[index]);
-								////console.log(prop);
+								//////console.log('----VHOST-----');
+								//////console.log(cfg[index]);
+								//////console.log(prop);
 							//});
 							
-							////console.log('----NO INDEX----');
-							////console.log(cfg);
+							//////console.log('----NO INDEX----');
+							//////console.log(cfg);
 							//res.json(cfg);
 						//}
 						//else{
@@ -379,7 +379,7 @@ module.exports = new Class({
 	 *  
 	 * */
 	update: function(req, res, next){
-		console.log(req.body);
+		//console.log(req.body);
 		
 		this.comments = (req.query && req.query.comments == "false") ? false : true;
 		
@@ -389,13 +389,13 @@ module.exports = new Class({
 			var lock = os.tmpdir()+ '/.' + original_file + '.lock';
 			
 			//test
-			file = os.tmpdir()+ '/.' + original_file + '_' + new Date().getTime();
+			//file = os.tmpdir()+ '/.' + original_file + '_' + new Date().getTime();
 			
-			console.log('FILE '+file);
+			//console.log('FILE '+file);
 			
-			//console.log('save');
-			//console.log(arguments);
-			//console.log(conf.toString());
+			////console.log('save');
+			////console.log(arguments);
+			////console.log(conf.toString());
 			
 			//fs.access(file, fs.constants.W_OK, (err) => {
 				//if(err && ! err.code === 'ENOENT')//can't write
@@ -411,81 +411,48 @@ module.exports = new Class({
 				
 						if (err) {
 							if(err.code === 'EEXIST'){
-								console.log('exists....');
-								console.log(conf.nginx.server);
+								//console.log('exists....');
+								//console.log(conf.nginx.server);
 								
 									//var server = null;
 									
 									nginx.create(file, function(err, original_conf) {
 										if (err) {
-											console.log(err);
+											//console.log(err);
 											return;
 										}
 										
+										//don't write to disk when something changes 
 										conf.die(file);
 										
 										if(original_conf.nginx.server){
-											//don't write to disk when something changes 
-											
-											
-											//console.log(original_conf.nginx.server);
 											
 											if(original_conf.nginx.server instanceof Array){
-												console.log('original_conf.nginx.server instanceof Array');
+												//console.log('original_conf.nginx.server instanceof Array');
+												if(original_conf.nginx.server[index]){
+													original_conf.nginx.server[index] = conf.nginx.server;
+												}
+												else{
+													throw new Errro('Bad index, somthing went wrong!');
+												}
 											}
 											else{
-												console.log('original_conf.nginx.server NO Array');
+												//console.log('original_conf.nginx.server NO Array');
 												
 												if(index == 0){
 													original_conf.nginx.server = conf.nginx.server;
 												}
 												else{
-													original_conf.nginx.server._add('server');
+													original_conf.nginx._add('server');
 													original_conf.nginx.server[1] = conf.nginx.server;
 												}
-												//server._add('server');
 												
-												//var tmp_server = server[0];
-												//server[0] = conf.nginx.server;
-												
-												//if(server[index]){
-												//}
-												
-												//if(!original_conf.nginx.server){
-													////original_conf.die(file);
-													
-													//original_conf.nginx._add('server');
-													//original_conf.nginx.server = conf.nginx.server;
-													
-													////console.log(original_conf.nginx);
-													//original_conf.flush();
-												//}
-												//else{
-													
-													//console.log('-------');
-													//console.log(conf.nginx.server.toString());
-													//console.log(original_conf.nginx.toString());
-													//console.log('-------');
-												
-													//if(original_conf.nginx.server[index]){
-														//var tmp_server = original_conf.nginx.server[index];
-														//original_conf.nginx.server[index] = conf.nginx.server;
-														//original_conf.nginx.server.push(tmp_server);
-													//}
-													//else{
-														//original_conf.nginx.server[index] = conf.nginx.server;
-													//}
-													
-													
-													
-													
-												//}
 											}
 											
 											original_conf.flush();
 										}
 										else{
-											console.log(original_conf.nginx);
+											//console.log(original_conf.nginx);
 											throw new Error('case where vhosts are on original_conf.nginx.http....');
 										}
 										
@@ -506,7 +473,7 @@ module.exports = new Class({
 								
 								//fs.flock(fd, 'ex', function (err) {
 										//if (err) {
-												//return console.log("Couldn't lock file");
+												//return //console.log("Couldn't lock file");
 										//}
 										// file is locked
 										conf.live(file);
@@ -536,10 +503,10 @@ module.exports = new Class({
 		};
 		
 		var callback = function(scaned_vhosts){
-			console.log('----SCANNED---');
-			console.log(scaned_vhosts);
+			//console.log('----SCANNED---');
+			//console.log(scaned_vhosts);
 			
-			//console.log(vhosts.length);
+			////console.log(vhosts.length);
 			var prop = req.body;
 			var send = null;
 			
@@ -547,8 +514,8 @@ module.exports = new Class({
 					
 				var read_vhosts = this.search_vhost(scaned_vhosts, req.params.uri);
 				
-				console.log('---read_vhosts---');
-				console.log(read_vhosts);
+				//console.log('---read_vhosts---');
+				//console.log(read_vhosts);
 				
 				if(read_vhosts.length == 0){//no match
 					res.status(404).json({error: 'URI/server_name Not Found'});
@@ -561,17 +528,20 @@ module.exports = new Class({
 					//with {uri,file} info, read whole vhost config	
 					this.read_vhosts_full(read_vhosts, function(cfg){
 						
-						console.log('---read_vhosts_full---');
-						console.log(cfg);
+						//console.log('---read_vhosts_full---');
+						//console.log(cfg);
 				
 						if(req.params.prop_or_index){
 							
 							// is Numberic index or a property String - mootols 1.6 vs 1.5
 							var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
 							
+							//if index was String, take it as property
+							//var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
+							
 							if(cfg instanceof Array){//multiple vhosts
 								
-								if(index != null){//seacrh for vhost matching index on []
+								if(index != null){//search for vhost matching index on []
 									
 									if(cfg[index]){//exist
 										
@@ -581,10 +551,7 @@ module.exports = new Class({
 										cfg[index] = this.cfg_merge(cfg[index], prop);
 										
 										var conf = this.obj_to_conf(cfg[index], function (conf){
-											console.log('saving with index...');
-											console.log(cfg[index]);
-											//console.log(scaned_vhosts);
-											//save(conf, '/tmp/nginx-conf', index);
+											save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
 										});
 										
 										res.json(cfg[index]);
@@ -593,8 +560,8 @@ module.exports = new Class({
 										res.status(404).json({error: 'Index Not Found'});
 									}
 								}
-								else{//no index sent, search for matching property on every vhost on []
-									//var props = [];
+								else{//no index sent
+									
 									var vhosts = []
 									Array.each(cfg, function(vhost, index){
 										/**
@@ -603,8 +570,8 @@ module.exports = new Class({
 										vhost = this.cfg_merge(vhost, prop)
 										var conf = this.obj_to_conf(vhost,  function (conf){
 											console.log('saving multiple vhosts...');
-											console.log(vhost);
-											//console.log(scaned_vhosts);
+											//console.log(vhost);
+											////console.log(scaned_vhosts);
 											//save(conf, '/tmp/nginx-conf', index);
 										});
 										
@@ -613,12 +580,7 @@ module.exports = new Class({
 									
 									res.json(vhosts);
 									
-									//if(props.length > 0){
-										//res.json(props);
-									//}
-									//else{
-										//res.status(404).json({error: 'Property Not Found'});
-									//}
+									
 								}
 							}
 							else{//single vhosts
@@ -629,10 +591,7 @@ module.exports = new Class({
 									 * */
 									cfg = this.cfg_merge(cfg, prop);
 									var conf = this.obj_to_conf(cfg,  function (conf){
-										console.log('saving single vhosts...');
-										console.log(cfg);
-										//console.log(scaned_vhosts);
-										//save(conf, '/tmp/nginx-conf', 0);
+										save(conf, read_vhosts['file'], read_vhosts['index']);
 									});
 									
 									res.json(cfg);
@@ -648,7 +607,7 @@ module.exports = new Class({
 							var vhosts = [];
 							if(cfg instanceof Array){
 								
-								console.log(read_vhosts);
+								//console.log(read_vhosts);
 								
 								Array.each(cfg, function(vhost, index){
 									/**
@@ -656,23 +615,18 @@ module.exports = new Class({
 									 * */
 									cfg[index] = this.cfg_merge(cfg[index], prop)
 									var conf = this.obj_to_conf(cfg[index],  function (conf){
-										console.log('saving single vhosts 2...');
-										//console.log(index);
-										//console.log(cfg[index]);
-										//console.log(read_vhosts[index]);
-										
 										save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
 									});
 									
 									vhosts.push(cfg[index]);
 									
-									//console.log('----VHOST-----');
-									//console.log(cfg[index]);
-									//console.log(prop);
+									////console.log('----VHOST-----');
+									////console.log(cfg[index]);
+									////console.log(prop);
 								}.bind(this));
 								
-								//console.log('----NO INDEX----');
-								//console.log(cfg);
+								////console.log('----NO INDEX----');
+								////console.log(cfg);
 								res.json(vhosts);
 							}
 							else{
@@ -681,10 +635,7 @@ module.exports = new Class({
 								 * */
 								cfg = this.cfg_merge(cfg, prop);
 								var conf = this.obj_to_conf(cfg,  function (conf){
-									console.log('saving single vhosts 3...');
-									console.log(cfg);
-									//console.log(scaned_vhosts);
-									//save(conf, '/tmp/nginx-conf', 0);
+									save(conf, read_vhosts['file'], read_vhosts['index']);
 								});
 								res.json(cfg);
 							}
@@ -711,9 +662,9 @@ module.exports = new Class({
 	remove: function(req, res, next){
 		
 		var callback = function(vhosts){
-			console.log('----SCANNED---');
-			console.log(vhosts);
-			//console.log(vhosts.length);
+			//console.log('----SCANNED---');
+			//console.log(vhosts);
+			////console.log(vhosts.length);
 			
 			var send = null;
 			
@@ -724,8 +675,8 @@ module.exports = new Class({
 				var read_vhosts = this.search_vhost(vhosts, req.params.uri);
 				
 				
-				//console.log('---read_vhosts---');
-				//console.log(read_vhosts);
+				////console.log('---read_vhosts---');
+				////console.log(read_vhosts);
 				
 				if(read_vhosts.length == 0){//no match
 					res.status(404).json({error: 'URI/server_name Not Found'});
@@ -747,9 +698,9 @@ module.exports = new Class({
 							//var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
 							
 							
-							console.log('INDEX');
-							console.log(index);
-							//console.log(prop);
+							//console.log('INDEX');
+							//console.log(index);
+							////console.log(prop);
 							
 							if(cfg instanceof Array){//multiple vhosts
 								
@@ -809,19 +760,19 @@ module.exports = new Class({
 	 * query with no comments: ?comments=false
 	 * */
 	get: function(req, res, next){
-		console.log(req.path);
-		console.log(req.params);
-		console.log(req.query);
+		//console.log(req.path);
+		//console.log(req.params);
+		//console.log(req.query);
 		
 		this.comments = (req.query && req.query.comments == "false") ? false : true;
 		
-		//console.log('comments');
-		//console.log(this.comments);
+		////console.log('comments');
+		////console.log(this.comments);
 		
 		var callback = function(vhosts){
-			//console.log('----SCANNED---');
-			//console.log(vhosts);
-			//console.log(vhosts.length);
+			////console.log('----SCANNED---');
+			////console.log(vhosts);
+			////console.log(vhosts.length);
 			
 			var send = null;
 			
@@ -830,8 +781,8 @@ module.exports = new Class({
 				//var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
 				var read_vhosts = this.search_vhost(vhosts, req.params.uri);
 				
-				//console.log('---read_vhosts---');
-				//console.log(read_vhosts);
+				////console.log('---read_vhosts---');
+				////console.log(read_vhosts);
 				
 				if(read_vhosts.length == 0){//no match
 					res.status(404).json({error: 'URI/server_name Not Found'});
@@ -853,9 +804,9 @@ module.exports = new Class({
 							var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
 							
 							
-							//console.log('INDEX');
-							//console.log(index);
-							//console.log(prop);
+							////console.log('INDEX');
+							////console.log(index);
+							////console.log(prop);
 							
 							if(cfg instanceof Array){//multiple vhosts
 								
@@ -864,12 +815,6 @@ module.exports = new Class({
 									if(cfg[index]){//exist
 										
 										if(prop && cfg[index][prop]){//property exists
-											//if(!comments){
-												//delete cfg[index][prop]['_comments'];
-												
-												//if(Object.getLength(cfg[index][prop]) == 1)//if there is only _value, return that
-													//cfg[index][prop] = cfg[index][prop]['_value'];
-											//}
 											
 											res.json(cfg[index][prop]);
 										}
@@ -916,7 +861,7 @@ module.exports = new Class({
 												//cfg[prop] = cfg[prop]['_value'];
 												
 										//}
-										//console.log(cfg[prop]);
+										////console.log(cfg[prop]);
 										
 										res.json(cfg[prop]);
 									}
@@ -987,13 +932,13 @@ module.exports = new Class({
 						vhosts = vhosts.concat(cfg);
 						
 						tmp.push(dir);
-						//console.log('---TMP----');
-						//console.log(tmp);
-						//console.log(this.options.conf_path[sync]);
+						////console.log('---TMP----');
+						////console.log(tmp);
+						////console.log(this.options.conf_path[sync]);
 						//if(index == this.options.conf_path[sync].length - 1){
 						if(tmp.length == this.options.conf_path[sync].length){
-							//console.log('index: '+index);
-							//console.log(vhosts);
+							////console.log('index: '+index);
+							////console.log(vhosts);
 							
 							callback(vhosts);
 							
@@ -1006,7 +951,7 @@ module.exports = new Class({
 			
 		}
 		else{
-			//console.log(this.options.conf_path[sync]);
+			////console.log(this.options.conf_path[sync]);
 			this.scan_vhosts(
 				this.options.conf_path[sync],
 				this.options.conf_ext[sync],
@@ -1016,8 +961,8 @@ module.exports = new Class({
 	},
 	scan_vhosts: function(conf_path, ext, callback){
 		
-		console.log('----conf_path---');
-		console.log(conf_path);
+		//console.log('----conf_path---');
+		//console.log(conf_path);
 		
 		//try{
 		if(fs.statSync(conf_path).isDirectory() == true){
@@ -1025,8 +970,8 @@ module.exports = new Class({
 			var files = fs.readdirSync(conf_path);
 			var vhosts_full_conf_path = [];
 			
-			//console.log('----FILES-----');
-			//console.log(files);
+			////console.log('----FILES-----');
+			////console.log(files);
 			
 			if(files.length > 0){
 				
@@ -1050,8 +995,8 @@ module.exports = new Class({
 						file.charAt(0) != '.'
 					)
 					{
-						console.log('---full_conf_path---');
-						console.log(full_conf_path);
+						//console.log('---full_conf_path---');
+						//console.log(full_conf_path);
 						
 						vhosts_full_conf_path.push(full_conf_path);
 						
@@ -1059,8 +1004,8 @@ module.exports = new Class({
 					}
 					
 					if(index == files.length - 1){
-						console.log('----this.read_vhosts_simple----');
-						console.log(full_conf_path);
+						//console.log('----this.read_vhosts_simple----');
+						//console.log(full_conf_path);
 						this.read_vhosts_simple(vhosts_full_conf_path, function(cfg){
 							
 							callback(cfg);
@@ -1098,19 +1043,19 @@ module.exports = new Class({
 			Array.each(files, function(file, index){
 				
 				this.read_vhosts_simple(file, function(cfg){
-					//console.log('---recursive----');
+					////console.log('---recursive----');
 					
 					
 					tmp_cfg = tmp_cfg.concat(cfg);
 					
 					tmp_files.push(file);
 					
-					//console.log('----tmp_cfg-----');
-					//console.log(tmp_cfg);
+					////console.log('----tmp_cfg-----');
+					////console.log(tmp_cfg);
 					
 					//if(index == files.length - 1){
 					if(tmp_files.length == files.length){
-						console.log(cfg);
+						//console.log(cfg);
 						callback(tmp_cfg);
 					}
 				});
@@ -1122,7 +1067,7 @@ module.exports = new Class({
 			var file = files;
 			nginx.create(file, function(err, conf) {
 				if (err) {
-					console.log(err);
+					//console.log(err);
 					return;
 				}
 			 
@@ -1178,8 +1123,8 @@ module.exports = new Class({
 				//var vhost = vhosts[i];
 				
 				//this.read_vhosts_full(vhost, function(cfg){
-					//console.log('---recursive----');
-					//console.log(i);
+					////console.log('---recursive----');
+					////console.log(i);
 					
 					//tmp_cfg = tmp_cfg.concat(cfg);
 					
@@ -1197,25 +1142,25 @@ module.exports = new Class({
 				
 				this.read_vhosts_full(vhost, function(cfg, vhost){
 					
-					//console.log(recursive_index);
+					////console.log(recursive_index);
 					
 					
 					var index = vhosts.indexOf(vhost);
-					console.log('---recursive----');
-					console.log(vhost);
-					console.log(index);
+					//console.log('---recursive----');
+					//console.log(vhost);
+					//console.log(index);
 					
 					//tmp_cfg = tmp_cfg.concat(cfg);
 					tmp_cfg[index] = Object.clone(cfg);
 					
-					console.log(tmp_cfg);
+					//console.log(tmp_cfg);
 					
 					//not_full_array = tmp_cfg.contains(undefined);
 					
 					if(tmp_cfg.clean().length == vhosts.length){
 						
 						
-						//console.log(tmp_cfg);
+						////console.log(tmp_cfg);
 						callback(tmp_cfg);
 					}
 				});
@@ -1230,18 +1175,18 @@ module.exports = new Class({
 			
 			nginx.create(file, function(err, conf) {
 				if (err) {
-					console.log(err);
+					//console.log(err);
 					return;
 				}
 			 
 				//don't write to disk when something changes 
 				conf.die(file);
 				
-				//console.log('read_vhost');
-				//console.log(conf.nginx.server);
+				////console.log('read_vhost');
+				////console.log(conf.nginx.server);
 				
 				//Array.each(conf.nginx.server, function(server){
-					//console.log(server.server_name._value.clean().split(" "));
+					////console.log(server.server_name._value.clean().split(" "));
 				//});
 				
 				var all_uris = [];
@@ -1292,11 +1237,11 @@ module.exports = new Class({
 						
 					}.bind(this));
 					
-					console.log('---NO ARRAY----');
-					console.log(server.server_name._value);
+					//console.log('---NO ARRAY----');
+					//console.log(server.server_name._value);
 				}
 				
-				//console.log(cfg);
+				////console.log(cfg);
 				callback(cfg, vhosts);
 				
 			}.bind(this));
@@ -1305,15 +1250,15 @@ module.exports = new Class({
 		
 	},
   conf_to_obj: function(conf){
-		//console.log('---conf_to_obj----');
-		//console.log(conf);
+		////console.log('---conf_to_obj----');
+		////console.log(conf);
 		
 		var cfg = {};
 		Object.each(conf, function(value, prop){
-			//console.log('prop: '+prop);
+			////console.log('prop: '+prop);
 			if(prop.charAt(0) != '_' && prop != 'toString'){
-				//console.log('prop: '+prop);
-				//console.log('value: '+value._comments);
+				////console.log('prop: '+prop);
+				////console.log('value: '+value._comments);
 				
 				if(value instanceof Array){
 					cfg[prop] = [];
@@ -1324,12 +1269,18 @@ module.exports = new Class({
 						var propertys = this.conf_to_obj(val);
 						
 						if(Object.getLength(propertys) > 0){
+							var obj = {
+								'_value' : val._value
+							};
+							
+							if(val._comments && this.comments)
+								obj['_comments'] = val._comments;
 							
 							cfg[prop].push(
-								Object.merge({
-									'_value' : val._value
-								},
-								propertys)
+								Object.merge(
+									obj,
+									propertys
+								)
 							);
 							
 						}
@@ -1345,7 +1296,7 @@ module.exports = new Class({
 				else{
 					var propertys = this.conf_to_obj(value);
 					
-					//console.log(propertys);
+					////console.log(propertys);
 					
 					//if(Object.getLength(propertys) > 0){
 						cfg[prop] = Object.merge({
@@ -1364,7 +1315,7 @@ module.exports = new Class({
 						//cfg[prop] = value._value;
 					//}
 					
-					//console.log(this.conf_to_obj(value));
+					////console.log(this.conf_to_obj(value));
 				}
 			}
 			
@@ -1383,23 +1334,58 @@ module.exports = new Class({
 			
 			nginx.create(os.tmpdir()+'/nginx-conf', function(err, conf) {
 				if (err) {
-					console.log(err);
+					//console.log(err);
 					return;
 				}
 				
 				conf.die(os.tmpdir()+'/nginx-conf');
 				
-				//console.log(conf.toString());
+				////console.log(conf.toString());
 				conf.nginx._add('server');
 				
 				Object.each(obj, function(value, prop){
-					//console.log('prop: '+prop);
-					//console.log(value);
+					////console.log('prop: '+prop);
+					////console.log(value);
 					
 					if(value instanceof Array){
 						Array.each(value, function(val, index){
-							conf.nginx.server._add(prop, val);
-						});
+							
+							
+							if(val instanceof Object){//ex: 'location' Array
+								
+								conf.nginx.server._add(prop, val['_value']);//add, ex: "location /"
+								
+								if(this.comments && val['_comments']){
+									Object.each(val['_comments'], function(comment){
+										if(conf.nginx.server[prop] instanceof Array){//if we added the key before, now is an array ex: multiple "location"
+											var last = conf.nginx.server[prop].length - 1;
+											conf.nginx.server[prop][last]._comments.push(comment);
+										}
+										else{
+											conf.nginx.server[prop]._comments.push(comment);
+										}
+									});
+								}
+								 
+								Object.each(val, function(item, key){//add, ex: "location / {proxy_pass: "$proxy"}"
+									
+									if(key != '_value' && key != '_comments'){
+										if(conf.nginx.server[prop] instanceof Array){//if we added the key before, now is an array ex: multiple "location"
+											var last = conf.nginx.server[prop].length - 1;
+											conf.nginx.server[prop][last]._add(key, item);
+										}
+										else{
+											conf.nginx.server[prop]._add(key, item);
+										}
+									}
+									
+								});
+								
+							}
+							else{
+								conf.nginx.server._add(prop, val);
+							}
+						}.bind(this));
 					}
 					else if(value instanceof Object){
 						conf.nginx.server._add(prop);
@@ -1408,7 +1394,7 @@ module.exports = new Class({
 							if(key == '_value'){
 								conf.nginx.server[prop]._value = val;
 							}
-							else if(key == '_comments'){
+							else if(key == '_comments' && this.comments){
 								Array.each(val, function(comment){
 									conf.nginx.server[prop]._comments.push(comment);
 								});
@@ -1416,36 +1402,122 @@ module.exports = new Class({
 							else{
 								conf.nginx.server[prop]._add(key, val);
 							}	
-						});
+						}.bind(this));
 					}
 					else{
 						conf.nginx.server._add(prop, value);
 					}
-				});
+				}.bind(this));
 				
-				//console.log(conf);
+				////console.log(conf);
 				
 				callback(conf);
-			});
+			}.bind(this));
 			
 		});
 
 		
 
-	}, 
+	},
+	/**
+	* change "location /" on Array: location[][_value]=/&location[][limit_req]=zone=default burst=5
+	* , and with a comment: location[][_value]=/&location[][limit_req]=zone=default burst=5&location[][_comments][]=a comment
+	* add "location /colo" on Array: location[][_value]=/colo&location[][limit_req]=zone=default burst=5
+	* change include Array order: include[1]=/etc/nginx/conf.d/no_log.conf&include[0]=/etc/nginx/conf.d/errors.conf
+	* convert "set" to Array: set[]=$proxy "http://educativa"&set[]=$bar "foo"
+	* convert "if" Object to Array: if[][_value]=BAR&if[][rewrite]=FOO
+	* delete "location": location=
+	*/ 
 	cfg_merge: function(orig, cfg){
-		var config = {};
+		//var config = {};
 		
-		config = Object.merge(orig, cfg);
-		
+		//config = Object.merge(orig, cfg);
 		Object.each(cfg, function(value, prop){
-			if(!value || value == '')
-				delete config[prop];
-				//delete cfg[prop];
+			if(!orig[prop] && (!value || value == '')){//if property doesn't exist and value not empty or undefined, add it
+				orig[prop] = value;
+			}
+			else{
+				if(!value || value == '' || value == null){//if value empty or undefined, delete it
+					delete orig[prop];
+				}
+				else if(value instanceof Array){
+					
+					if (orig[prop] instanceof Array){//if original it's also an Array
+						
+						var found = false;
+						
+						/**
+						 * check what type of data it is:
+						 * simple as include: [file, file2, fileN]
+						 * complex as location: [{ _value: '/', proxy_pass: '$proxy' }]
+						 * */
+						Array.each(value, function(inside_val, inside_key){
+							if(inside_val['_value']){
+								/**
+								 * if it's and object (ex: location: { _value: '/' }), we need to search it inside original
+								 * */
+								Array.each(orig[prop], function(orig_val, orig_key){
+									
+									if(orig_val['_value'] && (orig_val['_value'] == inside_val['_value'])){//match, replace it
+										found = true;
+										
+										if(!inside_val || inside_val == '' || inside_val == null){//if value empty or undefined, delete it
+											delete orig[prop][orig_key];
+										}
+										else{
+											orig[prop][orig_key] = inside_val;
+										}
+									}
+									
+								});
+								
+								if(!found && (!inside_val || inside_val == ''))//no match, push it (unless no inside_val)
+									orig[prop].push(inside_val);
+									
+							}
+							else{//simple values (ex: include[file, file2, fileN])
+								if(!inside_val || inside_val == '' || inside_val == null){//if value empty or undefined, delete it
+									delete orig[prop][inside_key];
+								}
+								else{
+									orig[prop][inside_key] = inside_val;
+								}
+								//orig[prop][inside_key] = inside_val;
+							}
+						});
+					}
+					else if (orig[prop] instanceof Object){//if original it's an Object, convert it to an array, saving orginal value
+						var tmp_val = orig[prop];
+						orig[prop] = value;
+						orig[prop].unshift(tmp_val);
+					}
+					else{//if original not Array, just replace it
+						orig[prop] = value;
+					}
+				}
+				//else if(value instanceof Object){
+					//if (orig[prop] instanceof Object){//if original it's also an Object
+					//}
+					//else{//if original not Object, just replace it
+						//orig[prop] = value;
+					//}
+				//}
+				else{//simple values
+					orig[prop] = value;
+				}
+				
+			}
+			
 		});
 		
+		//Object.each(cfg, function(value, prop){
+			//if(!value || value == '')
+				//delete orig[prop];
+				////delete cfg[prop];
+		//});
 		
-		return config;
+		
+		return orig;
 	},
 	/**
 	 * return just 1 match of vhosts, even if it is multiple times in a file, 
