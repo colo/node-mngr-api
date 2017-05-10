@@ -107,12 +107,12 @@ module.exports = new Class({
 						callbacks: ['update'],
 						version: '',
 					},
-					//{
-						//path: 'enabled/:uri/:prop_or_index/:prop',
-						////callbacks: ['check_authentication', 'add'],
-						//callbacks: ['update'],
-						//version: '',
-					//},
+					{
+						path: 'enabled/:uri/:prop_or_index/:prop',
+						//callbacks: ['check_authentication', 'add'],
+						callbacks: ['update'],
+						version: '',
+					},
 					{
 						path: ':uri',
 						//callbacks: ['check_authentication', 'add'],
@@ -125,12 +125,12 @@ module.exports = new Class({
 						callbacks: ['update'],
 						version: '',
 					},
-					//{
-						//path: ':uri/:prop_or_index/:prop',
-						////callbacks: ['check_authentication', 'add'],
-						//callbacks: ['update'],
-						//version: '',
-					//},
+					{
+						path: ':uri/:prop_or_index/:prop',
+						//callbacks: ['check_authentication', 'add'],
+						callbacks: ['update'],
+						version: '',
+					},
 					{
 						path: '',
 						//callbacks: ['check_authentication', 'add'],
@@ -379,7 +379,9 @@ module.exports = new Class({
 	 *  
 	 * */
 	update: function(req, res, next){
-		//console.log(req.body);
+		console.log(req.body);
+		console.log(req.params);
+		//throw new Error();
 		
 		this.comments = (req.query && req.query.comments == "false") ? false : true;
 		
@@ -507,7 +509,15 @@ module.exports = new Class({
 			//console.log(scaned_vhosts);
 			
 			////console.log(vhosts.length);
-			var prop = req.body;
+			
+			var put_val = null;
+			if(req.body['value'] || req.body['_value']){
+				put_val = (req.body['value']) ? req.body['value'] : req.body['_value'];
+			}
+			else{
+				put_val = req.body;
+			}
+				
 			var send = null;
 			
 			if(req.params.uri){//if vhost uri sent
@@ -537,7 +547,7 @@ module.exports = new Class({
 							var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
 							
 							//if index was String, take it as property
-							//var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
+							var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
 							
 							if(cfg instanceof Array){//multiple vhosts
 								
@@ -545,40 +555,73 @@ module.exports = new Class({
 									
 									if(cfg[index]){//exist
 										
-										/**
-										 * convert prop to nginx.conf and save
-										 * */
-										cfg[index] = this.cfg_merge(cfg[index], prop);
+										if(prop && cfg[index][prop]){//property exists
+											/**
+											 * convert prop to nginx.conf and save
+											 * */
+											var value = {};
+											value[prop] = put_val;
+											
+											cfg[index] = this.cfg_merge(cfg[index], value);
+											
+											var conf = this.obj_to_conf(cfg[index], function (conf){
+												save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+											});
+											
+											res.json(cfg[index][prop]);
+										}
+										else if(prop != undefined && !cfg[index][prop]){
+											res.status(404).json({error: 'Property Not Found'});
+										}
+										else{// property param wasn't set at all, return vhost matching index on []
+											/**
+											 * convert prop to nginx.conf and save
+											 * */
+											cfg[index] = this.cfg_merge(cfg[index], put_val);
+											
+											var conf = this.obj_to_conf(cfg[index], function (conf){
+												save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+											});
+											
+											res.json(cfg[index]);
+										}
 										
-										var conf = this.obj_to_conf(cfg[index], function (conf){
-											save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-										});
 										
-										res.json(cfg[index]);
 									}
 									else{//index doens't exist
 										res.status(404).json({error: 'Index Not Found'});
 									}
 								}
-								else{//no index sent
-									
-									var vhosts = []
+								else{//no index sent, search for matching property on every vhost on []
+									var props = [];
 									Array.each(cfg, function(vhost, index){
-										/**
-										 * convert prop to nginx.conf and save
-										 * */
-										vhost = this.cfg_merge(vhost, prop)
-										var conf = this.obj_to_conf(vhost,  function (conf){
-											console.log('saving multiple vhosts...');
-											//console.log(vhost);
-											////console.log(scaned_vhosts);
-											//save(conf, '/tmp/nginx-conf', index);
-										});
+											if(vhost[prop]){
+												
+												/**
+												 * convert prop to nginx.conf and save
+												 * */
+												var value = {};
+												value[prop] = put_val;
+												
+												vhost = this.cfg_merge(vhost, value)
+												var conf = this.obj_to_conf(vhost,  function (conf){
+													//console.log('saving multiple vhosts...');
+													//console.log(vhost);
+													//console.log(read_vhosts[index]);
+													//////console.log(scaned_vhosts);
+													save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+												});
 										
-										vhosts.push(vhost);
+												props[index] = vhost[prop];
+											}
 									}.bind(this));
 									
-									res.json(vhosts);
+									if(props.length > 0){
+										res.json(props);
+									}
+									else{
+										res.status(404).json({error: 'Property Not Found'});
+									}
 									
 									
 								}
@@ -589,7 +632,7 @@ module.exports = new Class({
 									/**
 									 * convert prop to nginx.conf and save
 									 * */
-									cfg = this.cfg_merge(cfg, prop);
+									cfg = this.cfg_merge(cfg, put_val);
 									var conf = this.obj_to_conf(cfg,  function (conf){
 										save(conf, read_vhosts['file'], read_vhosts['index']);
 									});
@@ -613,7 +656,7 @@ module.exports = new Class({
 									/**
 									 * convert prop to nginx.conf and save
 									 * */
-									cfg[index] = this.cfg_merge(cfg[index], prop)
+									cfg[index] = this.cfg_merge(cfg[index], put_val)
 									var conf = this.obj_to_conf(cfg[index],  function (conf){
 										save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
 									});
@@ -633,7 +676,7 @@ module.exports = new Class({
 								/**
 								 * convert prop to nginx.conf and save
 								 * */
-								cfg = this.cfg_merge(cfg, prop);
+								cfg = this.cfg_merge(cfg, put_val);
 								var conf = this.obj_to_conf(cfg,  function (conf){
 									save(conf, read_vhosts['file'], read_vhosts['index']);
 								});
