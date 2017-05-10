@@ -373,335 +373,6 @@ module.exports = new Class({
 		
 		
 	},
-	/**
-	 * &listen=108.163.170.178:80&server_name=campus.apci.org.ar&location[value]=\&location[limit_req]=zone=default burst=4
-	 * &include[]=/etc/nginx/conf.d/no_log.conf2&include[]=/etc/nginx/conf.d/errors.conf
-	 *  
-	 * */
-	update: function(req, res, next){
-		console.log(req.body);
-		console.log(req.params);
-		//throw new Error();
-		
-		this.comments = (req.query && req.query.comments == "false") ? false : true;
-		
-		var save = function(conf, file, index){
-			var original_file = path.posix.basename(file);
-			var original_path = path.dirname(file);
-			var lock = os.tmpdir()+ '/.' + original_file + '.lock';
-			
-			//test
-			//file = os.tmpdir()+ '/.' + original_file + '_' + new Date().getTime();
-			
-			//console.log('FILE '+file);
-			
-			////console.log('save');
-			////console.log(arguments);
-			////console.log(conf.toString());
-			
-			//fs.access(file, fs.constants.W_OK, (err) => {
-				//if(err && ! err.code === 'ENOENT')//can't write
-					//throw err;
-					
-				fs.open(file, 'wx', (err, fd) => {
-				
-					lockFile.lock(lock, {wait: 1000} ,function (lock_err) {
-						
-						if(lock_err)
-							throw lock_err;
-							
-				
-						if (err) {
-							if(err.code === 'EEXIST'){
-								//console.log('exists....');
-								//console.log(conf.nginx.server);
-								
-									//var server = null;
-									
-									nginx.create(file, function(err, original_conf) {
-										if (err) {
-											//console.log(err);
-											return;
-										}
-										
-										//don't write to disk when something changes 
-										conf.die(file);
-										
-										if(original_conf.nginx.server){
-											
-											if(original_conf.nginx.server instanceof Array){
-												//console.log('original_conf.nginx.server instanceof Array');
-												if(original_conf.nginx.server[index]){
-													original_conf.nginx.server[index] = conf.nginx.server;
-												}
-												else{
-													throw new Errro('Bad index, somthing went wrong!');
-												}
-											}
-											else{
-												//console.log('original_conf.nginx.server NO Array');
-												
-												if(index == 0){
-													original_conf.nginx.server = conf.nginx.server;
-												}
-												else{
-													original_conf.nginx._add('server');
-													original_conf.nginx.server[1] = conf.nginx.server;
-												}
-												
-											}
-											
-											original_conf.flush();
-										}
-										else{
-											//console.log(original_conf.nginx);
-											throw new Error('case where vhosts are on original_conf.nginx.http....');
-										}
-										
-									});
-									
-								
-							}
-							else{
-								throw err;
-							}
-						}
-						else{//if no exist, it's safe to write
-							fs.close(fd);
-							
-							fs.writeFile(file, '', (err) => {//create empty
-								
-								//if (err) throw err;
-								
-								//fs.flock(fd, 'ex', function (err) {
-										//if (err) {
-												//return //console.log("Couldn't lock file");
-										//}
-										// file is locked
-										conf.live(file);
-										conf.flush();
-										
-										//fs.close(fd);
-								//});
-								
-								
-							});
-							
-							
-						}
-
-					lockFile.unlock(lock, function (lock_err) {
-							if(lock_err)
-							throw lock_err;
-							
-						});
-					});
-					
-				});//open
-				
-			//});
-			
-			
-		};
-		
-		var callback = function(scaned_vhosts){
-			//console.log('----SCANNED---');
-			//console.log(scaned_vhosts);
-			
-			////console.log(vhosts.length);
-			
-			var put_val = null;
-			if(req.body['value'] || req.body['_value']){
-				put_val = (req.body['value']) ? req.body['value'] : req.body['_value'];
-			}
-			else{
-				put_val = req.body;
-			}
-				
-			var send = null;
-			
-			if(req.params.uri){//if vhost uri sent
-					
-				var read_vhosts = this.search_vhost(scaned_vhosts, req.params.uri);
-				
-				//console.log('---read_vhosts---');
-				//console.log(read_vhosts);
-				
-				if(read_vhosts.length == 0){//no match
-					res.status(404).json({error: 'URI/server_name Not Found'});
-				}
-				else{
-					
-					if(read_vhosts.length == 1)//if only one match, should return a vhost {}, not an [] of vhosts
-						read_vhosts = read_vhosts[0];
-					
-					//with {uri,file} info, read whole vhost config	
-					this.read_vhosts_full(read_vhosts, function(cfg){
-						
-						//console.log('---read_vhosts_full---');
-						//console.log(cfg);
-				
-						if(req.params.prop_or_index){
-							
-							// is Numberic index or a property String - mootols 1.6 vs 1.5
-							var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
-							
-							//if index was String, take it as property
-							var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
-							
-							if(cfg instanceof Array){//multiple vhosts
-								
-								if(index != null){//search for vhost matching index on []
-									
-									if(cfg[index]){//exist
-										
-										if(prop && cfg[index][prop]){//property exists
-											/**
-											 * convert prop to nginx.conf and save
-											 * */
-											var value = {};
-											value[prop] = put_val;
-											
-											cfg[index] = this.cfg_merge(cfg[index], value);
-											
-											var conf = this.obj_to_conf(cfg[index], function (conf){
-												save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-											});
-											
-											res.json(cfg[index][prop]);
-										}
-										else if(prop != undefined && !cfg[index][prop]){
-											res.status(404).json({error: 'Property Not Found'});
-										}
-										else{// property param wasn't set at all, return vhost matching index on []
-											/**
-											 * convert prop to nginx.conf and save
-											 * */
-											cfg[index] = this.cfg_merge(cfg[index], put_val);
-											
-											var conf = this.obj_to_conf(cfg[index], function (conf){
-												save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-											});
-											
-											res.json(cfg[index]);
-										}
-										
-										
-									}
-									else{//index doens't exist
-										res.status(404).json({error: 'Index Not Found'});
-									}
-								}
-								else{//no index sent, search for matching property on every vhost on []
-									var props = [];
-									Array.each(cfg, function(vhost, index){
-											if(vhost[prop]){
-												
-												/**
-												 * convert prop to nginx.conf and save
-												 * */
-												var value = {};
-												value[prop] = put_val;
-												
-												vhost = this.cfg_merge(vhost, value)
-												var conf = this.obj_to_conf(vhost,  function (conf){
-													//console.log('saving multiple vhosts...');
-													//console.log(vhost);
-													//console.log(read_vhosts[index]);
-													//////console.log(scaned_vhosts);
-													save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-												});
-										
-												props[index] = vhost[prop];
-											}
-									}.bind(this));
-									
-									if(props.length > 0){
-										res.json(props);
-									}
-									else{
-										res.status(404).json({error: 'Property Not Found'});
-									}
-									
-									
-								}
-							}
-							else{//single vhosts
-								
-								if(index == 0 || index == null){//if there is only one vhost and index=0, return that vhost
-									/**
-									 * convert prop to nginx.conf and save
-									 * */
-									cfg = this.cfg_merge(cfg, put_val);
-									var conf = this.obj_to_conf(cfg,  function (conf){
-										save(conf, read_vhosts['file'], read_vhosts['index']);
-									});
-									
-									res.json(cfg);
-								}
-								else{	
-									res.status(404).json({error: 'No matching vhost'});
-								}
-								
-								
-							}
-						}
-						else{//no 'prop_or_index' param sent, return full vhost or []
-							var vhosts = [];
-							if(cfg instanceof Array){
-								
-								//console.log(read_vhosts);
-								
-								Array.each(cfg, function(vhost, index){
-									/**
-									 * convert prop to nginx.conf and save
-									 * */
-									cfg[index] = this.cfg_merge(cfg[index], put_val)
-									var conf = this.obj_to_conf(cfg[index],  function (conf){
-										save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-									});
-									
-									vhosts.push(cfg[index]);
-									
-									////console.log('----VHOST-----');
-									////console.log(cfg[index]);
-									////console.log(prop);
-								}.bind(this));
-								
-								////console.log('----NO INDEX----');
-								////console.log(cfg);
-								res.json(vhosts);
-							}
-							else{
-								/**
-								 * convert prop to nginx.conf and save
-								 * */
-								cfg = this.cfg_merge(cfg, put_val);
-								var conf = this.obj_to_conf(cfg,  function (conf){
-									save(conf, read_vhosts['file'], read_vhosts['index']);
-								});
-								res.json(cfg);
-							}
-						}
-						
-					}.bind(this));
-				
-				}
-			}
-			else{//no uri sent, that's an error
-				res.status(500).json({error: 'Vhost not specified.'});
-			}
-			
-			
-		}.bind(this);
-		
-		/**
-		 * per default will sync & search on 'available' vhosts, unless request path is /vhosts/enabled/
-		 * */
-		var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
-		this.sync_vhosts(sync, callback);
-		
-	},
 	remove: function(req, res, next){
 		
 		var callback = function(vhosts){
@@ -944,6 +615,209 @@ module.exports = new Class({
 		
 			
   },
+  /**
+	 * &listen=108.163.170.178:80&server_name=campus.apci.org.ar&location[value]=\&location[limit_req]=zone=default burst=4
+	 * &include[]=/etc/nginx/conf.d/no_log.conf2&include[]=/etc/nginx/conf.d/errors.conf
+	 *  
+	 * */
+	update: function(req, res, next){
+		console.log(req.body);
+		console.log(req.params);
+		//throw new Error();
+		
+		this.comments = (req.query && req.query.comments == "false") ? false : true;
+		
+		var callback = function(scaned_vhosts){
+			//console.log('----SCANNED---');
+			//console.log(scaned_vhosts);
+			
+			////console.log(vhosts.length);
+			
+			var put_val = null;
+			if(req.body['value'] || req.body['_value']){
+				put_val = (req.body['value']) ? req.body['value'] : req.body['_value'];
+			}
+			else{
+				put_val = req.body;
+			}
+				
+			var send = null;
+			
+			if(req.params.uri){//if vhost uri sent
+					
+				var read_vhosts = this.search_vhost(scaned_vhosts, req.params.uri);
+				
+				//console.log('---read_vhosts---');
+				//console.log(read_vhosts);
+				
+				if(read_vhosts.length == 0){//no match
+					res.status(404).json({error: 'URI/server_name Not Found'});
+				}
+				else{
+					
+					if(read_vhosts.length == 1)//if only one match, should return a vhost {}, not an [] of vhosts
+						read_vhosts = read_vhosts[0];
+					
+					//with {uri,file} info, read whole vhost config	
+					this.read_vhosts_full(read_vhosts, function(cfg){
+						
+						//console.log('---read_vhosts_full---');
+						//console.log(cfg);
+				
+						if(req.params.prop_or_index){
+							
+							// is Numberic index or a property String - mootols 1.6 vs 1.5
+							var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
+							
+							//if index was String, take it as property
+							var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
+							
+							if(cfg instanceof Array){//multiple vhosts
+								
+								if(index != null){//search for vhost matching index on []
+									
+									if(cfg[index]){//exist
+										
+										if(prop && cfg[index][prop]){//property exists
+											/**
+											 * convert prop to nginx.conf and save
+											 * */
+											var value = {};
+											value[prop] = put_val;
+											
+											cfg[index] = this.cfg_merge(cfg[index], value);
+											
+											var conf = this.obj_to_conf(cfg[index], function (conf){
+												this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+											}.bind(this));
+											
+											res.json(cfg[index][prop]);
+										}
+										else if(prop != undefined && !cfg[index][prop]){
+											res.status(404).json({error: 'Property Not Found'});
+										}
+										else{// property param wasn't set at all, return vhost matching index on []
+											/**
+											 * convert prop to nginx.conf and save
+											 * */
+											cfg[index] = this.cfg_merge(cfg[index], put_val);
+											
+											var conf = this.obj_to_conf(cfg[index], function (conf){
+												this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+											}.bind(this));
+											
+											res.json(cfg[index]);
+										}
+										
+										
+									}
+									else{//index doens't exist
+										res.status(404).json({error: 'Index Not Found'});
+									}
+								}
+								else{//no index sent, search for matching property on every vhost on []
+									var props = [];
+									Array.each(cfg, function(vhost, index){
+											if(vhost[prop]){
+												
+												/**
+												 * convert prop to nginx.conf and save
+												 * */
+												var value = {};
+												value[prop] = put_val;
+												
+												vhost = this.cfg_merge(vhost, value)
+												var conf = this.obj_to_conf(vhost,  function (conf){
+													this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+												}.bind(this));
+										
+												props[index] = vhost[prop];
+											}
+									}.bind(this));
+									
+									if(props.length > 0){
+										res.json(props);
+									}
+									else{
+										res.status(404).json({error: 'Property Not Found'});
+									}
+									
+									
+								}
+							}
+							else{//single vhosts
+								
+								if(index == 0 || index == null){//if there is only one vhost and index=0, return that vhost
+									/**
+									 * convert prop to nginx.conf and save
+									 * */
+									cfg = this.cfg_merge(cfg, put_val);
+									var conf = this.obj_to_conf(cfg,  function (conf){
+										this.save(conf, read_vhosts['file'], read_vhosts['index']);
+									}.bind(this));
+									
+									res.json(cfg);
+								}
+								else{	
+									res.status(404).json({error: 'No matching vhost'});
+								}
+								
+								
+							}
+						}
+						else{//no 'prop_or_index' param sent, return full vhost or []
+							var vhosts = [];
+							if(cfg instanceof Array){
+								
+								//console.log(read_vhosts);
+								
+								Array.each(cfg, function(vhost, index){
+									/**
+									 * convert prop to nginx.conf and save
+									 * */
+									cfg[index] = this.cfg_merge(cfg[index], put_val)
+									var conf = this.obj_to_conf(cfg[index],  function (conf){
+										this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+									}.bind(this));
+									
+									vhosts.push(cfg[index]);
+
+								}.bind(this));
+								
+								////console.log('----NO INDEX----');
+								////console.log(cfg);
+								res.json(vhosts);
+							}
+							else{
+								/**
+								 * convert prop to nginx.conf and save
+								 * */
+								cfg = this.cfg_merge(cfg, put_val);
+								var conf = this.obj_to_conf(cfg,  function (conf){
+									this.save(conf, read_vhosts['file'], read_vhosts['index']);
+								}.bind(this));
+								res.json(cfg);
+							}
+						}
+						
+					}.bind(this));
+				
+				}
+			}
+			else{//no uri sent, that's an error
+				res.status(500).json({error: 'Vhost not specified.'});
+			}
+			
+			
+		}.bind(this);
+		
+		/**
+		 * per default will sync & search on 'available' vhosts, unless request path is /vhosts/enabled/
+		 * */
+		var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
+		this.sync_vhosts(sync, callback);
+		
+	},
   initialize: function(options){
 		this.profile('nginx_vhosts_init');//start profiling
 		
@@ -953,6 +827,101 @@ module.exports = new Class({
 		
 		this.log('nginx_vhosts', 'info', 'nginx_vhosts started');
   },
+  save: function(conf, file, index){
+		var original_file = path.posix.basename(file);
+		var original_path = path.dirname(file);
+		var lock = os.tmpdir()+ '/.' + original_file + '.lock';
+		
+		//test
+		//file = os.tmpdir()+ '/.' + original_file + '_' + new Date().getTime();
+		
+				
+		fs.open(file, 'wx', (err, fd) => {
+		
+			lockFile.lock(lock, {wait: 1000} ,function (lock_err) {
+				
+				if(lock_err)
+					throw lock_err;
+					
+		
+				if (err) {
+					if(err.code === 'EEXIST'){
+						//console.log('exists....');
+						//console.log(conf.nginx.server);
+						
+							//var server = null;
+							
+							nginx.create(file, function(err, original_conf) {
+								if (err) {
+									//console.log(err);
+									return;
+								}
+								
+								//don't write to disk when something changes 
+								conf.die(file);
+								
+								if(original_conf.nginx.server){
+									
+									if(original_conf.nginx.server instanceof Array){
+										//console.log('original_conf.nginx.server instanceof Array');
+										if(original_conf.nginx.server[index]){
+											original_conf.nginx.server[index] = conf.nginx.server;
+										}
+										else{
+											throw new Errro('Bad index, somthing went wrong!');
+										}
+									}
+									else{
+										//console.log('original_conf.nginx.server NO Array');
+										
+										if(index == 0){
+											original_conf.nginx.server = conf.nginx.server;
+										}
+										else{
+											original_conf.nginx._add('server');
+											original_conf.nginx.server[1] = conf.nginx.server;
+										}
+										
+									}
+									
+									original_conf.flush();
+								}
+								else{
+									//console.log(original_conf.nginx);
+									throw new Error('case where vhosts are on original_conf.nginx.http....');
+								}
+								
+							});
+							
+						
+					}
+					else{
+						throw err;
+					}
+				}
+				else{//if no exist, it's safe to write
+					fs.close(fd);
+					
+					fs.writeFile(file, '', (err) => {//create empty
+						
+								conf.live(file);
+								conf.flush();
+								
+					});
+					
+					
+				}
+
+			lockFile.unlock(lock, function (lock_err) {
+					if(lock_err)
+					throw lock_err;
+					
+				});
+			});
+			
+		});//open
+		
+	},
   /**
    * @protected
    * */
