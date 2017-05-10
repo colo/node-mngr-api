@@ -669,12 +669,6 @@ module.exports = new Class({
 		//console.log('PROP');
 		//console.log(prop);
 		
-		this.addEvent(this.ON_VHOST_NOT_FOUND, function(uri){
-			console.log('ON_VHOST_NOT_FOUND');
-			res.status(404).json({error: 'URI/server_name: '+uri+' not Found'});
-			
-		}.bind(this));
-		
 		this.addEvent(this.ON_VHOST_INDEX_PROP_FOUND, function(cfg, index, prop, read_vhosts){
 			console.log('ON_VHOST_INDEX_PROP_FOUND');
 			/**
@@ -692,11 +686,6 @@ module.exports = new Class({
 			res.json(cfg[index][prop]);
 		}.bind(this));
 		
-		this.addEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, function(uri, index, prop){
-			console.log('ON_VHOST_INDEX_PROP_NOT_FOUND');
-			res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+uri+' at index: '+index});
-			
-		}.bind(this));
 		
 		this.addEvent(this.ON_VHOST_INDEX_FOUND, function(cfg, index, read_vhosts){
 			console.log('ON_VHOST_INDEX_FOUND');
@@ -711,22 +700,6 @@ module.exports = new Class({
 			
 			res.json(cfg[index]);
 			
-		}.bind(this));
-		
-		this.addEvent(this.ON_VHOST_INDEX_NOT_FOUND, function(uri, index){
-			console.log('ON_VHOST_INDEX_NOT_FOUND');
-			res.status(404).json({error: 'Index: '+index+' not found for URI/server_name: '+uri});
-			
-		}.bind(this));
-		
-		this.addEvent(this.ON_VHOST_PROP_NOT_FOUND, function(uri, prop){
-			console.log('ON_VHOST_PROP_NOT_FOUND');
-			res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+uri});
-		}.bind(this));
-		
-		this.addEvent(this.ON_VHOST_ERROR, function(error){
-			console.log('ON_VHOST_ERROR');
-			res.status(500).json({error: error});
 		}.bind(this));
 		
 		this.addEvent(this.ON_VHOST_PROP_FOUND, function(cfg, props, prop, read_vhosts){
@@ -785,21 +758,11 @@ module.exports = new Class({
 			}
 			
 			
-			/**
-			 * convert prop to nginx.conf and save
-			 * */
-			//cfg = this.cfg_merge(cfg, put_val);
-			//var conf = this.obj_to_conf(cfg,  function (conf){
-				//this.save(conf, read_vhosts['file'], read_vhosts['index']);
-			//}.bind(this));
 			
-			//res.json(cfg);
 			
 		}.bind(this));
 		
-		//this.addEvent(this.ON_VHOST_NOT_FOUND, function(uri){
-			//res.status(404).json({error: 'No matching vhost with URI/server_name: '+uri});
-		//}.bind(this));
+		
 																								
 		var callback = function(scaned_vhosts){
 				
@@ -814,7 +777,7 @@ module.exports = new Class({
 				
 				if(read_vhosts.length == 0){//no match
 					
-					this.fireEvent(this.ON_VHOST_NOT_FOUND, uri);
+					this.fireEvent(this.ON_VHOST_NOT_FOUND, [res, uri]);
 					
 					//res.status(404).json({error: 'URI/server_name Not Found'});
 				}
@@ -841,7 +804,7 @@ module.exports = new Class({
 										}
 										else if(prop != undefined && !cfg[index][prop]){
 											
-											this.fireEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, [uri, index, prop]);
+											this.fireEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, [res, uri, index, prop]);
 											
 										}
 										else{// property param wasn't set at all, return vhost matching index on []
@@ -854,7 +817,7 @@ module.exports = new Class({
 									}
 									else{//index doens't exist
 										
-										this.fireEvent(this.ON_VHOST_INDEX_NOT_FOUND, [uri, index]);
+										this.fireEvent(this.ON_VHOST_INDEX_NOT_FOUND, [res, uri, index]);
 										
 									}
 								}
@@ -873,13 +836,13 @@ module.exports = new Class({
 										
 									}
 									else{
-										this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [uri, prop]);
+										this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [res, uri, prop]);
 									}
 									
 									
 								}
 								else{
-									this.fireEvent(this.ON_VHOST_ERROR, 'Property undefined');
+									this.fireEvent(this.ON_VHOST_ERROR, [res, 'Property undefined']);
 								}
 							}
 							else{//single vhosts
@@ -890,7 +853,7 @@ module.exports = new Class({
 									
 								}
 								else{
-									this.fireEvent(this.ON_VHOST_NOT_FOUND, uri);	
+									this.fireEvent(this.ON_VHOST_NOT_FOUND, [res, uri]);	
 								}
 								
 							}
@@ -923,6 +886,42 @@ module.exports = new Class({
 		this.profile('nginx_vhosts_init');//start profiling
 		
 		this.parent(options);//override default options
+		
+		/**
+		 * ******************************
+		 * generic Events for all methods
+		 * ******************************
+		 * */
+		this.addEvent(this.ON_VHOST_NOT_FOUND, function(res, uri){
+			console.log('ON_VHOST_NOT_FOUND');
+			res.status(404).json({error: 'URI/server_name: '+uri+' not Found'});
+			
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, function(res, uri, index, prop){
+			console.log('ON_VHOST_INDEX_PROP_NOT_FOUND');
+			res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+uri+' at index: '+index});
+			
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_INDEX_NOT_FOUND, function(res, uri, index){
+			console.log('ON_VHOST_INDEX_NOT_FOUND');
+			res.status(404).json({error: 'Index: '+index+' not found for URI/server_name: '+uri});
+			
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_PROP_NOT_FOUND, function(res, uri, prop){
+			console.log('ON_VHOST_PROP_NOT_FOUND');
+			res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+uri});
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_ERROR, function(res, error){
+			console.log('ON_VHOST_ERROR');
+			res.status(500).json({error: error});
+		}.bind(this));
+		/**
+		 * 
+		 * */
 		
 		this.profile('nginx_vhosts_init');//end profiling
 		
