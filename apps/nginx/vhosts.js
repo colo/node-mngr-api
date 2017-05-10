@@ -615,6 +615,20 @@ module.exports = new Class({
 		
 			
   },
+  
+  ON_VHOST_ERROR: 'onVhostError',
+  
+  ON_VHOST_FOUND: 'onVhostFound',
+  ON_VHOST_NOT_FOUND: 'onVhostNotFound',
+  
+  ON_VHOST_INDEX_FOUND: 'onVhostIndexFound',
+  ON_VHOST_INDEX_NOT_FOUND: 'onVhostIndexNotFound',
+  
+  ON_VHOST_INDEX_PROP_FOUND: 'onVhostIndexPropFound',
+  ON_VHOST_INDEX_PROP_NOT_FOUND: 'onVhostIndexPropNotFound',
+  
+  ON_VHOST_PROP_FOUND: 'onVhostPropFound',
+  ON_VHOST_PROP_NOT_FOUND: 'onVhostPropNotFound',
   /**
 	 * &listen=108.163.170.178:80&server_name=campus.apci.org.ar&location[value]=\&location[limit_req]=zone=default burst=4
 	 * &include[]=/etc/nginx/conf.d/no_log.conf2&include[]=/etc/nginx/conf.d/errors.conf
@@ -625,33 +639,184 @@ module.exports = new Class({
 		console.log(req.params);
 		//throw new Error();
 		
+		
+		var put_val = null;//value to PUT on property
+		
 		this.comments = (req.query && req.query.comments == "false") ? false : true;
 		
-		var callback = function(scaned_vhosts){
-			//console.log('----SCANNED---');
-			//console.log(scaned_vhosts);
+		var uri = req.params.uri;
+		
+		// is Numberic index or a property String - mootols 1.6 vs 1.5
+		var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
+		
+		//if index was String, take it as property
+		var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
+		
+		if(prop == undefined &&
+			Object.getLength(req.body) == 1 &&
+			!(req.body['value'] || req.body['_value'])){//asume req.body to have the property
+			prop = Object.keys(req.body)[0];
+		}
+		
+		
+		if(req.body['value'] || req.body['_value']){
+			put_val = (req.body['value']) ? req.body['value'] : req.body['_value'];
+		}
+		else{
+			put_val = req.body;
+		}
+		
+		//console.log('PROP');
+		//console.log(prop);
+		
+		this.addEvent(this.ON_VHOST_NOT_FOUND, function(uri){
+			console.log('ON_VHOST_NOT_FOUND');
+			res.status(404).json({error: 'URI/server_name: '+uri+' not Found'});
 			
-			////console.log(vhosts.length);
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_INDEX_PROP_FOUND, function(cfg, index, prop, read_vhosts){
+			console.log('ON_VHOST_INDEX_PROP_FOUND');
+			/**
+			 * convert prop to nginx.conf and save
+			 * */
+			var value = {};
+			value[prop] = put_val;
 			
-			var put_val = null;
-			if(req.body['value'] || req.body['_value']){
-				put_val = (req.body['value']) ? req.body['value'] : req.body['_value'];
+			cfg[index] = this.cfg_merge(cfg[index], value);
+			
+			var conf = this.obj_to_conf(cfg[index], function (conf){
+				this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+			}.bind(this));
+			
+			res.json(cfg[index][prop]);
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, function(uri, index, prop){
+			console.log('ON_VHOST_INDEX_PROP_NOT_FOUND');
+			res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+uri+' at index: '+index});
+			
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_INDEX_FOUND, function(cfg, index, read_vhosts){
+			console.log('ON_VHOST_INDEX_FOUND');
+			/**
+			 * convert prop to nginx.conf and save
+			 * */
+			cfg[index] = this.cfg_merge(cfg[index], put_val);
+			
+			var conf = this.obj_to_conf(cfg[index], function (conf){
+				this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+			}.bind(this));
+			
+			res.json(cfg[index]);
+			
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_INDEX_NOT_FOUND, function(uri, index){
+			console.log('ON_VHOST_INDEX_NOT_FOUND');
+			res.status(404).json({error: 'Index: '+index+' not found for URI/server_name: '+uri});
+			
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_PROP_NOT_FOUND, function(uri, prop){
+			console.log('ON_VHOST_PROP_NOT_FOUND');
+			res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+uri});
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_ERROR, function(error){
+			console.log('ON_VHOST_ERROR');
+			res.status(500).json({error: error});
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_PROP_FOUND, function(cfg, props, prop, read_vhosts){
+			console.log('ON_VHOST_PROP_FOUND');
+			var props = [];
+			Array.each(cfg, function(vhost, index){
+				if(vhost[prop]){
+					/**
+					 * convert prop to nginx.conf and save
+					 * */
+					var value = {};
+					value[prop] = put_val;
+					
+					vhost = this.cfg_merge(vhost, value)
+					var conf = this.obj_to_conf(vhost,  function (conf){
+						this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+					}.bind(this));
+					
+					props[index] = vhost[prop];
+				}
+			}.bind(this));
+	
+			res.json(props);
+				
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_FOUND, function(cfg, read_vhosts){
+			console.log('ON_VHOST_FOUND');
+			var vhosts = [];
+			if(cfg instanceof Array){
+				
+				Array.each(cfg, function(vhost, index){
+					/**
+					 * convert prop to nginx.conf and save
+					 * */
+					cfg[index] = this.cfg_merge(cfg[index], put_val)
+					var conf = this.obj_to_conf(cfg[index],  function (conf){
+						this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+					}.bind(this));
+					
+					vhosts.push(cfg[index]);
+
+				}.bind(this));
+				
+				res.json(vhosts);
 			}
 			else{
-				put_val = req.body;
+				/**
+				 * convert prop to nginx.conf and save
+				 * */
+				cfg = this.cfg_merge(cfg, put_val);
+				var conf = this.obj_to_conf(cfg,  function (conf){
+					this.save(conf, read_vhosts['file'], read_vhosts['index']);
+				}.bind(this));
+				res.json(cfg);
 			}
+			
+			
+			/**
+			 * convert prop to nginx.conf and save
+			 * */
+			//cfg = this.cfg_merge(cfg, put_val);
+			//var conf = this.obj_to_conf(cfg,  function (conf){
+				//this.save(conf, read_vhosts['file'], read_vhosts['index']);
+			//}.bind(this));
+			
+			//res.json(cfg);
+			
+		}.bind(this));
+		
+		//this.addEvent(this.ON_VHOST_NOT_FOUND, function(uri){
+			//res.status(404).json({error: 'No matching vhost with URI/server_name: '+uri});
+		//}.bind(this));
+																								
+		var callback = function(scaned_vhosts){
 				
 			var send = null;
 			
-			if(req.params.uri){//if vhost uri sent
-					
-				var read_vhosts = this.search_vhost(scaned_vhosts, req.params.uri);
+			if(uri){//if vhost uri sent
 				
-				//console.log('---read_vhosts---');
-				//console.log(read_vhosts);
+				/**
+				 * new func (scaned_vhosts, uri, index, prop)
+				 * */	
+				var read_vhosts = this.search_vhost(scaned_vhosts, uri);
 				
 				if(read_vhosts.length == 0){//no match
-					res.status(404).json({error: 'URI/server_name Not Found'});
+					
+					this.fireEvent(this.ON_VHOST_NOT_FOUND, uri);
+					
+					//res.status(404).json({error: 'URI/server_name Not Found'});
 				}
 				else{
 					
@@ -661,16 +826,7 @@ module.exports = new Class({
 					//with {uri,file} info, read whole vhost config	
 					this.read_vhosts_full(read_vhosts, function(cfg){
 						
-						//console.log('---read_vhosts_full---');
-						//console.log(cfg);
-				
-						if(req.params.prop_or_index){
-							
-							// is Numberic index or a property String - mootols 1.6 vs 1.5
-							var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
-							
-							//if index was String, take it as property
-							var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
+						if(index >= 0 || prop != undefined){
 							
 							if(cfg instanceof Array){//multiple vhosts
 								
@@ -679,126 +835,71 @@ module.exports = new Class({
 									if(cfg[index]){//exist
 										
 										if(prop && cfg[index][prop]){//property exists
-											/**
-											 * convert prop to nginx.conf and save
-											 * */
-											var value = {};
-											value[prop] = put_val;
 											
-											cfg[index] = this.cfg_merge(cfg[index], value);
+											this.fireEvent(this.ON_VHOST_INDEX_PROP_FOUND, [cfg, index, prop, read_vhosts]);
 											
-											var conf = this.obj_to_conf(cfg[index], function (conf){
-												this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-											}.bind(this));
-											
-											res.json(cfg[index][prop]);
 										}
 										else if(prop != undefined && !cfg[index][prop]){
-											res.status(404).json({error: 'Property Not Found'});
+											
+											this.fireEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, [uri, index, prop]);
+											
 										}
 										else{// property param wasn't set at all, return vhost matching index on []
-											/**
-											 * convert prop to nginx.conf and save
-											 * */
-											cfg[index] = this.cfg_merge(cfg[index], put_val);
 											
-											var conf = this.obj_to_conf(cfg[index], function (conf){
-												this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-											}.bind(this));
+											this.fireEvent(this.ON_VHOST_INDEX_FOUND, [cfg, index, read_vhosts]);
 											
-											res.json(cfg[index]);
 										}
 										
 										
 									}
 									else{//index doens't exist
-										res.status(404).json({error: 'Index Not Found'});
+										
+										this.fireEvent(this.ON_VHOST_INDEX_NOT_FOUND, [uri, index]);
+										
 									}
 								}
-								else{//no index sent, search for matching property on every vhost on []
+								else if(prop != undefined){//no index sent, search for matching property on every vhost on []
+									
 									var props = [];
 									Array.each(cfg, function(vhost, index){
 											if(vhost[prop]){
-												
-												/**
-												 * convert prop to nginx.conf and save
-												 * */
-												var value = {};
-												value[prop] = put_val;
-												
-												vhost = this.cfg_merge(vhost, value)
-												var conf = this.obj_to_conf(vhost,  function (conf){
-													this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-												}.bind(this));
-										
 												props[index] = vhost[prop];
 											}
-									}.bind(this));
+									});
 									
 									if(props.length > 0){
-										res.json(props);
+
+										this.fireEvent(this.ON_VHOST_PROP_FOUND, [cfg, props, prop, read_vhosts]);
+										
 									}
 									else{
-										res.status(404).json({error: 'Property Not Found'});
+										this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [uri, prop]);
 									}
 									
 									
+								}
+								else{
+									this.fireEvent(this.ON_VHOST_ERROR, 'Property undefined');
 								}
 							}
 							else{//single vhosts
 								
 								if(index == 0 || index == null){//if there is only one vhost and index=0, return that vhost
-									/**
-									 * convert prop to nginx.conf and save
-									 * */
-									cfg = this.cfg_merge(cfg, put_val);
-									var conf = this.obj_to_conf(cfg,  function (conf){
-										this.save(conf, read_vhosts['file'], read_vhosts['index']);
-									}.bind(this));
 									
-									res.json(cfg);
+									this.fireEvent(this.ON_VHOST_FOUND, [cfg, read_vhosts]);
+									
 								}
-								else{	
-									res.status(404).json({error: 'No matching vhost'});
+								else{
+									this.fireEvent(this.ON_VHOST_NOT_FOUND, uri);	
 								}
-								
 								
 							}
 						}
 						else{//no 'prop_or_index' param sent, return full vhost or []
-							var vhosts = [];
-							if(cfg instanceof Array){
-								
-								//console.log(read_vhosts);
-								
-								Array.each(cfg, function(vhost, index){
-									/**
-									 * convert prop to nginx.conf and save
-									 * */
-									cfg[index] = this.cfg_merge(cfg[index], put_val)
-									var conf = this.obj_to_conf(cfg[index],  function (conf){
-										this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-									}.bind(this));
-									
-									vhosts.push(cfg[index]);
-
-								}.bind(this));
-								
-								////console.log('----NO INDEX----');
-								////console.log(cfg);
-								res.json(vhosts);
-							}
-							else{
-								/**
-								 * convert prop to nginx.conf and save
-								 * */
-								cfg = this.cfg_merge(cfg, put_val);
-								var conf = this.obj_to_conf(cfg,  function (conf){
-									this.save(conf, read_vhosts['file'], read_vhosts['index']);
-								}.bind(this));
-								res.json(cfg);
-							}
+							this.fireEvent(this.ON_VHOST_FOUND, [cfg, read_vhosts]);
 						}
+						
+						
 						
 					}.bind(this));
 				
@@ -944,16 +1045,11 @@ module.exports = new Class({
 						vhosts = vhosts.concat(cfg);
 						
 						tmp.push(dir);
-						////console.log('---TMP----');
-						////console.log(tmp);
-						////console.log(this.options.conf_path[sync]);
-						//if(index == this.options.conf_path[sync].length - 1){
+
 						if(tmp.length == this.options.conf_path[sync].length){
-							////console.log('index: '+index);
-							////console.log(vhosts);
-							
+
 							callback(vhosts);
-							
+						
 						}
 					}.bind(this)
 				);
