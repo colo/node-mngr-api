@@ -639,9 +639,6 @@ module.exports = new Class({
 		console.log(req.params);
 		//throw new Error();
 		
-		
-		var put_val = null;//value to PUT on property
-		
 		this.comments = (req.query && req.query.comments == "false") ? false : true;
 		
 		var uri = req.params.uri;
@@ -658,110 +655,16 @@ module.exports = new Class({
 			prop = Object.keys(req.body)[0];
 		}
 		
-		
-		if(req.body['value'] || req.body['_value']){
-			put_val = (req.body['value']) ? req.body['value'] : req.body['_value'];
-		}
-		else{
-			put_val = req.body;
-		}
+		//var put_val = null;//value to PUT on property
+		//if(req.body['value'] || req.body['_value']){
+			//put_val = (req.body['value']) ? req.body['value'] : req.body['_value'];
+		//}
+		//else{
+			//put_val = req.body;
+		//}
 		
 		//console.log('PROP');
 		//console.log(prop);
-		
-		this.addEvent(this.ON_VHOST_INDEX_PROP_FOUND, function(cfg, index, prop, read_vhosts){
-			console.log('ON_VHOST_INDEX_PROP_FOUND');
-			/**
-			 * convert prop to nginx.conf and save
-			 * */
-			var value = {};
-			value[prop] = put_val;
-			
-			cfg[index] = this.cfg_merge(cfg[index], value);
-			
-			var conf = this.obj_to_conf(cfg[index], function (conf){
-				this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-			}.bind(this));
-			
-			res.json(cfg[index][prop]);
-		}.bind(this));
-		
-		
-		this.addEvent(this.ON_VHOST_INDEX_FOUND, function(cfg, index, read_vhosts){
-			console.log('ON_VHOST_INDEX_FOUND');
-			/**
-			 * convert prop to nginx.conf and save
-			 * */
-			cfg[index] = this.cfg_merge(cfg[index], put_val);
-			
-			var conf = this.obj_to_conf(cfg[index], function (conf){
-				this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-			}.bind(this));
-			
-			res.json(cfg[index]);
-			
-		}.bind(this));
-		
-		this.addEvent(this.ON_VHOST_PROP_FOUND, function(cfg, props, prop, read_vhosts){
-			console.log('ON_VHOST_PROP_FOUND');
-			var props = [];
-			Array.each(cfg, function(vhost, index){
-				if(vhost[prop]){
-					/**
-					 * convert prop to nginx.conf and save
-					 * */
-					var value = {};
-					value[prop] = put_val;
-					
-					vhost = this.cfg_merge(vhost, value)
-					var conf = this.obj_to_conf(vhost,  function (conf){
-						this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-					}.bind(this));
-					
-					props[index] = vhost[prop];
-				}
-			}.bind(this));
-	
-			res.json(props);
-				
-		}.bind(this));
-		
-		this.addEvent(this.ON_VHOST_FOUND, function(cfg, read_vhosts){
-			console.log('ON_VHOST_FOUND');
-			var vhosts = [];
-			if(cfg instanceof Array){
-				
-				Array.each(cfg, function(vhost, index){
-					/**
-					 * convert prop to nginx.conf and save
-					 * */
-					cfg[index] = this.cfg_merge(cfg[index], put_val)
-					var conf = this.obj_to_conf(cfg[index],  function (conf){
-						this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-					}.bind(this));
-					
-					vhosts.push(cfg[index]);
-
-				}.bind(this));
-				
-				res.json(vhosts);
-			}
-			else{
-				/**
-				 * convert prop to nginx.conf and save
-				 * */
-				cfg = this.cfg_merge(cfg, put_val);
-				var conf = this.obj_to_conf(cfg,  function (conf){
-					this.save(conf, read_vhosts['file'], read_vhosts['index']);
-				}.bind(this));
-				res.json(cfg);
-			}
-			
-			
-			
-			
-		}.bind(this));
-		
 		
 																								
 		var callback = function(scaned_vhosts){
@@ -777,7 +680,7 @@ module.exports = new Class({
 				
 				if(read_vhosts.length == 0){//no match
 					
-					this.fireEvent(this.ON_VHOST_NOT_FOUND, [res, uri]);
+					this.fireEvent(this.ON_VHOST_NOT_FOUND, [req, res, next, [uri]]);
 					
 					//res.status(404).json({error: 'URI/server_name Not Found'});
 				}
@@ -799,17 +702,17 @@ module.exports = new Class({
 										
 										if(prop && cfg[index][prop]){//property exists
 											
-											this.fireEvent(this.ON_VHOST_INDEX_PROP_FOUND, [cfg, index, prop, read_vhosts]);
+											this.fireEvent(this.ON_VHOST_INDEX_PROP_FOUND, [req, res, next, [cfg, index, prop, read_vhosts]]);
 											
 										}
 										else if(prop != undefined && !cfg[index][prop]){
 											
-											this.fireEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, [res, uri, index, prop]);
+											this.fireEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, [req, res, next, [cfg, index, prop, read_vhosts]]);
 											
 										}
 										else{// property param wasn't set at all, return vhost matching index on []
 											
-											this.fireEvent(this.ON_VHOST_INDEX_FOUND, [cfg, index, read_vhosts]);
+											this.fireEvent(this.ON_VHOST_INDEX_FOUND, [req, res, next, [cfg, index, read_vhosts]]);
 											
 										}
 										
@@ -817,7 +720,7 @@ module.exports = new Class({
 									}
 									else{//index doens't exist
 										
-										this.fireEvent(this.ON_VHOST_INDEX_NOT_FOUND, [res, uri, index]);
+										this.fireEvent(this.ON_VHOST_INDEX_NOT_FOUND, [req, res, next, [cfg, index, read_vhosts]]);
 										
 									}
 								}
@@ -832,34 +735,46 @@ module.exports = new Class({
 									
 									if(props.length > 0){
 
-										this.fireEvent(this.ON_VHOST_PROP_FOUND, [cfg, props, prop, read_vhosts]);
+										this.fireEvent(this.ON_VHOST_PROP_FOUND, [req, res, next, [cfg, props, prop, read_vhosts]]);
 										
 									}
 									else{
-										this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [res, uri, prop]);
+										//this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [req, res, next, [uri, prop]]);
+										this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [req, res, next, [cfg, props, prop, read_vhosts]]);
 									}
 									
 									
 								}
 								else{
-									this.fireEvent(this.ON_VHOST_ERROR, [res, 'Property undefined']);
+									this.fireEvent(this.ON_VHOST_ERROR, [req, res, next, [uri, 'Property undefined']]);
 								}
 							}
 							else{//single vhosts
 								
-								if(index == 0 || index == null){//if there is only one vhost and index=0, return that vhost
+								if((index == 0 || index == null) && !prop ){//if there is only one vhost and index=0, return that vhost
 									
-									this.fireEvent(this.ON_VHOST_FOUND, [cfg, read_vhosts]);
+									this.fireEvent(this.ON_VHOST_FOUND, [req, res, next, [cfg, read_vhosts]]);
+									
+								}
+								else if(prop){
+									
+									if(cfg[prop]){
+										this.fireEvent(this.ON_VHOST_PROP_FOUND, [req, res, next, [cfg, null, prop, read_vhosts]]);
+									}
+									else{
+										//this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [req, res, next, [uri, prop]]);
+										this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [req, res, next, [cfg, null, prop, read_vhosts]]);
+									}
 									
 								}
 								else{
-									this.fireEvent(this.ON_VHOST_NOT_FOUND, [res, uri]);	
+									this.fireEvent(this.ON_VHOST_INDEX_NOT_FOUND, [req, res, next, [cfg, index, read_vhosts]]);
 								}
 								
 							}
 						}
 						else{//no 'prop_or_index' param sent, return full vhost or []
-							this.fireEvent(this.ON_VHOST_FOUND, [cfg, read_vhosts]);
+							this.fireEvent(this.ON_VHOST_FOUND, [req, res, next, [cfg, read_vhosts]]);
 						}
 						
 						
@@ -892,41 +807,256 @@ module.exports = new Class({
 		 * generic Events for all methods
 		 * ******************************
 		 * */
-		this.addEvent(this.ON_VHOST_NOT_FOUND, function(res, uri){
+		this.addEvent(this.ON_VHOST_NOT_FOUND, function(req, res, next, params){
 			console.log('ON_VHOST_NOT_FOUND');
+			var uri = params[0];
 			res.status(404).json({error: 'URI/server_name: '+uri+' not Found'});
 			
 		}.bind(this));
 		
-		this.addEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, function(res, uri, index, prop){
+		this.addEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, function(req, res, next, params){
 			console.log('ON_VHOST_INDEX_PROP_NOT_FOUND');
-			res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+uri+' at index: '+index});
+			var cfg = params[0];
+			var index = params[1];
+			var prop = params[2];
+			var read_vhosts = params[3];
+			
+			if(req.method == 'GET'){
+				res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+req.params.uri+' at index: '+index});
+			}
 			
 		}.bind(this));
 		
-		this.addEvent(this.ON_VHOST_INDEX_NOT_FOUND, function(res, uri, index){
+		this.addEvent(this.ON_VHOST_INDEX_NOT_FOUND, function(req, res, next, params){
 			console.log('ON_VHOST_INDEX_NOT_FOUND');
-			res.status(404).json({error: 'Index: '+index+' not found for URI/server_name: '+uri});
+			var cfg = params[0];
+			var index = params[1];
+			var read_vhosts = params[2];
+			
+			res.status(404).json({error: 'Index: '+index+' not found for URI/server_name: '+req.params.uri});
 			
 		}.bind(this));
 		
-		this.addEvent(this.ON_VHOST_PROP_NOT_FOUND, function(res, uri, prop){
+		this.addEvent(this.ON_VHOST_PROP_NOT_FOUND, function(req, res, next, params){
 			console.log('ON_VHOST_PROP_NOT_FOUND');
-			res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+uri});
+			var cfg = params[0];
+			var props = params[1];
+			var prop = params[2];
+			var read_vhosts = params[3];
+
+			if(req.method == 'GET'){
+				res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+req.params.uri});
+			}
 		}.bind(this));
 		
-		this.addEvent(this.ON_VHOST_ERROR, function(res, error){
+		this.addEvent(this.ON_VHOST_ERROR, function(req, res, next, params){
 			console.log('ON_VHOST_ERROR');
+			var error = params[0];
 			res.status(500).json({error: error});
 		}.bind(this));
 		/**
 		 * 
 		 * */
 		
+		/**
+		 * ******************************
+		 * PUT/Update Events
+		 * ******************************
+		 * */
+		
+		var save_index_property = function(req, res, next, params){
+			console.log('PUT: ON_VHOST_INDEX_PROP_FOUND || ON_VHOST_INDEX_PROP_NOT_FOUND');
+			if(req.method == 'PUT'){
+				var cfg = params[0];
+				var index = params[1];
+				var prop = params[2];
+				var read_vhosts = params[3];
+				
+				var put_val = this.put_value(req);
+				
+				/**
+				 * convert prop to nginx.conf and save
+				 * */
+				//if(cfg[index][prop]){
+				//if property is found, check that put_val doens't include it
+				put_val = (put_val[prop]) ? put_val[prop] : put_val;
+				//}
+				
+				var value = {};
+				value[prop] = put_val;
+				
+				console.log(cfg);
+				console.log(value);
+				
+				cfg[index] = this.cfg_merge(cfg[index], value);
+				
+				var conf = this.obj_to_conf(cfg[index], function (conf){
+					this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+				}.bind(this));
+				
+				res.json(value);
+			}
+		}.bind(this);
+		
+		this.addEvent(this.ON_VHOST_INDEX_PROP_FOUND, save_index_property);
+		this.addEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, save_index_property);
+		
+		
+		this.addEvent(this.ON_VHOST_INDEX_FOUND, function(req, res, next, params){
+			if(req.method == 'PUT'){
+				console.log('PUT: ON_VHOST_INDEX_FOUND');
+				var cfg = params[0];
+				var index = params[1];
+				var read_vhosts = params[2];
+				
+				/**
+				 * convert prop to nginx.conf and save
+				 * */
+				cfg[index] = this.cfg_merge(cfg[index], this.put_value(req));
+				
+				var conf = this.obj_to_conf(cfg[index], function (conf){
+					this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+				}.bind(this));
+				
+				res.json(cfg[index]);
+			}
+		}.bind(this));
+		
+		var save_property = function(req, res, next, params){
+			console.log('PUT: ON_VHOST_PROP_FOUND || ON_VHOST_PROP_NOT_FOUND');
+			if(req.method == 'PUT'){
+				var cfg = params[0];
+				var props = params[1];
+				var prop = params[2];
+				var read_vhosts = params[3];
+				
+				var props = [];
+				var put_val = this.put_value(req);
+				
+				if(cfg instanceof Array){
+					Array.each(cfg, function(vhost, index){
+						
+						/**
+						 * convert prop to nginx.conf and save
+						 * */
+						 //if(vhost[prop]){
+						 //if property is found, check that put_val doens't include it
+						 put_val = (put_val[prop]) ? put_val[prop] : put_val;
+						 //}
+						 
+						var value = {};
+						value[prop] = put_val;
+						
+						vhost = this.cfg_merge(vhost, value)
+						
+						var conf = this.obj_to_conf(vhost,  function (conf){
+							this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+						}.bind(this));
+						
+						props[index] = value;
+						
+					}.bind(this));
+			
+					res.json(props);
+				}
+				else{
+					/**
+					 * convert prop to nginx.conf and save
+					 * */
+					 
+					//if(cfg[prop]){
+					//if property is found, check that put_val doens't include it
+					put_val = (put_val[prop]) ? put_val[prop] : put_val;
+					//}
+					
+					var value = {};
+					value[prop] = put_val;
+					
+					cfg = this.cfg_merge(cfg, value);
+					
+					var conf = this.obj_to_conf(cfg,  function (conf){
+						this.save(conf, read_vhosts['file'], read_vhosts['index']);
+					}.bind(this));
+					
+					res.json(value);
+				}
+			}
+		}.bind(this);
+		
+		this.addEvent(this.ON_VHOST_PROP_FOUND, save_property);
+		this.addEvent(this.ON_VHOST_PROP_NOT_FOUND, save_property);
+		
+		this.addEvent(this.ON_VHOST_FOUND, function(req, res, next, params){
+			if(req.method == 'PUT'){
+				console.log('PUT: ON_VHOST_FOUND');
+				var cfg = params[0];
+				var read_vhosts = params[1];
+				
+				var vhosts = [];
+				var put_val = this.put_value(req);
+				
+				if(cfg instanceof Array){
+					
+					Array.each(cfg, function(vhost, index){
+						/**
+						 * convert prop to nginx.conf and save
+						 * */
+						if(!put_val['_value']){
+							cfg[index] = this.cfg_merge(cfg[index], put_val)
+							var conf = this.obj_to_conf(cfg[index],  function (conf){
+								this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+							}.bind(this));
+							
+							vhosts.push(cfg[index]);
+						}
+					}.bind(this));
+					
+					if(vhosts.length == 0){
+						res.status(500).json({error: 'Bad formated property value', value: put_val});
+					}
+					else{
+						res.json(vhosts);
+					}
+				}
+				else{
+					/**
+					 * convert prop to nginx.conf and save
+					 * */
+					
+					if(put_val['_value']){
+						res.status(500).json({error: 'Bad formated property value', value: put_val});
+					}
+					else{
+						cfg = this.cfg_merge(cfg, put_val);
+						
+						var conf = this.obj_to_conf(cfg,  function (conf){
+							this.save(conf, read_vhosts['file'], read_vhosts['index']);
+						}.bind(this));
+						
+						res.json(cfg);
+					}
+				}
+			}
+		}.bind(this));
+		/**
+		 * 
+		 * */
+		 
 		this.profile('nginx_vhosts_init');//end profiling
 		
 		this.log('nginx_vhosts', 'info', 'nginx_vhosts started');
   },
+  put_value: function(req){
+		var put_val = null;//value to PUT on property
+		if(req.body['value'] || req.body['_value']){
+			put_val = (req.body['value']) ? req.body['value'] : req.body['_value'];
+		}
+		else{
+			put_val = req.body;
+		}
+		
+		return put_val;
+	},
   save: function(conf, file, index){
 		var original_file = path.posix.basename(file);
 		var original_path = path.dirname(file);
@@ -1512,7 +1642,15 @@ module.exports = new Class({
 						}.bind(this));
 					}
 					else{
-						conf.nginx.server._add(prop, value);
+						if(prop == '_value'){
+							conf.nginx.server._value = value;
+						}
+						else if(prop == '_comments' && this.comments){
+							conf.nginx.server._comments = value;
+						}
+						else{
+							conf.nginx.server._add(prop, value);
+						}
 					}
 				}.bind(this));
 				
