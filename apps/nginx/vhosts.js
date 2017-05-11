@@ -12,6 +12,21 @@ var App = require('node-express-app'),
 module.exports = new Class({
   Extends: App,
   
+  ON_NO_VHOST: 'onNoVhost',
+  ON_VHOST_ERROR: 'onVhostError',
+  
+  ON_VHOST_FOUND: 'onVhostFound',
+  ON_VHOST_NOT_FOUND: 'onVhostNotFound',
+  
+  ON_VHOST_INDEX_FOUND: 'onVhostIndexFound',
+  ON_VHOST_INDEX_NOT_FOUND: 'onVhostIndexNotFound',
+  
+  ON_VHOST_INDEX_PROP_FOUND: 'onVhostIndexPropFound',
+  ON_VHOST_INDEX_PROP_NOT_FOUND: 'onVhostIndexPropNotFound',
+  
+  ON_VHOST_PROP_FOUND: 'onVhostPropFound',
+  ON_VHOST_PROP_NOT_FOUND: 'onVhostPropNotFound',
+  
   app: null,
   logger: null,
   //authorization:null,
@@ -150,7 +165,7 @@ module.exports = new Class({
 						version: '',
 					},
 					{
-						path: 'enabled/:uri/:index',
+						path: 'enabled/:uri/:prop_or_index',
 						callbacks: ['remove'],
 						version: '',
 					},
@@ -161,7 +176,7 @@ module.exports = new Class({
 						version: '',
 					},
 					{
-						path: ':uri/:index',
+						path: ':uri/:prop_or_index',
 						//callbacks: ['check_authentication', 'add'],
 						callbacks: ['remove'],
 						version: '',
@@ -223,450 +238,15 @@ module.exports = new Class({
   },
 	
 	add: function(req, res, next){
-		var prop = req.body;
-		var cfg = {};
-		
-		this.comments = (req.query && req.query.comments == "false") ? false : true;
-		
-		if(req.params.uri){//if vhost uri sent
-			
-			//convert prop to nginx.conf and save
-			//cfg = Object.merge(cfg, Object.clone(prop));
-			if(prop['server_name']){
-				prop['server_name'] = req.params.uri+' '+prop['server_name'];
-			}
-			else{
-				prop['server_name'] = req.params.uri;
-			}
-				
-			cfg = this.obj_to_conf(prop);
-			res.json(cfg);
-									
-			//var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
-			
-			////console.log('---read_vhosts---');
-			////console.log(read_vhosts);
-			
-			//if(read_vhosts.length == 0){//no match
-				//res.status(404).json({error: 'URI/server_name Not Found'});
-			//}
-			//else{
-				
-				//if(read_vhosts.length == 1)//if only one match, should return a vhost {}, not an [] of vhosts
-					//read_vhosts = read_vhosts[0];
-				
-				////with {uri,file} info, read whole vhost config	
-				//this.read_vhosts_full(read_vhosts, function(cfg){
-					
-					//if(req.params.prop_or_index){
-						
-						//// is Numberic index or a property String - mootols 1.6 vs 1.5
-						//var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
-						
-						////if index was String, take it as property
-						////var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
-						////var prop = req.body;
-						
-						//////console.log('INDEX');
-						//////console.log(index);
-						//////console.log(prop);
-						
-						//if(cfg instanceof Array){//multiple vhosts
-							
-							//if(index != null){//seacrh for vhost matching index on []
-								
-								//if(cfg[index]){//exist
-									
-									////if(prop && cfg[index][prop]){//property exists
-										////res.json(cfg[index][prop]);
-									////}
-									////else if(prop != undefined && !cfg[index][prop]){
-										////res.status(404).json({error: 'Property Not Found'});
-									////}
-									////else{// property param wasn't set at all, return vhost matching index on []
-										////res.json(cfg[index]);
-									////}
-									
-									////convert prop to nginx.conf and save
-									//cfg[index] = Object.merge(cfg[index], Object.clone(prop));
-									//res.json(cfg[index]);
-								//}
-								//else{//index doens't exist
-									//res.status(404).json({error: 'Index Not Found'});
-								//}
-							//}
-							//else{//no index sent, search for matching property on every vhost on []
-								////var props = [];
-								//Array.each(cfg, function(vhost, index){
-									////convert prop to nginx.conf and save
-									//vhost = Object.merge(vhost, Object.clone(prop));
-								//});
-								
-								//res.json(cfg);
-								
-								////if(props.length > 0){
-									////res.json(props);
-								////}
-								////else{
-									////res.status(404).json({error: 'Property Not Found'});
-								////}
-							//}
-						//}
-						//else{//single vhosts
-							
-							//if(index == 0 || index == null){//if there is only one vhost and index=0, return that vhost
-								////convert prop to nginx.conf and save
-								//cfg = Object.merge(cfg, prop);
-								//res.json(cfg);
-							//}
-							//else{	
-								//res.status(404).json({error: 'No matching vhost'});
-							//}
-							
-							
-						//}
-					//}
-					//else{//no 'prop_or_index' param sent, return full vhost or []
-						
-						//if(cfg instanceof Array){
-							////for(var index = 0; index < cfg.length; index++ ){
-								//////convert prop to nginx.conf and save
-								////cfg[index] = Object.merge(cfg[index], Object.clone(prop));
-								//////console.log('----VHOST-----');
-								//////console.log(cfg[index]);
-								//////console.log(Object.clone(prop));
-								
-							////}
-							//Array.each(cfg, function(vhost, index){
-								////convert prop to nginx.conf and save
-								//cfg[index] = Object.merge(cfg[index], Object.clone(prop));
-								
-								//////console.log('----VHOST-----');
-								//////console.log(cfg[index]);
-								//////console.log(prop);
-							//});
-							
-							//////console.log('----NO INDEX----');
-							//////console.log(cfg);
-							//res.json(cfg);
-						//}
-						//else{
-							//cfg = Object.merge(cfg, prop);
-							//res.json(cfg);
-						//}
-					//}
-					
-				//});
-			
-			//}
-		}
-		else{//no uri sent, that's an error
-			res.status(500).json({error: 'Vhost not specified.'});
-		}
-		
-		/**
-		 * per default will add on 'available' vhosts, unless request path is /vhosts/enabled/
-		 * if added on "enabled", automatically will add it to "available"
-		 * */
-		//var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
-		//this.sync_vhosts(sync, callback);
-		
-		
-	},
-	remove: function(req, res, next){
-		
-		var callback = function(vhosts){
-			//console.log('----SCANNED---');
-			//console.log(vhosts);
-			////console.log(vhosts.length);
-			
-			var send = null;
-			
-			if(req.params.uri){//if vhost uri sent
-					
-				
-				//var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
-				var read_vhosts = this.search_vhost(vhosts, req.params.uri);
-				
-				
-				////console.log('---read_vhosts---');
-				////console.log(read_vhosts);
-				
-				if(read_vhosts.length == 0){//no match
-					res.status(404).json({error: 'URI/server_name Not Found'});
-				}
-				else{
-					
-					if(read_vhosts.length == 1)//if only one match, should return a vhost {}, not an [] of vhosts
-						read_vhosts = read_vhosts[0];
-					
-					//with {uri,file} info, read whole vhost config	
-					this.read_vhosts_full(read_vhosts, function(cfg){
-						
-						if(req.params.index){
-							
-							// is Numberic index or a property String - mootols 1.6 vs 1.5
-							var index = (Number.convert) ? Number.convert(req.params.index) : Number.from(req.params.index);
-							
-							//if index was String, take it as property
-							//var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
-							
-							
-							//console.log('INDEX');
-							//console.log(index);
-							////console.log(prop);
-							
-							if(cfg instanceof Array){//multiple vhosts
-								
-								if(index != null){//seacrh for vhost matching index on []
-									
-									if(cfg[index]){//exist
-										
-										//should delete/remove vhost
-										res.json(cfg[index]);
-										
-										
-									}
-									else{//index doens't exist
-										res.status(404).json({error: 'Index Not Found'});
-									}
-								}
-								else{//error, index is non Numeric
-									
-									res.status(500).json({error: 'Index is not Numeric'});
-										
-								}
-							}
-							else{//single vhosts
-								
-								//should delete/remove vhosts
-								res.json(cfg);
-								
-							}
-						}
-						else{//no 'prop_or_index' param sent, delete/remove all vhosts on []
-									
-							//should delete/remove vhosts
-							res.json(cfg);
-						}
-						
-					});
-				
-				}
-			}
-			else{//no uri sent, that's an error
-				res.status(500).json({error: 'Vhost not specified.'});
-			}
-			
-			
-		}.bind(this);
-		
-		/**
-		 * per default will sync & search on 'available' vhosts, unless request path is /vhosts/enabled/
-		 * if removed from "available", automatically will remove it from "enabled"
-		 * */
-		var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
-		this.sync_vhosts(sync, callback);
-		
-		//res.json({});
-	},
-	/**
-	 * query with no comments: ?comments=false
-	 * */
-	get: function(req, res, next){
-		//console.log(req.path);
-		//console.log(req.params);
-		//console.log(req.query);
-		
-		this.comments = (req.query && req.query.comments == "false") ? false : true;
-		
-		////console.log('comments');
-		////console.log(this.comments);
-		
-		var callback = function(vhosts){
-			////console.log('----SCANNED---');
-			////console.log(vhosts);
-			////console.log(vhosts.length);
-			
-			var send = null;
-			
-			if(req.params.uri){//if vhost uri sent
-					
-				//var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
-				var read_vhosts = this.search_vhost(vhosts, req.params.uri);
-				
-				////console.log('---read_vhosts---');
-				////console.log(read_vhosts);
-				
-				if(read_vhosts.length == 0){//no match
-					res.status(404).json({error: 'URI/server_name Not Found'});
-				}
-				else{
-					
-					if(read_vhosts.length == 1)//if only one match, should return a vhost {}, not an [] of vhosts
-						read_vhosts = read_vhosts[0];
-					
-					//with {uri,file} info, read whole vhost config	
-					this.read_vhosts_full(read_vhosts, function(cfg){
-						
-						if(req.params.prop_or_index){
-							
-							// is Numberic index or a property String - mootols 1.6 vs 1.5
-							var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
-							
-							//if index was String, take it as property
-							var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
-							
-							
-							////console.log('INDEX');
-							////console.log(index);
-							////console.log(prop);
-							
-							if(cfg instanceof Array){//multiple vhosts
-								
-								if(index != null){//search for vhost matching index on []
-									
-									if(cfg[index]){//exist
-										
-										if(prop && cfg[index][prop]){//property exists
-											
-											res.json(cfg[index][prop]);
-										}
-										else if(prop != undefined && !cfg[index][prop]){
-											res.status(404).json({error: 'Property Not Found'});
-										}
-										else{// property param wasn't set at all, return vhost matching index on []
-											res.json(cfg[index]);
-										}
-										
-									}
-									else{//index doens't exist
-										res.status(404).json({error: 'Index Not Found'});
-									}
-								}
-								else{//no index sent, search for matching property on every vhost on []
-									var props = [];
-									Array.each(cfg, function(vhost, index){
-											if(vhost[prop]){
-												props[index] = vhost[prop];
-											}
-									});
-									
-									if(props.length > 0){
-										res.json(props);
-									}
-									else{
-										res.status(404).json({error: 'Property Not Found'});
-									}
-								}
-							}
-							else{//single vhosts
-								
-								if(index == 0 && !prop){//if there is only one vhost and index=0, return that vhost
-									res.json(cfg);
-								}
-								else{	
-									
-									if(cfg[prop]){
-										//if(!comments){
-											
-											//delete cfg[prop]['_comments'];
-											//if(Object.getLength(cfg[prop]) == 1)//if there is only _value, return that
-												//cfg[prop] = cfg[prop]['_value'];
-												
-										//}
-										////console.log(cfg[prop]);
-										
-										res.json(cfg[prop]);
-									}
-									else{
-										res.status(404).json({error: 'Property Not Found'});
-									}
-								}
-								
-							}
-						}
-						else{//no 'prop_or_index' param sent, return full vhost or []
-							res.json(cfg);
-						}
-						
-					});
-				
-				}
-			}
-			else{//complete vhosts list
-				send = [];
-				
-				for(var i = 0; i < vhosts.length; i++){
-					if(send.indexOf(vhosts[i].uri) == -1)//not found
-						send.push(vhosts[i].uri);
-				}
-				
-				res.json(send);
-
-			}
-			
-			
-		}.bind(this);
-		
-		//per default will sync & search on 'available' vhosts, unless request path is /vhosts/enabled/
-		var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
-		this.sync_vhosts(sync, callback);
-		
-			
-  },
-  
-  ON_VHOST_ERROR: 'onVhostError',
-  
-  ON_VHOST_FOUND: 'onVhostFound',
-  ON_VHOST_NOT_FOUND: 'onVhostNotFound',
-  
-  ON_VHOST_INDEX_FOUND: 'onVhostIndexFound',
-  ON_VHOST_INDEX_NOT_FOUND: 'onVhostIndexNotFound',
-  
-  ON_VHOST_INDEX_PROP_FOUND: 'onVhostIndexPropFound',
-  ON_VHOST_INDEX_PROP_NOT_FOUND: 'onVhostIndexPropNotFound',
-  
-  ON_VHOST_PROP_FOUND: 'onVhostPropFound',
-  ON_VHOST_PROP_NOT_FOUND: 'onVhostPropNotFound',
-  /**
-	 * &listen=108.163.170.178:80&server_name=campus.apci.org.ar&location[value]=\&location[limit_req]=zone=default burst=4
-	 * &include[]=/etc/nginx/conf.d/no_log.conf2&include[]=/etc/nginx/conf.d/errors.conf
-	 *  
-	 * */
-	update: function(req, res, next){
 		console.log(req.body);
 		console.log(req.params);
+		console.log(req.query);
 		//throw new Error();
 		
 		this.comments = (req.query && req.query.comments == "false") ? false : true;
 		
 		var uri = req.params.uri;
 		
-		// is Numberic index or a property String - mootols 1.6 vs 1.5
-		var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
-		
-		//if index was String, take it as property
-		var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
-		
-		if(prop == undefined &&
-			Object.getLength(req.body) == 1 &&
-			!(req.body['value'] || req.body['_value'])){//asume req.body to have the property
-			prop = Object.keys(req.body)[0];
-		}
-		
-		//var put_val = null;//value to PUT on property
-		//if(req.body['value'] || req.body['_value']){
-			//put_val = (req.body['value']) ? req.body['value'] : req.body['_value'];
-		//}
-		//else{
-			//put_val = req.body;
-		//}
-		
-		//console.log('PROP');
-		//console.log(prop);
-		
-																								
 		var callback = function(scaned_vhosts){
 				
 			var send = null;
@@ -682,7 +262,55 @@ module.exports = new Class({
 					
 					this.fireEvent(this.ON_VHOST_NOT_FOUND, [req, res, next, [uri]]);
 					
-					//res.status(404).json({error: 'URI/server_name Not Found'});
+				}
+				else{
+					
+					this.fireEvent(this.ON_VHOST_FOUND, [req, res, next, [null, read_vhosts]]);
+					
+				}
+			}
+			else{//no uri sent
+				this.fireEvent(this.ON_NO_VHOST, [req, res, next, [scaned_vhosts]]);
+			}
+			
+			
+		}.bind(this);
+		
+		/**
+		 * per default will add on 'available' vhosts, unless request path is /vhosts/enabled/
+		 * if added on "enabled", automatically will add it to "available"
+		 * */
+		var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
+		this.sync_vhosts(sync, callback);
+		
+		
+	},
+	remove: function(req, res, next){
+		
+		this.comments = (req.query && req.query.comments == "false") ? false : true;
+		
+		var uri = req.params.uri;
+		
+		// is Numberic index or a property String - mootols 1.6 vs 1.5
+		var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
+		
+		//if index was String, take it as property
+		//var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
+		
+		var callback = function(scaned_vhosts){
+			
+			var send = null;
+			
+			if(uri){//if vhost uri sent
+					
+				//var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
+				var read_vhosts = this.search_vhost(scaned_vhosts, uri);
+				
+				
+				if(read_vhosts.length == 0){//no match
+					
+					this.fireEvent(this.ON_VHOST_NOT_FOUND, [req, res, next, [uri]]);
+					
 				}
 				else{
 					
@@ -692,7 +320,107 @@ module.exports = new Class({
 					//with {uri,file} info, read whole vhost config	
 					this.read_vhosts_full(read_vhosts, function(cfg){
 						
-						if(index >= 0 || prop != undefined){
+						if(req.params.prop_or_index){
+						//if(index >= 0 || prop != undefined){
+							
+							if(cfg instanceof Array){//multiple vhosts
+								
+								if(index != null){//search for vhost matching index on []
+									
+									if(cfg[index]){//exist
+										
+										this.fireEvent(this.ON_VHOST_INDEX_FOUND, [req, res, next, [cfg, index, read_vhosts]]);
+										
+									}
+									else{//index doens't exist
+										
+										this.fireEvent(this.ON_VHOST_INDEX_NOT_FOUND, [req, res, next, [cfg, index, read_vhosts]]);
+										
+									}
+								}
+								else{//no index sent, search for matching property on every vhost on []
+									
+									this.fireEvent(this.ON_VHOST_INDEX_NOT_FOUND, [req, res, next, [cfg, null, read_vhosts]]);
+									
+								}
+							}
+							else{//single vhosts
+								
+								if(index == 0 || index == null){//if there is only one vhost and index=0, return that vhost
+									
+									this.fireEvent(this.ON_VHOST_FOUND, [req, res, next, [cfg, read_vhosts]]);
+									
+								}
+								else{
+									this.fireEvent(this.ON_VHOST_INDEX_NOT_FOUND, [req, res, next, [cfg, index, read_vhosts]]);
+								}
+								
+							}
+						}
+						else{//no 'prop_or_index' param sent, return full vhost or []
+							this.fireEvent(this.ON_VHOST_FOUND, [req, res, next, [cfg, read_vhosts]]);
+						}
+						
+					}.bind(this));
+				
+				}
+			}
+			else{//complete vhosts list
+				this.fireEvent(this.ON_NO_VHOST, [req, res, next, [scaned_vhosts]]);
+			}
+			
+			
+		}.bind(this);
+		
+		/**
+		 * per default will sync & search on 'available' vhosts, unless request path is /vhosts/enabled/
+		 * if removed from "available", automatically will remove it from "enabled"
+		 * */
+		var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
+		this.sync_vhosts(sync, callback);
+		
+		
+	},
+	/**
+	 * query with no comments: ?comments=false
+	 * */
+	get: function(req, res, next){
+		
+		this.comments = (req.query && req.query.comments == "false") ? false : true;
+		
+		var uri = req.params.uri;
+		
+		// is Numberic index or a property String - mootols 1.6 vs 1.5
+		var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
+		
+		//if index was String, take it as property
+		var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
+		
+		var callback = function(scaned_vhosts){
+			
+			var send = null;
+			
+			if(uri){//if vhost uri sent
+					
+				//var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
+				var read_vhosts = this.search_vhost(scaned_vhosts, uri);
+				
+				
+				if(read_vhosts.length == 0){//no match
+					
+					this.fireEvent(this.ON_VHOST_NOT_FOUND, [req, res, next, [uri]]);
+					
+				}
+				else{
+					
+					if(read_vhosts.length == 1)//if only one match, should return a vhost {}, not an [] of vhosts
+						read_vhosts = read_vhosts[0];
+					
+					//with {uri,file} info, read whole vhost config	
+					this.read_vhosts_full(read_vhosts, function(cfg){
+						
+						if(req.params.prop_or_index){
+						//if(index >= 0 || prop != undefined){
 							
 							if(cfg instanceof Array){//multiple vhosts
 								
@@ -724,7 +452,7 @@ module.exports = new Class({
 										
 									}
 								}
-								else if(prop != undefined){//no index sent, search for matching property on every vhost on []
+								else{//no index sent, search for matching property on every vhost on []
 									
 									var props = [];
 									Array.each(cfg, function(vhost, index){
@@ -734,20 +462,164 @@ module.exports = new Class({
 									});
 									
 									if(props.length > 0){
-
 										this.fireEvent(this.ON_VHOST_PROP_FOUND, [req, res, next, [cfg, props, prop, read_vhosts]]);
-										
+									}
+									else{
+										this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [req, res, next, [cfg, props, prop, read_vhosts]]);
+									}
+								}
+							}
+							else{//single vhosts
+								
+								if((index == 0 || index == null) && !prop ){//if there is only one vhost and index=0, return that vhost
+									
+									this.fireEvent(this.ON_VHOST_FOUND, [req, res, next, [cfg, read_vhosts]]);
+									
+								}
+								else if((index == 0 || index == null) && prop){
+									
+									if(cfg[prop]){
+										this.fireEvent(this.ON_VHOST_PROP_FOUND, [req, res, next, [cfg, cfg[prop], prop, read_vhosts]]);
 									}
 									else{
 										//this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [req, res, next, [uri, prop]]);
+										this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [req, res, next, [cfg, null, prop, read_vhosts]]);
+									}
+									
+								}
+								else{
+									this.fireEvent(this.ON_VHOST_INDEX_NOT_FOUND, [req, res, next, [cfg, index, read_vhosts]]);
+								}
+								
+							}
+						}
+						else{//no 'prop_or_index' param sent, return full vhost or []
+							this.fireEvent(this.ON_VHOST_FOUND, [req, res, next, [cfg, read_vhosts]]);
+						}
+						
+					}.bind(this));
+				
+				}
+			}
+			else{//complete vhosts list
+				this.fireEvent(this.ON_NO_VHOST, [req, res, next, [scaned_vhosts]]);
+			}
+			
+			
+		}.bind(this);
+		
+		//per default will sync & search on 'available' vhosts, unless request path is /vhosts/enabled/
+		var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
+		this.sync_vhosts(sync, callback);
+		
+			
+  },
+  
+  
+  /**
+	 * &listen=108.163.170.178:80&server_name=campus.apci.org.ar&location[value]=\&location[limit_req]=zone=default burst=4
+	 * &include[]=/etc/nginx/conf.d/no_log.conf2&include[]=/etc/nginx/conf.d/errors.conf
+	 *  
+	 * */
+	update: function(req, res, next){
+		console.log(req.body);
+		console.log(req.params);
+		//throw new Error();
+		
+		this.comments = (req.query && req.query.comments == "false") ? false : true;
+		
+		var uri = req.params.uri;
+		
+		// is Numberic index or a property String - mootols 1.6 vs 1.5
+		var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
+		
+		//if index was String, take it as property
+		var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
+		
+		if(prop == undefined &&
+			Object.getLength(req.body) == 1 &&
+			!(req.body['value'] || req.body['_value'])){//asume req.body to have the property
+			prop = Object.keys(req.body)[0];
+		}
+																								
+		var callback = function(scaned_vhosts){
+				
+			var send = null;
+			
+			if(uri){//if vhost uri sent
+				
+				/**
+				 * new func (scaned_vhosts, uri, index, prop)
+				 * */	
+				var read_vhosts = this.search_vhost(scaned_vhosts, uri);
+				
+				if(read_vhosts.length == 0){//no match
+					
+					this.fireEvent(this.ON_VHOST_NOT_FOUND, [req, res, next, [uri]]);
+
+				}
+				else{
+					
+					if(read_vhosts.length == 1)//if only one match, should return a vhost {}, not an [] of vhosts
+						read_vhosts = read_vhosts[0];
+					
+					//with {uri,file} info, read whole vhost config	
+					this.read_vhosts_full(read_vhosts, function(cfg){
+						
+						if(req.params.prop_or_index){
+						//if(index >= 0 || prop != undefined){
+							
+							if(cfg instanceof Array){//multiple vhosts
+								
+								if(index != null){//search for vhost matching index on []
+									
+									if(cfg[index]){//exist
+										
+										if(prop && cfg[index][prop]){//property exists
+											
+											this.fireEvent(this.ON_VHOST_INDEX_PROP_FOUND, [req, res, next, [cfg, index, prop, read_vhosts]]);
+											
+										}
+										else if(prop != undefined && !cfg[index][prop]){
+											
+											this.fireEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, [req, res, next, [cfg, index, prop, read_vhosts]]);
+											
+										}
+										else{// property param wasn't set at all, return vhost matching index on []
+											
+											this.fireEvent(this.ON_VHOST_INDEX_FOUND, [req, res, next, [cfg, index, read_vhosts]]);
+											
+										}
+										
+										
+									}
+									else{//index doens't exist
+										
+										this.fireEvent(this.ON_VHOST_INDEX_NOT_FOUND, [req, res, next, [cfg, index, read_vhosts]]);
+										
+									}
+								}
+								//else if(prop != undefined){//no index sent, search for matching property on every vhost on []
+								else {	
+									var props = [];
+									Array.each(cfg, function(vhost, index){
+											if(vhost[prop]){
+												props[index] = vhost[prop];
+											}
+									});
+									
+									if(props.length > 0){
+										this.fireEvent(this.ON_VHOST_PROP_FOUND, [req, res, next, [cfg, props, prop, read_vhosts]]);
+									}
+									else{
 										this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [req, res, next, [cfg, props, prop, read_vhosts]]);
 									}
 									
 									
 								}
-								else{
-									this.fireEvent(this.ON_VHOST_ERROR, [req, res, next, [uri, 'Property undefined']]);
-								}
+								//else{
+									//this.fireEvent(this.ON_VHOST_ERROR, [req, res, next, [uri, 'Property undefined']]);
+								//}
 							}
 							else{//single vhosts
 								
@@ -784,7 +656,8 @@ module.exports = new Class({
 				}
 			}
 			else{//no uri sent, that's an error
-				res.status(500).json({error: 'Vhost not specified.'});
+				this.fireEvent(this.ON_NO_VHOST, [req, res, next, [scaned_vhosts]]);
+				//res.status(500).json({error: 'Vhost not specified.'});
 			}
 			
 			
@@ -804,27 +677,15 @@ module.exports = new Class({
 		
 		/**
 		 * ******************************
-		 * generic Events for all methods
+		 * generic Events for GET/PUT/DELETE methods
 		 * ******************************
 		 * */
 		this.addEvent(this.ON_VHOST_NOT_FOUND, function(req, res, next, params){
-			console.log('ON_VHOST_NOT_FOUND');
-			var uri = params[0];
-			res.status(404).json({error: 'URI/server_name: '+uri+' not Found'});
-			
-		}.bind(this));
-		
-		this.addEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, function(req, res, next, params){
-			console.log('ON_VHOST_INDEX_PROP_NOT_FOUND');
-			var cfg = params[0];
-			var index = params[1];
-			var prop = params[2];
-			var read_vhosts = params[3];
-			
-			if(req.method == 'GET'){
-				res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+req.params.uri+' at index: '+index});
+			if(req.method == 'GET' || req.method == 'PUT' || req.method == 'DELETE'){
+				console.log('GET/PUT: ON_VHOST_NOT_FOUND');
+				var uri = params[0];
+				res.status(404).json({error: 'URI/server_name: '+uri+' not Found'});
 			}
-			
 		}.bind(this));
 		
 		this.addEvent(this.ON_VHOST_INDEX_NOT_FOUND, function(req, res, next, params){
@@ -835,18 +696,6 @@ module.exports = new Class({
 			
 			res.status(404).json({error: 'Index: '+index+' not found for URI/server_name: '+req.params.uri});
 			
-		}.bind(this));
-		
-		this.addEvent(this.ON_VHOST_PROP_NOT_FOUND, function(req, res, next, params){
-			console.log('ON_VHOST_PROP_NOT_FOUND');
-			var cfg = params[0];
-			var props = params[1];
-			var prop = params[2];
-			var read_vhosts = params[3];
-
-			if(req.method == 'GET'){
-				res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+req.params.uri});
-			}
 		}.bind(this));
 		
 		this.addEvent(this.ON_VHOST_ERROR, function(req, res, next, params){
@@ -860,13 +709,287 @@ module.exports = new Class({
 		
 		/**
 		 * ******************************
-		 * PUT/Update Events
+		 * POST/add Events
 		 * ******************************
 		 * */
 		
-		var save_index_property = function(req, res, next, params){
-			console.log('PUT: ON_VHOST_INDEX_PROP_FOUND || ON_VHOST_INDEX_PROP_NOT_FOUND');
+		this.addEvent(this.ON_NO_VHOST, function(req, res, next, params){
+			if(req.method == 'POST'){
+				console.log('POST: ON_NO_VHOST');
+				var scaned_vhosts = params[0];
+				
+				var post_val = this.post_value(req);
+				var post_path_available = this.post_path_available(req);
+				
+				console.log(post_path_available);
+				
+				if(post_val && post_val['server_name']){//hast the minimun requirement, a server_name
+					
+					var conf = this.obj_to_conf(post_val, function (conf){
+						this.save(conf, post_path_available);
+					}.bind(this));
+					
+					res.json(post_val);
+					
+				}
+				else{
+					res.status(500).json({error: 'At least URI/server_name must be specified'});
+				}
+				
+				
+			}
+			
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_NOT_FOUND, function(req, res, next, params){
+			if(req.method == 'POST'){
+				console.log('POST: ON_VHOST_NOT_FOUND');
+				var uri = params[0];
+				
+				var post_val = this.post_value(req);
+				var post_path_available = this.post_path_available(req);
+				
+				console.log(post_path_available);
+				
+				if(post_val){//has the minimun requirement, a server_name
+					post_val['server_name'] = uri;
+					
+					var conf = this.obj_to_conf(post_val, function (conf){
+						this.save(conf, post_path_available);
+					}.bind(this));
+					
+					res.json(post_val);
+				}
+				else{
+					res.status(500).json({error: 'No data sent or incorrect format'});
+				}
+				
+				
+			}
+			
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_FOUND, function(req, res, next, params){
+			if(req.method == 'POST'){
+				console.log('POST: ON_VHOST_FOUND');
+				var cfg = params[0];
+				var read_vhosts = params[1];
+				
+				var post_val = this.post_value(req);
+				var post_path_available = this.post_path_available(req);
+				
+				console.log(read_vhosts);
+				
+				if(post_val){//has the minimun requirement, a server_name
+					
+					if(read_vhosts instanceof Array){
+						post_val['server_name'] = read_vhosts[0]['uri'];
+					}
+					else{
+						post_val['server_name'] = read_vhosts['uri'];
+					}
+					
+					var conf = this.obj_to_conf(post_val, function (conf){
+						this.save(conf, post_path_available);
+					}.bind(this));
+					
+					res.json(post_val);
+				}
+				else{
+					res.status(500).json({error: 'No data sent or incorrect format'});
+				}
+				
+				
+				
+			}
+		}.bind(this)); 
+		/**
+		 * *
+		 * */
+		
+		/**
+		 * ******************************
+		 * DELETE/remove Events
+		 * ******************************
+		 * */
+		
+		this.addEvent(this.ON_NO_VHOST, function(req, res, next, params){
+			if(req.method == 'DELETE'){
+				console.log('DELETE: ON_NO_VHOST');
+				var scaned_vhosts = params[0];
+				
+				res.status(500).json({error: 'URI/server_name not specified.'});
+			}
+			
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_FOUND, function(req, res, next, params){
+			if(req.method == 'DELETE'){
+				console.log('DELETE: ON_VHOST_FOUND');
+				var cfg = params[0];
+				var read_vhosts = params[1];
+				
+				if(cfg instanceof Array){
+					
+					var vhosts= [];
+					Array.each(cfg, function(vhost, index){
+						
+						this.save(null, read_vhosts[index]['file'], read_vhosts[index]['index']);
+						vhosts.push(cfg[index]);
+						
+					}.bind(this));
+					
+					if(vhosts.length == 0){
+						res.status(500).json({error: 'Problem deleting URI/server_name vhosts'});
+					}
+					else{
+						res.json(vhosts);
+					}
+				}
+				else{
+					this.save(null, read_vhosts['file'], read_vhosts['index']);
+					res.json(cfg);
+				}
+				
+				
+			}
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_INDEX_FOUND, function(req, res, next, params){
+			if(req.method == 'DELETE'){
+				console.log('DELETE: ON_VHOST_INDEX_FOUND');
+				var cfg = params[0];
+				var index = params[1];
+				var read_vhosts = params[2];
+				
+				this.save(null, read_vhosts[index]['file'], read_vhosts[index]['index']);
+				
+				res.json(cfg[index]);
+			}
+		}.bind(this));
+		
+		/**
+		 * *
+		 * */
+		  
+		/**
+		 * ******************************
+		 * GET Events
+		 * ******************************
+		 * */
+		
+		this.addEvent(this.ON_NO_VHOST, function(req, res, next, params){
+			if(req.method == 'GET'){
+				console.log('GET: ON_NO_VHOST');
+				var scaned_vhosts = params[0];
+				
+				var send = [];
+				
+				for(var i = 0; i < scaned_vhosts.length; i++){
+					if(send.indexOf(scaned_vhosts[i].uri) == -1)//not found
+						send.push(scaned_vhosts[i].uri);
+				}
+				
+				res.json(send);
+			}
+			
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_INDEX_PROP_FOUND, function(req, res, next, params){
+			if(req.method == 'GET'){
+				console.log('GET: ON_VHOST_INDEX_PROP_FOUND');
+				var cfg = params[0];
+				var index = params[1];
+				var prop = params[2];
+				var read_vhosts = params[3];
+			
+				res.json(cfg[index][prop]);
+			}
+			
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, function(req, res, next, params){
+			if(req.method == 'GET'){
+				console.log('GET: ON_VHOST_INDEX_PROP_NOT_FOUND');
+				var cfg = params[0];
+				var index = params[1];
+				var prop = params[2];
+				var read_vhosts = params[3];
+			
+			
+				res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+req.params.uri+' at index: '+index});
+			}
+			
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_PROP_FOUND, function(req, res, next, params){
+			if(req.method == 'GET'){
+				console.log('GET: ON_VHOST_PROP_FOUND');
+				var cfg = params[0];
+				var props = params[1];
+				var prop = params[2];
+				var read_vhosts = params[3];
+				
+				res.json(props);
+			}
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_PROP_NOT_FOUND, function(req, res, next, params){
+			if(req.method == 'GET'){
+				console.log('GET: ON_VHOST_PROP_NOT_FOUND');
+				var cfg = params[0];
+				var props = params[1];
+				var prop = params[2];
+				var read_vhosts = params[3];
+
+			
+				res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+req.params.uri});
+			}
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_INDEX_FOUND, function(req, res, next, params){
+			if(req.method == 'GET'){
+				console.log('GET: ON_VHOST_INDEX_FOUND');
+				var cfg = params[0];
+				var index = params[1];
+				var read_vhosts = params[2];
+				
+				res.json(cfg[index]);
+			}
+		}.bind(this));
+		
+		this.addEvent(this.ON_VHOST_FOUND, function(req, res, next, params){
+			if(req.method == 'GET'){
+				console.log('GET: ON_VHOST_FOUND');
+				var cfg = params[0];
+				var read_vhosts = params[1];
+				
+				res.json(cfg);
+				
+			}
+		}.bind(this));  
+		/**
+		 * 
+		 * */
+		
+		/**
+		 * ******************************
+		 * PUT/Update Events
+		 * ******************************
+		 * */
+		this.addEvent(this.ON_NO_VHOST, function(req, res, next, params){
 			if(req.method == 'PUT'){
+				console.log('PUT: ON_NO_VHOST');
+				var scaned_vhosts = params[0];
+				
+				res.status(500).json({error: 'URI/server_name not specified.'});
+			}
+			
+		}.bind(this));
+		
+		var save_index_property = function(req, res, next, params){
+			if(req.method == 'PUT'){
+				console.log('PUT: ON_VHOST_INDEX_PROP_FOUND || ON_VHOST_INDEX_PROP_NOT_FOUND');
 				var cfg = params[0];
 				var index = params[1];
 				var prop = params[2];
@@ -923,8 +1046,8 @@ module.exports = new Class({
 		}.bind(this));
 		
 		var save_property = function(req, res, next, params){
-			console.log('PUT: ON_VHOST_PROP_FOUND || ON_VHOST_PROP_NOT_FOUND');
 			if(req.method == 'PUT'){
+				console.log('PUT: ON_VHOST_PROP_FOUND || ON_VHOST_PROP_NOT_FOUND');
 				var cfg = params[0];
 				var props = params[1];
 				var prop = params[2];
@@ -995,13 +1118,15 @@ module.exports = new Class({
 				var vhosts = [];
 				var put_val = this.put_value(req);
 				
+				console.log(put_val);
+				
 				if(cfg instanceof Array){
 					
 					Array.each(cfg, function(vhost, index){
 						/**
 						 * convert prop to nginx.conf and save
 						 * */
-						if(!put_val['_value']){
+						if(!put_val['_value'] && put_val instanceof Object){
 							cfg[index] = this.cfg_merge(cfg[index], put_val)
 							var conf = this.obj_to_conf(cfg[index],  function (conf){
 								this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
@@ -1023,7 +1148,7 @@ module.exports = new Class({
 					 * convert prop to nginx.conf and save
 					 * */
 					
-					if(put_val['_value']){
+					if(put_val['_value'] && put_val instanceof Object){
 						res.status(500).json({error: 'Bad formated property value', value: put_val});
 					}
 					else{
@@ -1057,6 +1182,25 @@ module.exports = new Class({
 		
 		return put_val;
 	},
+	post_value: function(req){
+		return (req.body instanceof Object && Object.getLength(req.body) >= 1) ? req.body : null;
+	},
+	post_path_available: function(req){
+		var path_available = this.options.conf_path.available;
+		var path = (path_available instanceof Array) ? path_available[0] : path_available;
+		
+		var uri = (req.params && req.params.uri) ? req.params.uri : req.body.server_name;
+		
+		if(req.query && req.query.dir)
+			path+= req.query.dir+'/';
+		
+		path+= (req.query && req.query.file) ? req.query.file : uri;
+	
+		return path;
+	},
+	/**
+	 * conf = null to delete vhost
+	 * */
   save: function(conf, file, index){
 		var original_file = path.posix.basename(file);
 		var original_path = path.dirname(file);
@@ -1088,37 +1232,49 @@ module.exports = new Class({
 								}
 								
 								//don't write to disk when something changes 
-								conf.die(file);
+								//original_conf.die(file);
 								
 								if(original_conf.nginx.server){
 									
 									if(original_conf.nginx.server instanceof Array){
 										//console.log('original_conf.nginx.server instanceof Array');
 										if(original_conf.nginx.server[index]){
-											original_conf.nginx.server[index] = conf.nginx.server;
+											if(conf == null){//delete the vhost
+												
+												original_conf.nginx._remove('server', index);
+											}
+											else{
+												original_conf.nginx.server[index] = conf.nginx.server;
+											}
 										}
 										else{
-											throw new Errro('Bad index, somthing went wrong!');
+											throw new Error('Bad index, somthing went wrong!');
 										}
 									}
 									else{
 										//console.log('original_conf.nginx.server NO Array');
-										
-										if(index == 0){
-											original_conf.nginx.server = conf.nginx.server;
+										if(conf == null){//delete the vhost
+											console.log('deleting....');
+											original_conf.nginx._remove('server');
 										}
 										else{
-											original_conf.nginx._add('server');
-											original_conf.nginx.server[1] = conf.nginx.server;
+											
+											if(index == 0){
+												original_conf.nginx.server = conf.nginx.server;
+											}
+											else{
+												original_conf.nginx._add('server');
+												original_conf.nginx.server[1] = conf.nginx.server;
+											}
 										}
 										
 									}
 									
-									original_conf.flush();
+									//original_conf.flush();
 								}
-								else{
-									//console.log(original_conf.nginx);
-									throw new Error('case where vhosts are on original_conf.nginx.http....');
+								else{//empty file...and maybe where vhosts are on original_conf.nginx.http....
+									original_conf.nginx._add('server');
+									original_conf.nginx.server = conf.nginx.server;
 								}
 								
 							});
@@ -1329,7 +1485,7 @@ module.exports = new Class({
 
 					});
 				}
-				else{
+				else if(conf.nginx.server){
 					all_uris = conf.nginx.server.server_name._value.clean().split(" ");
 					
 					Array.each(all_uris, function(uri){
