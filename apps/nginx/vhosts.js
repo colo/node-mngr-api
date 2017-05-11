@@ -756,7 +756,7 @@ module.exports = new Class({
 									this.fireEvent(this.ON_VHOST_FOUND, [req, res, next, [cfg, read_vhosts]]);
 									
 								}
-								else if(prop){
+								else if((index == 0 || index == null) && prop){
 									
 									if(cfg[prop]){
 										this.fireEvent(this.ON_VHOST_PROP_FOUND, [req, res, next, [cfg, null, prop, read_vhosts]]);
