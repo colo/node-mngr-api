@@ -1220,7 +1220,8 @@ module.exports = new Class({
 		
 				if (err) {
 					if(err.code === 'EEXIST'){
-						//console.log('exists....');
+						console.log('exists....');
+						console.log(file);
 						//console.log(conf.nginx.server);
 						
 							//var server = null;
@@ -1270,12 +1271,14 @@ module.exports = new Class({
 										
 									}
 									
-									//original_conf.flush();
+									
 								}
 								else{//empty file...and maybe where vhosts are on original_conf.nginx.http....
 									original_conf.nginx._add('server');
 									original_conf.nginx.server = conf.nginx.server;
 								}
+								
+								original_conf.flush();
 								
 							});
 							
