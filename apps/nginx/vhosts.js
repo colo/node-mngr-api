@@ -1474,7 +1474,17 @@ module.exports = new Class({
 				
 				if(conf.nginx.server instanceof Array){
 					Array.each(conf.nginx.server, function(server, index){
-						all_uris = server.server_name._value.clean().split(" ");
+						if(server.server_name._value == undefined){
+							Array.each(server.server_name,function(server_name){
+								
+								var tmp_uris = server_name._value.clean().split(" ");
+								all_uris = all_uris.concat(tmp_uris);
+								
+							}.bind(this));
+						}
+						else{
+							all_uris = server.server_name._value.clean().split(" ");
+						}
 						
 						Array.each(all_uris, function(uri){
 							
@@ -1489,7 +1499,15 @@ module.exports = new Class({
 					});
 				}
 				else if(conf.nginx.server){
-					all_uris = conf.nginx.server.server_name._value.clean().split(" ");
+					if(conf.nginx.server.server_name instanceof Array){
+						Array.each(conf.nginx.server.server_name,function(server_name){
+							var tmp_uris = server_name._value.clean().split(" ");
+							all_uris = all_uris.concat(tmp_uris);
+						}.bind(this));
+					}
+					else{
+						all_uris = conf.nginx.server.server_name._value.clean().split(" ");
+					}
 					
 					Array.each(all_uris, function(uri){
 							
@@ -1622,7 +1640,15 @@ module.exports = new Class({
 						var server = conf.nginx.server;
 					}
 						
-					all_uris = server.server_name._value.clean().split(" ");
+					if(server.server_name instanceof Array){
+						Array.each(server.server_name, function(server_name){
+							var tmp_uris = server_name._value.clean().split(" ");
+							all_uris = all_uris.concat(tmp_uris);
+						}.bind(this));
+					}
+					else{
+						all_uris = server.server_name._value.clean().split(" ");
+					}
 					
 					
 					Array.each(all_uris, function(uri){
