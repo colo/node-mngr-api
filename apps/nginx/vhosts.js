@@ -44,6 +44,21 @@ module.exports = new Class({
 			],
 			enabled: path.join(__dirname,"../../devel/etc/nginx/sites-enabled/"),
 		},
+		/**
+		 * production
+		 * */
+		 
+		 /**
+		  conf_path: {
+			available: [ 
+				path.join("/","/etc/nginx/sites-available/"),
+				path.join("/","/etc/nginx/sites-available/proxies/"),
+				path.join("/","/etc/nginx/sites-available/redirects/"),
+				path.join("/","/etc/nginx/sites-available/ssl/"),
+			],
+			enabled: path.join("/","/etc/nginx/sites-enabled/"),
+		},
+		* */
 		
 		conf_ext: {
 			//available: new RegExp("\\w+", "gi"),
