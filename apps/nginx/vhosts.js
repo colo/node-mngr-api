@@ -1766,8 +1766,7 @@ module.exports = new Class({
 				conf.nginx._add('server');
 				
 				Object.each(obj, function(value, prop){
-					////console.log('prop: '+prop);
-					////console.log(value);
+					
 					
 					if(value instanceof Array){
 						Array.each(value, function(val, index){
@@ -1791,17 +1790,40 @@ module.exports = new Class({
 								 
 								Object.each(val, function(item, key){//add, ex: "location / {proxy_pass: "$proxy"}"
 									
+									var comments = null;
+									
+									console.log('--item--');
+									console.log(item);
+									
+									if(item instanceof Object){//it shouldn't, unless it has comments
+										comments = item['_comments'];
+										item = item['_value'];
+									}
+									
 									if(key != '_value' && key != '_comments'){
 										if(conf.nginx.server[prop] instanceof Array){//if we added the key before, now is an array ex: multiple "location"
 											var last = conf.nginx.server[prop].length - 1;
 											conf.nginx.server[prop][last]._add(key, item);
+											
+											if(this.comments && comments){
+												Array.each(comments, function(comment){
+													conf.nginx.server[prop][last][key]._comments.push(comment);
+												}.bind(this));
+											}
+												
 										}
 										else{
 											conf.nginx.server[prop]._add(key, item);
+											
+											if(this.comments && comments){
+												Array.each(comments, function(comment){
+													conf.nginx.server[prop][key]._comments.push(comment);
+												}.bind(this));
+											}
 										}
 									}
 									
-								});
+								}.bind(this));
 								
 							}
 							else{
@@ -1810,6 +1832,9 @@ module.exports = new Class({
 						}.bind(this));
 					}
 					else if(value instanceof Object){
+						//console.log('OBJECT');
+						//console.log(value);
+					
 						conf.nginx.server._add(prop);
 						
 						Object.each(value, function(val, key){
@@ -1822,7 +1847,23 @@ module.exports = new Class({
 								});
 							}
 							else{
+								var comments = null;
+									
+								//console.log('--VAL--');
+								//console.log(val);
+								
+								if(val instanceof Object){//it shouldn't, unless it has comments
+									comments = val['_comments'];
+									val = val['_value'];
+								}
+									
 								conf.nginx.server[prop]._add(key, val);
+								
+								if(this.comments && comments){
+									Array.each(comments, function(comment){
+										conf.nginx.server[prop][key]._comments.push(comment);
+									}.bind(this));
+								}
 							}	
 						}.bind(this));
 					}
