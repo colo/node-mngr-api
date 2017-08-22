@@ -266,7 +266,7 @@ module.exports = new Class({
 				
 			var send = null;
 			
-			if(uri){//if vhost uri sent
+			if(uri){//if vhost uri sent...this check should be run prev to scan the vhost!!??
 				
 				/**
 				 * new func (scaned_vhosts, uri, index, prop)

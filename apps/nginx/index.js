@@ -56,7 +56,7 @@ module.exports = new Class({
   },
 
   get: function(req, res, next){
-		
+		/**
 		nginx.create(this.conf_dir+'nginx.conf', function(err, conf) {
 			if (err) {
 				console.log(err);
@@ -84,7 +84,7 @@ module.exports = new Class({
 			conf.die(this.conf_dir+'sites-available/ssl/campus.apci.org.ar');
 
 		}.bind(this));	
-		
+		*/
 		res.status(200);
 			
 		res.format({

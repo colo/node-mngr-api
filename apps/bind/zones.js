@@ -1,15 +1,17 @@
-//'use strict'
+'use strict'
 
 var App = require('node-express-app'),
 	fs = require('fs'),
 	path = require('path');
 	
-	//zonefile = require('dns-zonefile'); not working....colliding with mootools??
+	
+//zonefile = require('dns-zonefile'); not working....colliding with mootools??
+
 
 //command line zonefile works
 var sys = require('sys'),
 	exec = require('child_process').exec,
-	zonefile = path.join(__dirname,'./node_modules/dns-zonefile/bin/zonefile');
+	zonefile_bin = path.join(__dirname,'./node_modules/dns-zonefile/bin/zonefile');
 	
 
 
@@ -21,60 +23,150 @@ module.exports = new Class({
   authorization:null,
   authentication: null,
   
-  options: {
-	
-	zones_dir: path.join(__dirname,'./../../devel/var/bind/domains'),
-	zone_file_filter: /^[a-zA-Z0-9_\.-]+$/,
-	zone_file_extension: '.hosts',
-	
-	id: 'bind',
-	path: '/bind/zones',
-	
-	//authorization: {
-		//config: path.join(__dirname,'./config/rbac.json'),
-	//},
-	
-	params: {
-	  zone: /^[a-zA-Z0-9_\.-]+$/,
-	  prop: /origin|ttl|ns|a|aaaa|cname|mx|txt|srv/,
-	},
-	
-	routes: {
+	options: {
 		
-		/*all: [
-		  {
-			path: '',
-			callbacks: ['get']
-		  },
-		]*/
-	},
-	
-	api: {
+		zones_dir: path.join(__dirname,'./../../devel/var/bind/domains'),
+		zone_file_filter: /^[a-zA-Z0-9_\.-]+$/,
+		zone_file_extension: '.hosts',
 		
-		version: '1.0.0',
+		//https://stackoverflow.com/questions/3026957/how-to-validate-a-domain-name-using-regex-php/16491074#16491074
+		zone_validation: /^(?!\-)(?:[a-zA-Z\d\-]{0,62}[a-zA-Z\d]\.){1,126}(?!\d+)[a-zA-Z\d]{1,63}$/,
 		
-		routes: {
-			all: [
-			  {
-				path: ':zone',
-				callbacks: ['get_zone'],
-				version: '',
-			  },
-			  {
-				path: ':zone/:prop',
-				callbacks: ['get_zone'],
-				version: '',
-			  },
-			  {
-				path: '',
-				callbacks: ['get'],
-				version: '',
-			  },
-			]
+		id: 'bind',
+		path: '/bind/zones',
+		
+		//authorization: {
+			//config: path.join(__dirname,'./config/rbac.json'),
+		//},
+		
+		params: {
+			zone: /^[a-zA-Z0-9_\.-]+$/,
+			prop: /origin|ttl|ns|a|aaaa|cname|mx|txt|srv/,
 		},
 		
-	},
+		routes: {
+			
+			/*all: [
+				{
+				path: '',
+				callbacks: ['get']
+				},
+			]*/
+		},
+		
+		api: {
+			
+			version: '1.0.0',
+			
+			routes: {
+				post: [
+						{
+							path: ':zone',
+							//callbacks: ['check_authentication', 'add'],
+							callbacks: ['add'],
+							version: '',
+						},
+						{
+							path: '',
+							//callbacks: ['check_authentication', 'add'],
+							callbacks: ['add'],
+							version: '',
+						},
+					],
+					put: [
+						{
+							path: ':zone',
+							//callbacks: ['check_authentication', 'add'],
+							callbacks: ['update'],
+							version: '',
+						},
+						{
+							path: ':uri/:prop',
+							//callbacks: ['check_authentication', 'add'],
+							callbacks: ['update'],
+							version: '',
+						},
+						{
+							path: '',
+							//callbacks: ['check_authentication', 'add'],
+							callbacks: ['update'],
+							version: '',
+						},
+					],
+					delete: [
+						{
+							path: ':zone',
+							//callbacks: ['check_authentication', 'add'],
+							callbacks: ['remove'],
+							version: '',
+						},
+						{
+							path: ':zone/:prop',
+							//callbacks: ['check_authentication', 'add'],
+							callbacks: ['remove'],
+							version: '',
+						},
+						{
+							path: '',
+							//callbacks: ['check_authentication', 'add'],
+							callbacks: ['remove'],
+							version: '',
+						},
+					],
+				all: [
+					{
+						path: ':zone',
+						callbacks: ['get_zone'],
+						version: '',
+					},
+					{
+						path: ':zone/:prop',
+						callbacks: ['get_zone'],
+						version: '',
+					},
+					{
+						path: '',
+						callbacks: ['get'],
+						version: '',
+					},
+				]
+			},
+			
+		},
   },
+  add: function (req, res, next){
+		var zone = req.params.zone;
+		var zone_content = req.body;
+		
+		console.log(zone_content.soa.name);
+		
+		if(!zone && zone_content.soa.name){
+			zone = zone_content.soa.name.slice(0, -1);//removes last '.'
+		}
+		
+		if(zone){
+			if(zone.test(this.options.zone_validation)){
+				var full_path = path.join(this.options.zones_dir, zone + this.options.zone_file_extension);
+				
+				var output = zonefile.generate(zone_content);
+				console.log(output);
+				
+				
+			}
+			else{
+			 res.status(500).json({err: 'invalid zone sent'});
+			}
+		}
+		else{
+			 res.status(500).json({err: 'no zone sent'});
+		}
+		
+	},
+	update: function (req, res, next){
+	},
+	remove: function (req, res, next){
+	},
+
   get_zone: function (req, res, next){
 	
 		if(req.params.zone){
@@ -86,12 +178,12 @@ module.exports = new Class({
 					//console.log(req.params.zone);
 					//console.log(full_path);
 					
-					// executes `pwd`
-					child = exec(zonefile + ' -p '+full_path, function (error, stdout, stderr) {
+					// executes `zonefile`
+					child = exec(zonefile_bin + ' -p '+full_path, function (error, stdout, stderr) {
 						//sys.print('stdout: ' + stdout);
 						//sys.print('stderr: ' + stderr);
 						if (error !== null) {
-						res.json({error: error});
+							res.json({error: error});
 						}
 						
 						var json = JSON.decode(stdout);
@@ -100,13 +192,13 @@ module.exports = new Class({
 						////console.log(json);
 						
 						if(req.params.prop){
-						if(!json[req.params.prop])
-							json[req.params.prop] = {};
-							
-						res.json(json[req.params.prop]);
+							if(!json[req.params.prop])
+								json[req.params.prop] = {};
+								
+							res.json(json[req.params.prop]);
 						}
 						else{
-						res.json(json);
+							res.json(json);
 						}
 						
 					});
