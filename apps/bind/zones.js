@@ -2,7 +2,8 @@
 
 var App = require('node-express-app'),
 	fs = require('fs'),
-	path = require('path');
+	path = require('path'),
+	os  = require('os');
 	
 	
 //zonefile = require('dns-zonefile'); not working....colliding with mootools??
@@ -11,7 +12,8 @@ var App = require('node-express-app'),
 //command line zonefile works
 var sys = require('sys'),
 	exec = require('child_process').exec,
-	zonefile_bin = path.join(__dirname,'./node_modules/dns-zonefile/bin/zonefile');
+	zonefile_bin = path.join(__dirname,'./node_modules/dns-zonefile/bin/zonefile'),
+	lockFile = require('lockfile');
 	
 
 
@@ -148,9 +150,24 @@ module.exports = new Class({
 			if(zone.test(this.options.zone_validation)){
 				var full_path = path.join(this.options.zones_dir, zone + this.options.zone_file_extension);
 				
-				var output = zonefile.generate(zone_content);
-				console.log(output);
-				
+				this.save_zone(zone_content, full_path, function(err, stdout){
+					if(err){
+						res.status(500).json(err);
+					}
+					else{
+						this.read_zone(full_path, function(err, json){
+							if(err){
+								res.status(500).json(err);
+							}
+							else{
+								res.json(json);
+							}
+							
+						});
+					}
+					//console.log('read result');
+					//console.log(stdout);
+				}.bind(this));
 				
 			}
 			else{
@@ -166,52 +183,165 @@ module.exports = new Class({
 	},
 	remove: function (req, res, next){
 	},
+	/**
+	 * 
+	 * */
+  save_zone: function(json, file, callback){
+		var original_file = path.posix.basename(file);
+		var original_path = path.dirname(file);
+		var lock = os.tmpdir()+ '/.' + original_file + '.lock';
+		var json_file = os.tmpdir()+ '/.' + original_file + '.json';
+		
+		//test
+		//file = os.tmpdir()+ '/.' + original_file + '_' + new Date().getTime();
+		var write_zone =  function(json_file, file){
+			console.log('writing zone to: '+file);
+			
+			if(fs.statSync(file).isFile()){
+				// executes `zonefile`
+				var child = exec(zonefile_bin + ' -g '+json_file+ ' > '+file, function (err, stdout, stderr) {
+					//sys.print('stdout: ' + stdout);
+					//sys.print('stderr: ' + stderr);
+					//if (error !== null) {
+						////res.json({error: error});
+					//}
+					
+					//remove json file 
+					fs.unlink(json_file, (err) => {
+						if (err) throw err;
+						console.log('successfully deleted'+json_file);
+					});
+					
+					if(err){
+						callback(err);
+					}
+					else{
+						//var json = JSON.decode(stdout);
+						callback(null, stdout);
+					}
+					////console.log('prop '+req.params.prop);
+					////console.log(json);
+					
+					//if(req.params.prop){
+						//if(!json[req.params.prop])
+							//json[req.params.prop] = {};
+							
+						//res.json(json[req.params.prop]);
+					//}
+					//else{
+						//res.json(json);
+					//}
+					
+				});
+			}
+		}
+		
+		var write_json = function(json, json_file){
+			console.log('writing json stream to: '+json_file);
+			
+			var wstream = fs.createWriteStream(json_file);
+			
+			wstream.on('finish', function(){
+				write_zone(json_file, file);
+			});
+			
+			wstream.on('error', function(err){
+				callback(err);
+			});
+			
+			
+			
+			wstream.write(JSON.stringify(json));
+			wstream.end();
+		}
+				
+		fs.open(file, 'wx', (err, fd) => {
+		
+			lockFile.lock(lock, {wait: 1000} ,function (lock_err) {
+				
+				if(lock_err)
+					callback(lock_err);
+					//throw lock_err;
+					
+		
+				if (err) {
+					if(err.code === 'EEXIST'){
+						console.log('exists....');
+						console.log(file);
+						
+						write_json(json, json_file);
+						
+					}
+					else{
+						//throw err;
+						callback(lock_err);
+					}
+				}
+				else{//if no exist, it's safe to write
+					fs.close(fd);
+					
+					write_json(json, json_file);
+					
+					
+				}
 
+			lockFile.unlock(lock, function (lock_err) {
+					if(lock_err)
+						callback(lock_err);
+						//throw lock_err;
+					
+				});
+			});
+			
+		});//open
+		
+	},
+	read_zone: function(file, callback){
+		try{
+				
+			if(fs.statSync(file).isFile()){
+				// executes `zonefile`
+				var child = exec(zonefile_bin + ' -p '+file, function (err, stdout, stderr) {
+					
+					if(err){
+						callback(e);
+					}
+					else{
+						
+						callback(null, JSON.decode(stdout));
+						
+					}
+				});
+				
+				
+			}
+		}
+		catch (e){
+			callback(e);
+		}
+	},
   get_zone: function (req, res, next){
 	
 		if(req.params.zone){
 			var full_path = path.join(this.options.zones_dir, req.params.zone + this.options.zone_file_extension);
 			
-			try{
-				if(fs.statSync(full_path).isFile()){
-					//console.log('get_zone');
-					//console.log(req.params.zone);
-					//console.log(full_path);
-					
-					// executes `zonefile`
-					child = exec(zonefile_bin + ' -p '+full_path, function (error, stdout, stderr) {
-						//sys.print('stdout: ' + stdout);
-						//sys.print('stderr: ' + stderr);
-						if (error !== null) {
-							res.json({error: error});
-						}
-						
-						var json = JSON.decode(stdout);
-						
-						////console.log('prop '+req.params.prop);
-						////console.log(json);
-						
-						if(req.params.prop){
-							if(!json[req.params.prop])
-								json[req.params.prop] = {};
-								
-							res.json(json[req.params.prop]);
-						}
-						else{
-							res.json(json);
-						}
-						
-					});
-					//var text = fs.readFileSync(full_path, 'utf8');
-					
-					////console.log(text);
-					
-					
+			this.read_zone(full_path, function(err, json){
+				if(err){
+					res.status(500).json(err);
 				}
-			}
-			catch (e){
-				res.json(e);
-			}
+				else{
+					if(req.params.prop){
+						if(!json[req.params.prop])
+							json[req.params.prop] = {};
+							
+						res.json(json[req.params.prop]);
+					}
+					else{
+						res.json(json);
+					}
+				}
+				
+			});
 			
 		}
 		else{  
