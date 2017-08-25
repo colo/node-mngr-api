@@ -140,8 +140,64 @@ module.exports = new Class({
 		var zone = req.params.zone;
 		var zone_content = req.body;
 		
-		console.log(zone_content.soa.name);
+		//console.log(zone_content.soa.name);
 		
+		this.save_zone(zone, zone_content, false, function(err, file){
+				
+			if(err){
+				res.status(500).json(err);
+			}
+			else{
+				//console.log('---FILE---');
+				//console.log(file);
+				//res.json(json);
+				this.read_zone(file, function(err, json){
+					if(err){
+						res.status(500).json(err);
+					}
+					else{
+						res.json(json);
+					}
+					
+				});
+			}
+		}.bind(this));
+		
+		
+	},
+	update: function (req, res, next){
+		var zone = req.params.zone;
+		var zone_content = req.body;
+		
+		//console.log(zone_content.soa.name);
+		
+		this.save_zone(zone, zone_content, true, function(err, file){
+				
+			if(err){
+				res.status(500).json(err);
+			}
+			else{
+				//console.log('---FILE---');
+				//console.log(file);
+				//res.json(json);
+				this.read_zone(file, function(err, json){
+					if(err){
+						res.status(500).json(err);
+					}
+					else{
+						res.json(json);
+					}
+					
+				});
+			}
+		}.bind(this));
+	},
+	remove: function (req, res, next){
+	},
+	/**
+	 * 
+	 * */
+	save_zone: function(zone, zone_content, rewrite, callback){
 		if(!zone && zone_content.soa.name){
 			zone = zone_content.soa.name.slice(0, -1);//removes last '.'
 		}
@@ -150,66 +206,55 @@ module.exports = new Class({
 			if(zone.test(this.options.zone_validation)){
 				var full_path = path.join(this.options.zones_dir, zone + this.options.zone_file_extension);
 				
-				this.save_zone(zone_content, full_path, function(err, stdout){
-					if(err){
-						res.status(500).json(err);
-					}
-					else{
-						this.read_zone(full_path, function(err, json){
-							if(err){
-								res.status(500).json(err);
-							}
-							else{
-								res.json(json);
-							}
-							
-						});
-					}
-					//console.log('read result');
-					//console.log(stdout);
-				}.bind(this));
+				this.save_zone_file(zone_content, full_path, rewrite, callback);
 				
 			}
 			else{
-			 res.status(500).json({err: 'invalid zone sent'});
+			 callback({err: 'invalid zone sent'});
 			}
 		}
 		else{
-			 res.status(500).json({err: 'no zone sent'});
+			 callback({err: 'no zone sent'});
 		}
-		
-	},
-	update: function (req, res, next){
-	},
-	remove: function (req, res, next){
 	},
 	/**
-	 * 
-	 * */
-  save_zone: function(json, file, callback){
+	 * rewrite optional, default: false
+	 * */ 
+  save_zone_file: function(json, file, rewrite, callback){
 		var original_file = path.posix.basename(file);
 		var original_path = path.dirname(file);
 		var lock = os.tmpdir()+ '/.' + original_file + '.lock';
 		var json_file = os.tmpdir()+ '/.' + original_file + '.json';
 		
+		console.log('---REWRITE----');
+		console.log(rewrite);
+		
+		if(rewrite instanceof Function){
+			callback = rewrite;
+			rewrite = false;
+		}
+		else if(rewrite !== true){
+			rewrite = false;
+		}
+		
+		console.log('---REWRITE----');
+		console.log(rewrite);
+		
 		//test
 		//file = os.tmpdir()+ '/.' + original_file + '_' + new Date().getTime();
 		var write_zone =  function(json_file, file){
 			console.log('writing zone to: '+file);
+			console.log(fs.accessSync(file, fs.constants.R_OK));
 			
-			if(fs.statSync(file).isFile()){
+			//if file exist we allow "update" but not "add"
+			if((fs.accessSync(file) && rewrite == true) || (!fs.accessSync(file) && rewrite == false)){
 				// executes `zonefile`
 				var child = exec(zonefile_bin + ' -g '+json_file+ ' > '+file, function (err, stdout, stderr) {
-					//sys.print('stdout: ' + stdout);
-					//sys.print('stderr: ' + stderr);
-					//if (error !== null) {
-						////res.json({error: error});
-					//}
 					
 					//remove json file 
 					fs.unlink(json_file, (err) => {
 						if (err) throw err;
-						console.log('successfully deleted'+json_file);
+						//console.log('successfully deleted'+json_file);
 					});
 					
 					if(err){
@@ -217,22 +262,21 @@ module.exports = new Class({
 					}
 					else{
 						//var json = JSON.decode(stdout);
-						callback(null, stdout);
+						callback(null, file);
 					}
-					////console.log('prop '+req.params.prop);
-					////console.log(json);
 					
-					//if(req.params.prop){
-						//if(!json[req.params.prop])
-							//json[req.params.prop] = {};
-							
-						//res.json(json[req.params.prop]);
-					//}
-					//else{
-						//res.json(json);
-					//}
 					
 				});
+				
+			}
+			else{
+				if(fs.accessSync(file)){
+					callback({ err: "Operation not permited: "+original_file+" file exists"});
+				}
+				else{
+					callback({ err: "Operation not permited: "+original_file+" file doens't exists"});
+				}
+				
 			}
 		}
 		
@@ -255,7 +299,7 @@ module.exports = new Class({
 			wstream.end();
 		}
 				
-		fs.open(file, 'wx', (err, fd) => {
+		//fs.open(file, 'wx', (err, fd) => {
 		
 			lockFile.lock(lock, {wait: 1000} ,function (lock_err) {
 				
@@ -264,26 +308,26 @@ module.exports = new Class({
 					//throw lock_err;
 					
 		
-				if (err) {
-					if(err.code === 'EEXIST'){
-						console.log('exists....');
-						console.log(file);
+				//if (err) {
+					//if(err.code === 'EEXIST'){
+						//console.log('exists....');
+						//console.log(file);
 						
-						write_json(json, json_file);
+						//write_json(json, json_file);
 						
-					}
-					else{
-						//throw err;
-						callback(lock_err);
-					}
-				}
-				else{//if no exist, it's safe to write
-					fs.close(fd);
+					//}
+					//else{
+						////throw err;
+						//callback(lock_err);
+					//}
+				//}
+				//else{//if no exist, it's safe to write
+					//fs.close(fd);
 					
 					write_json(json, json_file);
 					
 					
-				}
+				//}
 
 			lockFile.unlock(lock, function (lock_err) {
 					if(lock_err)
@@ -293,7 +337,7 @@ module.exports = new Class({
 				});
 			});
 			
-		});//open
+		//});//open
 		
 	},
 	read_zone: function(file, callback){
