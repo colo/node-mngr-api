@@ -244,10 +244,10 @@ module.exports = new Class({
 		//file = os.tmpdir()+ '/.' + original_file + '_' + new Date().getTime();
 		var write_zone =  function(json_file, file){
 			console.log('writing zone to: '+file);
-			console.log(fs.accessSync(file, fs.constants.R_OK));
+			console.log(fs.existsSync(file));
 			
 			//if file exist we allow "update" but not "add"
-			if((fs.accessSync(file) && rewrite == true) || (!fs.accessSync(file) && rewrite == false)){
+			if((fs.existsSync(file) && rewrite == true) || (!fs.existsSync(file) && rewrite == false)){
 				// executes `zonefile`
 				var child = exec(zonefile_bin + ' -g '+json_file+ ' > '+file, function (err, stdout, stderr) {
 					
@@ -270,7 +270,7 @@ module.exports = new Class({
 				
 			}
 			else{
-				if(fs.accessSync(file)){
+				if(fs.existsSync(file)){
 					callback({ err: "Operation not permited: "+original_file+" file exists"});
 				}
 				else{
