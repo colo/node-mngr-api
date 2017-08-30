@@ -32,7 +32,7 @@ module.exports = new Class({
 		zone_file_extension: '.hosts',
 		
 		//https://stackoverflow.com/questions/3026957/how-to-validate-a-domain-name-using-regex-php/16491074#16491074
-		zone_validation: /^(?!\-)(?:[a-zA-Z\d\-]{0,62}[a-zA-Z\d]\.){1,126}(?!\d+)[a-zA-Z\d]{1,63}$/,
+		//zone_validation: /^(?!\-)(?:[a-zA-Z\d\-]{0,62}[a-zA-Z\d]\.){1,126}(?!\d+)[a-zA-Z\d]{1,63}$/,
 		
 		id: 'bind',
 		path: '/bind/zones',
@@ -42,8 +42,9 @@ module.exports = new Class({
 		//},
 		
 		params: {
-			zone: /^[a-zA-Z0-9_\.-]+$/,
-			prop: /origin|ttl|ns|a|aaaa|cname|mx|txt|srv/,
+			//zone: /^[a-zA-Z0-9_\.-]+$/,
+			zone: /^(?!\-)(?:[a-zA-Z\d\-]{0,62}[a-zA-Z\d]\.){1,126}(?!\d+)[a-zA-Z\d]{1,63}$/,
+			prop: /soa|origin|ttl|ns|a|aaaa|cname|mx|txt|srv/,
 		},
 		
 		routes: {
@@ -83,7 +84,7 @@ module.exports = new Class({
 							version: '',
 						},
 						{
-							path: ':uri/:prop',
+							path: ':zone/:prop',
 							//callbacks: ['check_authentication', 'add'],
 							callbacks: ['update'],
 							version: '',
@@ -98,12 +99,6 @@ module.exports = new Class({
 					delete: [
 						{
 							path: ':zone',
-							//callbacks: ['check_authentication', 'add'],
-							callbacks: ['remove'],
-							version: '',
-						},
-						{
-							path: ':zone/:prop',
 							//callbacks: ['check_authentication', 'add'],
 							callbacks: ['remove'],
 							version: '',
@@ -151,7 +146,7 @@ module.exports = new Class({
 				//console.log('---FILE---');
 				//console.log(file);
 				//res.json(json);
-				this.read_zone(file, function(err, json){
+				this.read_zone_file(file, function(err, json){
 					if(err){
 						res.status(500).json(err);
 					}
@@ -168,10 +163,12 @@ module.exports = new Class({
 	update: function (req, res, next){
 		var zone = req.params.zone;
 		var zone_content = req.body;
+		var prop = req.params.prop;
 		
-		//console.log(zone_content.soa.name);
+		console.log('req.params.prop');
+		console.log(prop);
 		
-		this.save_zone(zone, zone_content, true, function(err, file){
+		var response = function(err, file){
 				
 			if(err){
 				res.status(500).json(err);
@@ -180,7 +177,7 @@ module.exports = new Class({
 				//console.log('---FILE---');
 				//console.log(file);
 				//res.json(json);
-				this.read_zone(file, function(err, json){
+				this.read_zone_file(file, function(err, json){
 					if(err){
 						res.status(500).json(err);
 					}
@@ -190,9 +187,54 @@ module.exports = new Class({
 					
 				});
 			}
-		}.bind(this));
+		}.bind(this);
+		
+		if(prop){
+			//already on save_zone...refactor this
+			if(!zone && zone_content.soa.name){
+				zone = zone_content.soa.name.slice(0, -1);//removes last '.'
+			}
+			
+			this.read_zone(zone, function(err, json){
+				if(err){
+					res.status(500).json(err);
+				}
+				else{
+					var tmp = zone_content;
+					zone_content = json;
+					zone_content[prop] = tmp;
+					
+					this.save_zone(zone, zone_content, true, response);
+				}
+			}.bind(this));
+		}
+		else {
+			this.save_zone(zone, zone_content, true, response);
+		}
+		
+		
+		
+		
 	},
 	remove: function (req, res, next){
+		var zone = req.params.zone;
+		
+		if(zone){
+			var full_path = path.join(this.options.zones_dir, zone + this.options.zone_file_extension);
+			
+			fs.unlink(full_path, (err) => {
+				if (err){
+					//throw err;
+					res.status(500).json(err);
+				}
+				else{
+					res.json({msg: 'zone '+zone+' deleted'});
+				}
+			});
+		}
+		else{  
+			res.json({err: 'wrong zone param'});
+		}
 	},
 	/**
 	 * 
@@ -203,24 +245,24 @@ module.exports = new Class({
 		}
 		
 		if(zone){
-			if(zone.test(this.options.zone_validation)){
+			if(zone.test(this.options.params.zone)){
 				var full_path = path.join(this.options.zones_dir, zone + this.options.zone_file_extension);
 				
-				this.save_zone_file(zone_content, full_path, rewrite, callback);
+				this.write_zone_file(zone_content, full_path, rewrite, callback);
 				
 			}
 			else{
-			 callback({err: 'invalid zone sent'});
+			 callback({err: 'wrong zone param'});
 			}
 		}
 		else{
-			 callback({err: 'no zone sent'});
+			 callback({err: 'wrong zone param'});
 		}
 	},
 	/**
 	 * rewrite optional, default: false
 	 * */ 
-  save_zone_file: function(json, file, rewrite, callback){
+  write_zone_file: function(json, file, rewrite, callback){
 		var original_file = path.posix.basename(file);
 		var original_path = path.dirname(file);
 		var lock = os.tmpdir()+ '/.' + original_file + '.lock';
@@ -340,7 +382,7 @@ module.exports = new Class({
 		//});//open
 		
 	},
-	read_zone: function(file, callback){
+	read_zone_file: function(file, callback){
 		try{
 				
 			if(fs.statSync(file).isFile()){
@@ -364,12 +406,16 @@ module.exports = new Class({
 			callback(e);
 		}
 	},
+	read_zone: function(zone, callback){
+		var full_path = path.join(this.options.zones_dir, zone + this.options.zone_file_extension);
+			
+		this.read_zone_file(full_path, callback);
+	},
   get_zone: function (req, res, next){
 	
 		if(req.params.zone){
-			var full_path = path.join(this.options.zones_dir, req.params.zone + this.options.zone_file_extension);
 			
-			this.read_zone(full_path, function(err, json){
+			this.read_zone(req.params.zone, function(err, json){
 				if(err){
 					res.status(500).json(err);
 				}
