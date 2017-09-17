@@ -68,8 +68,8 @@ module.exports = new Class({
 		},
   },
   /**
-   * need to send encoded "/" (%2F)
-   * 
+   * searchs by "fs", need to send encoded "/" (%2F)
+   * @example: mounts/%2Fdev%2Fsdb3
    * */
   get_mount: function (req, res, next){
 		//console.log('mounts param:');

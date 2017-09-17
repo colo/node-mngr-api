@@ -135,7 +135,7 @@ module.exports = new Class({
 		var zone = req.params.zone;
 		var zone_content = req.body;
 		
-		//console.log(zone_content.soa.name);
+		console.log(zone_content);
 		
 		this.save_zone(zone, zone_content, false, function(err, file){
 				
@@ -324,6 +324,7 @@ module.exports = new Class({
 		
 		var write_json = function(json, json_file){
 			console.log('writing json stream to: '+json_file);
+			console.log(json);
 			
 			var wstream = fs.createWriteStream(json_file);
 			
