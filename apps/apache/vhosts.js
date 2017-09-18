@@ -1,3 +1,6 @@
+//read: https://www.npmjs.com/package/config-general
+//write: https://www.npmjs.com/package/tonto
+
 'use strict'
 
 var App = require('node-express-app'),
@@ -1489,34 +1492,36 @@ module.exports = new Class({
 					
 					var vhosts_cfg = this.search_vhosts_cfg(config_data);
 					
-					console.log(vhosts_cfg);
+					//console.log(vhosts_cfg);
 					
 					Array.each(vhosts_cfg, function(cfg, index){
 						var all_uris = [];
 						
-						var VH = Object.keys(cfg)[0];
-						var server = cfg[VH];
-						var listen = VH.split(":")[0];
-							if(server.ServerName == undefined){
-								all_uris.push(listen);
-							}
-							else{
-								all_uris = server.ServerName.clean().split(" ");
-							}
+						var server = this.conf_to_obj(cfg);
+						//var VH = Object.keys(cfg)[0];
+						//var server = cfg[VH];
+						var listen = server.VirtualHost.split(":")[0];
+						
+						if(server.ServerName == undefined){
+							all_uris.push(listen);
+						}
+						else{
+							all_uris = server.ServerName.clean().split(" ");
+						}
+						
+						if(server.ServerAlias != undefined){
+							all_uris.combine(server.ServerAlias.clean().split(" "));
+						}
+						
+						Array.each(all_uris, function(uri){
 							
-							if(server.ServerAlias != undefined){
-								all_uris.combine(server.ServerAlias.clean().split(" "));
-							}
-							
-							Array.each(all_uris, function(uri){
-								
-								vhosts.push({
-									uri: uri,
-									file: file,
-									index: index
-								});
-								
+							vhosts.push({
+								uri: uri,
+								file: file,
+								index: index
 							});
+							
+						});
 
 						
 						console.log('----');
@@ -1577,7 +1582,8 @@ module.exports = new Class({
 	read_vhosts_full: function(vhosts, callback){
 		var cfg = null;
 		
-					
+		console.log('read_vhosts_full----');
+		console.log(vhosts);
 		if(vhosts instanceof Array){
 			var tmp_cfg = [];
 			
@@ -1644,27 +1650,44 @@ module.exports = new Class({
 					
 				var vhosts_cfg = this.search_vhosts_cfg(config_data);
 				
-				console.log(vhosts_cfg);
+				//console.log('---vhosts_cfg---');
+				//console.log(vhosts_cfg);
+				
+				console.log('---index---');
+				console.log(index);
+				
 				
 				var all_uris = [];
 				
 				if(vhosts_cfg instanceof Array && index == undefined){
+					console.log('---ARRAY----');
+					
 					cfg = [];
-					Array.each(vhosts_cfg, function(cfg, index){
+					Array.each(vhosts_cfg, function(server, index){
 						
 						
-						var VH = Object.keys(cfg)[0];
-						var server = cfg[VH];
-						var listen = VH.split(":")[0];
+						//var VH = Object.keys(tmp_cfg)[0];
+						////var server = tmp_cfg[VH];
+						//var listen = VH.split(":")[0];
+						server = this.conf_to_obj(server);
+						var listen = server.VirtualHost.split(":")[0];
 						
-						all_uris = server.ServerName.clean().split(" ");
+						//all_uris = server.ServerName.clean().split(" ");
+						if(server.ServerName == undefined){
+							all_uris.push(listen);
+						}
+						else{
+							all_uris = server.ServerName.clean().split(" ");
+						}
+						
+						if(server.ServerAlias != undefined){
+							all_uris.combine(server.ServerAlias.clean().split(" "));
+						}
 						
 						Array.each(all_uris, function(uri){
 							
 							if(vhost == uri){
-								//cfg.push(this.conf_to_obj(server));
 								cfg.push(server);
-							
 							}
 							
 						}.bind(this));
@@ -1681,28 +1704,42 @@ module.exports = new Class({
 						var server = vhosts_cfg;
 					}
 					
-					var VH = Object.keys(server)[0];
-					var server = server[VH];
-					var listen = VH.split(":")[0];
-						
-						
-					console.log(server);
 					
-					if(server.ServerName instanceof Array){
-						Array.each(server.ServerName, function(server_name){
-							var tmp_uris = server_name._value.clean().split(" ");
-							all_uris = all_uris.concat(tmp_uris);
-						}.bind(this));
+					//var VH = Object.keys(server)[0];
+					////var server = server[VH];
+					//var listen = VH.split(":")[0];
+					server = this.conf_to_obj(server);
+					var listen = server.VirtualHost.split(":")[0];
+					
+					console.log('---server---');
+					console.log(server);
+						
+					//console.log(server);
+					
+					//if(server.ServerName instanceof Array){
+						//Array.each(server.ServerName, function(server_name){
+							//var tmp_uris = server_name.clean().split(" ");
+							//all_uris = all_uris.concat(tmp_uris);
+						//}.bind(this));
+					//}
+					//else if(server.ServerName){
+						//all_uris = server.ServerName.clean().split(" ");
+					//}
+					
+					if(server.ServerName == undefined){
+						all_uris.push(listen);
 					}
 					else{
 						all_uris = server.ServerName.clean().split(" ");
 					}
 					
+					if(server.ServerAlias != undefined){
+						all_uris.combine(server.ServerAlias.clean().split(" "));
+					}
 					
 					Array.each(all_uris, function(uri){
 							
 						if(vhost == uri){
-							//cfg = this.conf_to_obj(server);
 							cfg = server;
 						}
 						
@@ -1712,6 +1749,8 @@ module.exports = new Class({
 					//console.log(server.server_name._value);
 				}
 				
+				//console.log('---server---');
+				//console.log(cfg);
 				////console.log(cfg);
 				callback(cfg, vhosts);
 					
@@ -1735,216 +1774,226 @@ module.exports = new Class({
 		////console.log(conf);
 		
 		var cfg = {};
-		Object.each(conf, function(value, prop){
-			////console.log('prop: '+prop);
-			if(prop.charAt(0) != '_' && prop != 'toString'){
-				////console.log('prop: '+prop);
-				////console.log('value: '+value._comments);
+		var VH = Object.keys(conf)[0];
+		cfg = conf[VH];
+		cfg.VirtualHost = VH;
+		
+		//Object.each(conf, function(value, prop){
+			//////console.log('prop: '+prop);
+			//if(prop.charAt(0) != '_' && prop != 'toString'){
+				//////console.log('prop: '+prop);
+				//////console.log('value: '+value._comments);
 				
-				if(value instanceof Array){
-					cfg[prop] = [];
+				//if(value instanceof Array){
+					//cfg[prop] = [];
 					
-					Array.each(value, function(val){
+					//Array.each(value, function(val){
 						
-						//cfg[prop].push(val._value);
-						var propertys = this.conf_to_obj(val);
+						////cfg[prop].push(val._value);
+						//var propertys = this.conf_to_obj(val);
 						
-						if(Object.getLength(propertys) > 0){
-							var obj = {
-								'_value' : val._value
-							};
+						//if(Object.getLength(propertys) > 0){
+							//var obj = {
+								//'_value' : val._value
+							//};
 							
-							if(val._comments && this.comments)
-								obj['_comments'] = val._comments;
+							//if(val._comments && this.comments)
+								//obj['_comments'] = val._comments;
 							
-							cfg[prop].push(
-								Object.merge(
-									obj,
-									propertys
-								)
-							);
+							//cfg[prop].push(
+								//Object.merge(
+									//obj,
+									//propertys
+								//)
+							//);
 							
-						}
-						else{
-							cfg[prop].push(val._value);
-						}
+						//}
+						//else{
+							//cfg[prop].push(val._value);
+						//}
 						
-					}.bind(this));
-				}
-				//else if(!value._value){
-					//cfg[prop] = this.conf_to_obj(value);
+					//}.bind(this));
 				//}
-				else{
-					var propertys = this.conf_to_obj(value);
+				////else if(!value._value){
+					////cfg[prop] = this.conf_to_obj(value);
+				////}
+				//else{
+					//var propertys = this.conf_to_obj(value);
 					
-					////console.log(propertys);
+					//////console.log(propertys);
 					
-					//if(Object.getLength(propertys) > 0){
-						cfg[prop] = Object.merge({
-							'_value' : value._value
-						},
-						propertys);
+					////if(Object.getLength(propertys) > 0){
+						//cfg[prop] = Object.merge({
+							//'_value' : value._value
+						//},
+						//propertys);
 						
-						if(this.comments && value._comments && value._comments.length > 0)//if there are comments, attach it
-							cfg[prop]['_comments'] = value._comments;
+						//if(this.comments && value._comments && value._comments.length > 0)//if there are comments, attach it
+							//cfg[prop]['_comments'] = value._comments;
 							
-						if(Object.getLength(cfg[prop]) == 1)//if there are no other keys, except "_value", return it as property = value
-							cfg[prop] = cfg[prop]['_value'];
+						//if(Object.getLength(cfg[prop]) == 1)//if there are no other keys, except "_value", return it as property = value
+							//cfg[prop] = cfg[prop]['_value'];
 						
-					//}
-					//else{
-						//cfg[prop] = value._value;
-					//}
+					////}
+					////else{
+						////cfg[prop] = value._value;
+					////}
 					
-					////console.log(this.conf_to_obj(value));
-				}
-			}
+					//////console.log(this.conf_to_obj(value));
+				//}
+			//}
 			
-		}.bind(this));
+		//}.bind(this));
 		
 		return cfg;
 	},
 	
 	obj_to_conf: function(obj, callback){
+		var conf = null;
+		console.log('obj_to_conf');
+		console.log(obj);
+		var key = obj.VirtualHost;
+		delete obj.VirtualHost;
 		
-		//console.log('obj_to_conf');
-		//console.log(obj);
+		conf[key] = obj;
 		
-		fs.writeFile(os.tmpdir()+'/apache-conf', '', (err) => {
-			if (err) throw err;
+		callback(conf);
+		
+		//fs.writeFile(os.tmpdir()+'/apache-conf', '', (err) => {
+			//if (err) throw err;
 			
-			apache.create(os.tmpdir()+'/apache-conf', function(err, conf) {
-				if (err) {
-					//console.log(err);
-					return;
-				}
+			//apache.create(os.tmpdir()+'/apache-conf', function(err, conf) {
+				//if (err) {
+					////console.log(err);
+					//return;
+				//}
 				
-				conf.die(os.tmpdir()+'/apache-conf');
+				//conf.die(os.tmpdir()+'/apache-conf');
 				
-				////console.log(conf.toString());
-				conf.apache._add('server');
+				//////console.log(conf.toString());
+				//conf.apache._add('server');
 				
-				Object.each(obj, function(value, prop){
+				//Object.each(obj, function(value, prop){
 					
 					
-					if(value instanceof Array){
-						Array.each(value, function(val, index){
+					//if(value instanceof Array){
+						//Array.each(value, function(val, index){
 							
 							
-							if(val instanceof Object){//ex: 'location' Array
+							//if(val instanceof Object){//ex: 'location' Array
 								
-								conf.apache.server._add(prop, val['_value']);//add, ex: "location /"
+								//conf.apache.server._add(prop, val['_value']);//add, ex: "location /"
 								
-								if(this.comments && val['_comments']){
-									Object.each(val['_comments'], function(comment){
-										if(conf.apache.server[prop] instanceof Array){//if we added the key before, now is an array ex: multiple "location"
-											var last = conf.apache.server[prop].length - 1;
-											conf.apache.server[prop][last]._comments.push(comment);
-										}
-										else{
-											conf.apache.server[prop]._comments.push(comment);
-										}
-									});
-								}
+								//if(this.comments && val['_comments']){
+									//Object.each(val['_comments'], function(comment){
+										//if(conf.apache.server[prop] instanceof Array){//if we added the key before, now is an array ex: multiple "location"
+											//var last = conf.apache.server[prop].length - 1;
+											//conf.apache.server[prop][last]._comments.push(comment);
+										//}
+										//else{
+											//conf.apache.server[prop]._comments.push(comment);
+										//}
+									//});
+								//}
 								 
-								Object.each(val, function(item, key){//add, ex: "location / {proxy_pass: "$proxy"}"
+								//Object.each(val, function(item, key){//add, ex: "location / {proxy_pass: "$proxy"}"
 									
-									var comments = null;
+									//var comments = null;
 									
-									console.log('--item--');
-									console.log(item);
+									//console.log('--item--');
+									//console.log(item);
 									
-									if(item instanceof Object){//it shouldn't, unless it has comments
-										comments = item['_comments'];
-										item = item['_value'];
-									}
+									//if(item instanceof Object){//it shouldn't, unless it has comments
+										//comments = item['_comments'];
+										//item = item['_value'];
+									//}
 									
-									if(key != '_value' && key != '_comments'){
-										if(conf.apache.server[prop] instanceof Array){//if we added the key before, now is an array ex: multiple "location"
-											var last = conf.apache.server[prop].length - 1;
-											conf.apache.server[prop][last]._add(key, item);
+									//if(key != '_value' && key != '_comments'){
+										//if(conf.apache.server[prop] instanceof Array){//if we added the key before, now is an array ex: multiple "location"
+											//var last = conf.apache.server[prop].length - 1;
+											//conf.apache.server[prop][last]._add(key, item);
 											
-											if(this.comments && comments){
-												Array.each(comments, function(comment){
-													conf.apache.server[prop][last][key]._comments.push(comment);
-												}.bind(this));
-											}
+											//if(this.comments && comments){
+												//Array.each(comments, function(comment){
+													//conf.apache.server[prop][last][key]._comments.push(comment);
+												//}.bind(this));
+											//}
 												
-										}
-										else{
-											conf.apache.server[prop]._add(key, item);
+										//}
+										//else{
+											//conf.apache.server[prop]._add(key, item);
 											
-											if(this.comments && comments){
-												Array.each(comments, function(comment){
-													conf.apache.server[prop][key]._comments.push(comment);
-												}.bind(this));
-											}
-										}
-									}
+											//if(this.comments && comments){
+												//Array.each(comments, function(comment){
+													//conf.apache.server[prop][key]._comments.push(comment);
+												//}.bind(this));
+											//}
+										//}
+									//}
 									
-								}.bind(this));
+								//}.bind(this));
 								
-							}
-							else{
-								conf.apache.server._add(prop, val);
-							}
-						}.bind(this));
-					}
-					else if(value instanceof Object){
-						//console.log('OBJECT');
-						//console.log(value);
+							//}
+							//else{
+								//conf.apache.server._add(prop, val);
+							//}
+						//}.bind(this));
+					//}
+					//else if(value instanceof Object){
+						////console.log('OBJECT');
+						////console.log(value);
 					
-						conf.apache.server._add(prop);
+						//conf.apache.server._add(prop);
 						
-						Object.each(value, function(val, key){
-							if(key == '_value'){
-								conf.apache.server[prop]._value = val;
-							}
-							else if(key == '_comments' && this.comments){
-								Array.each(val, function(comment){
-									conf.apache.server[prop]._comments.push(comment);
-								});
-							}
-							else{
-								var comments = null;
+						//Object.each(value, function(val, key){
+							//if(key == '_value'){
+								//conf.apache.server[prop]._value = val;
+							//}
+							//else if(key == '_comments' && this.comments){
+								//Array.each(val, function(comment){
+									//conf.apache.server[prop]._comments.push(comment);
+								//});
+							//}
+							//else{
+								//var comments = null;
 									
-								//console.log('--VAL--');
-								//console.log(val);
+								////console.log('--VAL--');
+								////console.log(val);
 								
-								if(val instanceof Object){//it shouldn't, unless it has comments
-									comments = val['_comments'];
-									val = val['_value'];
-								}
+								//if(val instanceof Object){//it shouldn't, unless it has comments
+									//comments = val['_comments'];
+									//val = val['_value'];
+								//}
 									
-								conf.apache.server[prop]._add(key, val);
+								//conf.apache.server[prop]._add(key, val);
 								
-								if(this.comments && comments){
-									Array.each(comments, function(comment){
-										conf.apache.server[prop][key]._comments.push(comment);
-									}.bind(this));
-								}
-							}	
-						}.bind(this));
-					}
-					else{
-						if(prop == '_value'){
-							conf.apache.server._value = value;
-						}
-						else if(prop == '_comments' && this.comments){
-							conf.apache.server._comments = value;
-						}
-						else{
-							conf.apache.server._add(prop, value);
-						}
-					}
-				}.bind(this));
+								//if(this.comments && comments){
+									//Array.each(comments, function(comment){
+										//conf.apache.server[prop][key]._comments.push(comment);
+									//}.bind(this));
+								//}
+							//}	
+						//}.bind(this));
+					//}
+					//else{
+						//if(prop == '_value'){
+							//conf.apache.server._value = value;
+						//}
+						//else if(prop == '_comments' && this.comments){
+							//conf.apache.server._comments = value;
+						//}
+						//else{
+							//conf.apache.server._add(prop, value);
+						//}
+					//}
+				//}.bind(this));
 				
-				////console.log(conf);
+				//////console.log(conf);
 				
-				callback(conf);
-			}.bind(this));
+				//callback(conf);
+			//}.bind(this));
 			
-		});
+		//});
 
 		
 
