@@ -259,46 +259,50 @@ module.exports = new Class({
 		console.log(req.params);
 		console.log(req.query);
 		//throw new Error();
+		var config = cg.parser({ ApacheCompatible: true, SaveSorted: true } );
+		config.VirtualHOst = '*.80';
+		config.save_file("/tmp/"+req.params.uri);
+		res.json({});		
 		
-		this.comments = (req.query && req.query.comments == "false") ? false : true;
+		//this.comments = (req.query && req.query.comments == "false") ? false : true;
 		
-		var uri = req.params.uri;
+		//var uri = req.params.uri;
 		
-		var callback = function(scaned_vhosts){
+		//var callback = function(scaned_vhosts){
 				
-			var send = null;
+			//var send = null;
 			
-			if(uri){//if vhost uri sent...this check should be run prev to scan the vhost!!??
+			//if(uri){//if vhost uri sent...this check should be run prev to scan the vhost!!??
 				
-				/**
-				 * new func (scaned_vhosts, uri, index, prop)
-				 * */	
-				var read_vhosts = this.search_vhost(scaned_vhosts, uri);
+				///**
+				 //* new func (scaned_vhosts, uri, index, prop)
+				 //* */	
+				//var read_vhosts = this.search_vhost(scaned_vhosts, uri);
 				
-				if(read_vhosts.length == 0){//no match
+				//if(read_vhosts.length == 0){//no match
 					
-					this.fireEvent(this.ON_VHOST_NOT_FOUND, [req, res, next, [uri]]);
+					//this.fireEvent(this.ON_VHOST_NOT_FOUND, [req, res, next, [uri]]);
 					
-				}
-				else{
+				//}
+				//else{
 					
-					this.fireEvent(this.ON_VHOST_FOUND, [req, res, next, [null, read_vhosts]]);
+					//this.fireEvent(this.ON_VHOST_FOUND, [req, res, next, [null, read_vhosts]]);
 					
-				}
-			}
-			else{//no uri sent
-				this.fireEvent(this.ON_NO_VHOST, [req, res, next, [scaned_vhosts]]);
-			}
+				//}
+			//}
+			//else{//no uri sent
+				//this.fireEvent(this.ON_NO_VHOST, [req, res, next, [scaned_vhosts]]);
+			//}
 			
 			
-		}.bind(this);
+		//}.bind(this);
 		
-		/**
-		 * per default will add on 'available' vhosts, unless request path is /vhosts/enabled/
-		 * if added on "enabled", automatically will add it to "available"
-		 * */
-		var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
-		this.sync_vhosts(sync, callback);
+		///**
+		 //* per default will add on 'available' vhosts, unless request path is /vhosts/enabled/
+		 //* if added on "enabled", automatically will add it to "available"
+		 //* */
+		//var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
+		//this.sync_vhosts(sync, callback);
 		
 		
 	},
@@ -1483,7 +1487,9 @@ module.exports = new Class({
 		else{
 			var file = files;
 			try {
-				var config = cg.parser( { ConfigFile: file, SlashIsDirectory: true } );
+				//var config = cg.parser( { ConfigFile: file, SlashIsDirectory: true, SaveSorted: true } );
+				var config = cg.parser( { ConfigFile: file, ApacheCompatible: true, SaveSorted: true } );
+				
 				var config_data = config.getall();
 				console.log(file);
 				//console.log(config_data);

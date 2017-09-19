@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "config-general": "^0.2.0",
-    "mootools": "1.4"
+    "mootools": "1.4",
+    "tonto": "^0.1.1"
   },
   "devDependencies": {},
   "optionalDependencies": {},
