@@ -8,7 +8,9 @@ var App = require('node-express-app'),
 	path = require('path'),
 	util = require('util'),
 	fs = require('fs'),
-	cg = require('config-general');
+	cg = require('config-general');//read
+	//Tonto = require('tonto'),//write
+	//TontoDirective = require('tonto').tontoDirective;
 
 
 module.exports = new Class({
@@ -258,13 +260,17 @@ module.exports = new Class({
 		console.log(req.body);
 		console.log(req.params);
 		console.log(req.query);
-		//throw new Error();
-		var config = cg.parser({ ApacheCompatible: true, SaveSorted: true } );
-		config.VirtualHOst = '*.80';
-		config.save_file("/tmp/"+req.params.uri);
-		res.json({});		
 		
-		//this.comments = (req.query && req.query.comments == "false") ? false : true;
+		var config = cg.parser( { ConfigFile: './example.vhost', SlashIsDirectory: true } );
+		
+		var config_data = config.getall();
+		
+		
+		config_data['VirtualHost']['*:80']['RewriteEngine'] = "on";
+		console.log(config_data);
+		config.save_file('./example.vhost.saved');
+		
+		////this.comments = (req.query && req.query.comments == "false") ? false : true;
 		
 		//var uri = req.params.uri;
 		
@@ -538,7 +544,7 @@ module.exports = new Class({
   
   
   /**
-	 * &listen=108.163.170.178:80&server_name=campus.apci.org.ar&location[value]=\&location[limit_req]=zone=default burst=4
+	 * &listen=108.163.170.178:80&ServerName=campus.apci.org.ar&location[value]=\&location[limit_req]=zone=default burst=4
 	 * &include[]=/etc/apache2/conf.d/no_log.conf2&include[]=/etc/apache2/conf.d/errors.conf
 	 *  
 	 * */
@@ -705,7 +711,7 @@ module.exports = new Class({
 			if(req.method == 'GET' || req.method == 'PUT' || req.method == 'DELETE'){
 				console.log('GET/PUT: ON_VHOST_NOT_FOUND');
 				var uri = params[0];
-				res.status(404).json({error: 'URI/server_name: '+uri+' not Found'});
+				res.status(404).json({error: 'URI/ServerName: '+uri+' not Found'});
 			}
 		}.bind(this));
 		
@@ -715,7 +721,7 @@ module.exports = new Class({
 			var index = params[1];
 			var read_vhosts = params[2];
 			
-			res.status(404).json({error: 'Index: '+index+' not found for URI/server_name: '+req.params.uri});
+			res.status(404).json({error: 'Index: '+index+' not found for URI/ServerName: '+req.params.uri});
 			
 		}.bind(this));
 		
@@ -744,7 +750,7 @@ module.exports = new Class({
 				
 				console.log(post_path_available);
 				
-				if(post_val && post_val['server_name']){//hast the minimun requirement, a server_name
+				if(post_val && post_val['ServerName']){//hast the minimun requirement, a ServerName
 					
 					var conf = this.obj_to_conf(post_val, function (conf){
 						this.save(conf, post_path_available);
@@ -754,7 +760,7 @@ module.exports = new Class({
 					
 				}
 				else{
-					res.status(500).json({error: 'At least URI/server_name must be specified'});
+					res.status(500).json({error: 'At least URI/ServerName must be specified'});
 				}
 				
 				
@@ -772,8 +778,8 @@ module.exports = new Class({
 				
 				console.log(post_path_available);
 				
-				if(post_val){//has the minimun requirement, a server_name
-					post_val['server_name'] = uri;
+				if(post_val){//has the minimun requirement, a ServerName
+					post_val['ServerName'] = uri;
 					
 					var conf = this.obj_to_conf(post_val, function (conf){
 						this.save(conf, post_path_available);
@@ -801,13 +807,13 @@ module.exports = new Class({
 				
 				console.log(read_vhosts);
 				
-				if(post_val){//has the minimun requirement, a server_name
+				if(post_val){//has the minimun requirement, a ServerName
 					
 					if(read_vhosts instanceof Array){
-						post_val['server_name'] = read_vhosts[0]['uri'];
+						post_val['ServerName'] = read_vhosts[0]['uri'];
 					}
 					else{
-						post_val['server_name'] = read_vhosts['uri'];
+						post_val['ServerName'] = read_vhosts['uri'];
 					}
 					
 					var conf = this.obj_to_conf(post_val, function (conf){
@@ -839,7 +845,7 @@ module.exports = new Class({
 				console.log('DELETE: ON_NO_VHOST');
 				var scaned_vhosts = params[0];
 				
-				res.status(500).json({error: 'URI/server_name not specified.'});
+				res.status(500).json({error: 'URI/ServerName not specified.'});
 			}
 			
 		}.bind(this));
@@ -861,7 +867,7 @@ module.exports = new Class({
 					}.bind(this));
 					
 					if(vhosts.length == 0){
-						res.status(500).json({error: 'Problem deleting URI/server_name vhosts'});
+						res.status(500).json({error: 'Problem deleting URI/ServerName vhosts'});
 					}
 					else{
 						res.json(vhosts);
@@ -938,7 +944,7 @@ module.exports = new Class({
 				var read_vhosts = params[3];
 			
 			
-				res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+req.params.uri+' at index: '+index});
+				res.status(404).json({error: 'Property: '+prop+' not found on URI/ServerName: '+req.params.uri+' at index: '+index});
 			}
 			
 		}.bind(this));
@@ -964,7 +970,7 @@ module.exports = new Class({
 				var read_vhosts = params[3];
 
 			
-				res.status(404).json({error: 'Property: '+prop+' not found on URI/server_name: '+req.params.uri});
+				res.status(404).json({error: 'Property: '+prop+' not found on URI/ServerName: '+req.params.uri});
 			}
 		}.bind(this));
 		
@@ -1003,7 +1009,7 @@ module.exports = new Class({
 				console.log('PUT: ON_NO_VHOST');
 				var scaned_vhosts = params[0];
 				
-				res.status(500).json({error: 'URI/server_name not specified.'});
+				res.status(500).json({error: 'URI/ServerName not specified.'});
 			}
 			
 		}.bind(this));
@@ -1206,11 +1212,15 @@ module.exports = new Class({
 	post_value: function(req){
 		return (req.body instanceof Object && Object.getLength(req.body) >= 1) ? req.body : null;
 	},
+	/**
+	 * @modified
+	 * 
+	 * */
 	post_path_available: function(req){
 		var path_available = this.options.conf_path.available;
 		var path = (path_available instanceof Array) ? path_available[0] : path_available;
 		
-		var uri = (req.params && req.params.uri) ? req.params.uri : req.body.server_name;
+		var uri = (req.params && req.params.uri) ? req.params.uri : req.body.ServerName;
 		
 		if(req.query && req.query.dir)
 			path+= req.query.dir+'/';
@@ -1723,8 +1733,8 @@ module.exports = new Class({
 					//console.log(server);
 					
 					//if(server.ServerName instanceof Array){
-						//Array.each(server.ServerName, function(server_name){
-							//var tmp_uris = server_name.clean().split(" ");
+						//Array.each(server.ServerName, function(ServerName){
+							//var tmp_uris = ServerName.clean().split(" ");
 							//all_uris = all_uris.concat(tmp_uris);
 						//}.bind(this));
 					//}
@@ -1752,7 +1762,7 @@ module.exports = new Class({
 					}.bind(this));
 					
 					//console.log('---NO ARRAY----');
-					//console.log(server.server_name._value);
+					//console.log(server.ServerName._value);
 				}
 				
 				//console.log('---server---');
@@ -1855,15 +1865,107 @@ module.exports = new Class({
 	},
 	
 	obj_to_conf: function(obj, callback){
-		var conf = null;
-		console.log('obj_to_conf');
-		console.log(obj);
+		//var conf = {};
+		//console.log('obj_to_conf');
+		//console.log(obj);
 		var key = obj.VirtualHost;
 		delete obj.VirtualHost;
 		
 		conf[key] = obj;
 		
 		callback(conf);
+		
+		
+		//Object.extend(Tonto, [
+  //'CustomDirective',
+  //'<CustomBlock>'
+//]);
+		
+		////var CustomDirective = new TontoDirective('customDirective', 'somthing');
+		//var document = new Tonto();
+		////console.log(document.directives);
+		//////document.push('php_flag');
+		////document.directives.extend([
+			////'php_flag',
+			////'php_admin_value'
+		////]);
+		
+		//document.customDirective('somthing');
+		
+		//var lowerFL = function(string) {
+				//return string.charAt(0).toLowerCase() + string.slice(1);
+		//}
+		
+		//var traverse_obj = function(obj, subDirective){
+			////delete obj.php_flag;
+			////delete obj.php_admin_value;
+			
+			
+			//Object.each(obj, function(value, key){
+				//var prop = lowerFL(key);
+				
+				//try{
+					//if(typeof subDirective[prop] != 'function'){
+						////subDirective[prop] = function(){};
+						////subDirective.extend([
+							////prop,
+						////]);
+					//}
+				//}
+				//catch(e){
+					//if(e instanceof TypeError){
+						//console.log(prop + ': unknown (define a Custom Directive or Custom Block)');
+					//}
+					////else{
+						//console.log(e);
+					////}
+				//}
+				
+				
+					
+				//if(typeof value == 'string'){
+					//console.log('---string---');
+					//console.log(prop);
+					//subDirective[prop](value);
+				//}
+				//else if(value instanceof Array){
+					////console.log('---array---');
+					////console.log(prop);
+					//Array.each(value, function(val){
+						//subDirective[prop](val);
+					//});
+					
+				//}
+				//else{
+					////console.log('---object---');
+					////console.log(value);
+					//Object.each(value, function(sub_value, sub_key){
+						////console.log('---subkey---');
+						////console.log(sub_key);
+						
+						//subDirective[prop](sub_key, function(sd){
+							//traverse_obj(sub_value, sd)
+						//});
+					//});
+					
+				//}
+				
+			//}.bind(this));
+			
+			////return subDirective;
+		//}
+		
+		
+		
+		//document.virtualHost(obj.VirtualHost, function (vh) {
+			//delete obj.VirtualHost;
+			
+			////var virtualhost = traverse_obj(obj, vh);
+			//traverse_obj(obj, vh);
+			
+		//});
+
+		//console.log(document.render());
 		
 		//fs.writeFile(os.tmpdir()+'/apache-conf', '', (err) => {
 			//if (err) throw err;
