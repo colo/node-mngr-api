@@ -8,9 +8,10 @@ var App = require('node-express-app'),
 	path = require('path'),
 	util = require('util'),
 	fs = require('fs'),
-	cg = require('config-general');//read
-	//Tonto = require('tonto'),//write
-	//TontoDirective = require('tonto').tontoDirective;
+	cg = require('config-general'),//read
+	Tonto = require('./libs/tonto'),//write
+	changeCase = require('change-case');
+
 
 
 module.exports = new Class({
@@ -257,58 +258,58 @@ module.exports = new Class({
   },
 	
 	add: function(req, res, next){
-		console.log(req.body);
-		console.log(req.params);
-		console.log(req.query);
+		//console.log(req.body);
+		//console.log(req.params);
+		//console.log(req.query);
 		
-		var config = cg.parser( { ConfigFile: './example.vhost', SlashIsDirectory: true } );
+		//var config = cg.parser( { ConfigFile: './example.vhost', SlashIsDirectory: true } );
 		
-		var config_data = config.getall();
+		//var config_data = config.getall();
 		
 		
-		config_data['VirtualHost']['*:80']['RewriteEngine'] = "on";
-		console.log(config_data);
-		config.save_file('./example.vhost.saved');
+		//config_data['VirtualHost']['*:80']['RewriteEngine'] = "on";
+		//console.log(config_data);
+		//config.save_file('./example.vhost.saved');
 		
-		////this.comments = (req.query && req.query.comments == "false") ? false : true;
+		//this.comments = (req.query && req.query.comments == "false") ? false : true;
 		
-		//var uri = req.params.uri;
+		var uri = req.params.uri;
 		
-		//var callback = function(scaned_vhosts){
+		var callback = function(scaned_vhosts){
 				
-			//var send = null;
+			var send = null;
 			
-			//if(uri){//if vhost uri sent...this check should be run prev to scan the vhost!!??
+			if(uri){//if vhost uri sent...this check should be run prev to scan the vhost!!??
 				
-				///**
-				 //* new func (scaned_vhosts, uri, index, prop)
-				 //* */	
-				//var read_vhosts = this.search_vhost(scaned_vhosts, uri);
+				/**
+				 * new func (scaned_vhosts, uri, index, prop)
+				 * */	
+				var read_vhosts = this.search_vhost(scaned_vhosts, uri);
 				
-				//if(read_vhosts.length == 0){//no match
+				if(read_vhosts.length == 0){//no match
 					
-					//this.fireEvent(this.ON_VHOST_NOT_FOUND, [req, res, next, [uri]]);
+					this.fireEvent(this.ON_VHOST_NOT_FOUND, [req, res, next, [uri]]);
 					
-				//}
-				//else{
+				}
+				else{
 					
-					//this.fireEvent(this.ON_VHOST_FOUND, [req, res, next, [null, read_vhosts]]);
+					this.fireEvent(this.ON_VHOST_FOUND, [req, res, next, [null, read_vhosts]]);
 					
-				//}
-			//}
-			//else{//no uri sent
-				//this.fireEvent(this.ON_NO_VHOST, [req, res, next, [scaned_vhosts]]);
-			//}
+				}
+			}
+			else{//no uri sent
+				this.fireEvent(this.ON_NO_VHOST, [req, res, next, [scaned_vhosts]]);
+			}
 			
 			
-		//}.bind(this);
+		}.bind(this);
 		
-		///**
-		 //* per default will add on 'available' vhosts, unless request path is /vhosts/enabled/
-		 //* if added on "enabled", automatically will add it to "available"
-		 //* */
-		//var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
-		//this.sync_vhosts(sync, callback);
+		/**
+		 * per default will add on 'available' vhosts, unless request path is /vhosts/enabled/
+		 * if added on "enabled", automatically will add it to "available"
+		 * */
+		var sync = (req.path.indexOf('enabled') != -1) ? 'enabled' : 'available';
+		this.sync_vhosts(sync, callback);
 		
 		
 	},
@@ -1865,24 +1866,25 @@ module.exports = new Class({
 	},
 	
 	obj_to_conf: function(obj, callback){
-		//var conf = {};
-		//console.log('obj_to_conf');
-		//console.log(obj);
-		var key = obj.VirtualHost;
-		delete obj.VirtualHost;
+		////var conf = {};
+		////console.log('obj_to_conf');
+		////console.log(obj);
+		//var key = obj.VirtualHost;
+		//delete obj.VirtualHost;
 		
-		conf[key] = obj;
+		//conf[key] = obj;
 		
-		callback(conf);
+		//callback(conf);
 		
 		
-		//Object.extend(Tonto, [
+		//Tonto.extend([
   //'CustomDirective',
   //'<CustomBlock>'
 //]);
 		
 		////var CustomDirective = new TontoDirective('customDirective', 'somthing');
-		//var document = new Tonto();
+		var document = new Tonto();
+		console.log(document);
 		////console.log(document.directives);
 		//////document.push('php_flag');
 		////document.directives.extend([
@@ -1892,80 +1894,73 @@ module.exports = new Class({
 		
 		//document.customDirective('somthing');
 		
-		//var lowerFL = function(string) {
-				//return string.charAt(0).toLowerCase() + string.slice(1);
-		//}
+		var lowerFL = function(string) {
+				return string.charAt(0).toLowerCase() + string.slice(1);
+		}
 		
-		//var traverse_obj = function(obj, subDirective){
-			////delete obj.php_flag;
-			////delete obj.php_admin_value;
+		var traverse_obj = function(obj, subDirective){
+			//delete obj.php_flag;
+			//delete obj.php_admin_value;
 			
 			
-			//Object.each(obj, function(value, key){
-				//var prop = lowerFL(key);
+			Object.each(obj, function(value, key){
+				var prop = lowerFL(key);
 				
-				//try{
-					//if(typeof subDirective[prop] != 'function'){
-						////subDirective[prop] = function(){};
-						////subDirective.extend([
-							////prop,
-						////]);
-					//}
-				//}
-				//catch(e){
-					//if(e instanceof TypeError){
-						//console.log(prop + ': unknown (define a Custom Directive or Custom Block)');
-					//}
-					////else{
-						//console.log(e);
-					////}
-				//}
-				
-				
-					
-				//if(typeof value == 'string'){
-					//console.log('---string---');
-					//console.log(prop);
-					//subDirective[prop](value);
-				//}
-				//else if(value instanceof Array){
-					////console.log('---array---');
-					////console.log(prop);
-					//Array.each(value, function(val){
-						//subDirective[prop](val);
-					//});
-					
-				//}
-				//else{
-					////console.log('---object---');
-					////console.log(value);
-					//Object.each(value, function(sub_value, sub_key){
-						////console.log('---subkey---');
-						////console.log(sub_key);
+				try{
+					if(typeof value == 'string'){
+						console.log('---string---');
+						console.log(prop);
+						prop = changeCase.camelCase(prop);
+						subDirective[prop](value);
+					}
+					else if(value instanceof Array){
+						//console.log('---array---');
+						//console.log(prop);
+						Array.each(value, function(val){
+							subDirective[prop](val);
+						});
 						
-						//subDirective[prop](sub_key, function(sd){
-							//traverse_obj(sub_value, sd)
-						//});
-					//});
-					
-				//}
+					}
+					else{
+						//console.log('---object---');
+						//console.log(value);
+						Object.each(value, function(sub_value, sub_key){
+							//console.log('---subkey---');
+							//console.log(sub_key);
+							
+							subDirective[prop](sub_key, function(sd){
+								traverse_obj(sub_value, sd)
+							});
+						});
+						
+					}
+				}
+				catch(e){
+					if(e instanceof TypeError){
+						console.log(prop + ': unknown (define a Custom Directive or Custom Block)');
+					}
+					//else{
+						console.log(e);
+					//}
+				}
 				
-			//}.bind(this));
+				
+			}.bind(this));
 			
-			////return subDirective;
-		//}
+			//return subDirective;
+		}
 		
 		
 		
-		//document.virtualHost(obj.VirtualHost, function (vh) {
-			//delete obj.VirtualHost;
+		document.virtualHost(obj.VirtualHost, function (vh) {
+			delete obj.VirtualHost;
 			
-			////var virtualhost = traverse_obj(obj, vh);
-			//traverse_obj(obj, vh);
+			//var virtualhost = traverse_obj(obj, vh);
+			traverse_obj(obj, vh);
 			
-		//});
+		});
 
-		//console.log(document.render());
+		console.log(document.render());
 		
 		//fs.writeFile(os.tmpdir()+'/apache-conf', '', (err) => {
 			//if (err) throw err;

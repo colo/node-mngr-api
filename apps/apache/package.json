@@ -11,6 +11,7 @@
     "node": ">= 0.10.21"
   },
   "dependencies": {
+    "caseswitcher": "^1.2.0",
     "config-general": "^0.2.0",
     "mootools": "1.4",
     "tonto": "^0.1.1"
