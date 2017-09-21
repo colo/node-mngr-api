@@ -10,7 +10,8 @@ var App = require('node-express-app'),
 	fs = require('fs'),
 	cg = require('config-general'),//read
 	Tonto = require('./libs/tonto'),//write
-	changeCase = require('change-case');
+	changeCase = require('change-case'),
+	lockFile = require('lockfile');
 
 
 
@@ -753,9 +754,11 @@ module.exports = new Class({
 				
 				if(post_val && post_val['ServerName']){//hast the minimun requirement, a ServerName
 					
-					var conf = this.obj_to_conf(post_val, function (conf){
-						this.save(conf, post_path_available);
-					}.bind(this));
+					//var conf = this.obj_to_conf(post_val, function (conf){
+						//this.save(conf, post_path_available);
+					//}.bind(this));
+					
+					this.save(post_val, post_path_available);
 					
 					res.json(post_val);
 					
@@ -782,9 +785,11 @@ module.exports = new Class({
 				if(post_val){//has the minimun requirement, a ServerName
 					post_val['ServerName'] = uri;
 					
-					var conf = this.obj_to_conf(post_val, function (conf){
-						this.save(conf, post_path_available);
-					}.bind(this));
+					//var conf = this.obj_to_conf(post_val, function (conf){
+						//this.save(conf, post_path_available);
+					//}.bind(this));
+					
+					this.save(post_val, post_path_available);
 					
 					res.json(post_val);
 				}
@@ -817,9 +822,11 @@ module.exports = new Class({
 						post_val['ServerName'] = read_vhosts['uri'];
 					}
 					
-					var conf = this.obj_to_conf(post_val, function (conf){
-						this.save(conf, post_path_available);
-					}.bind(this));
+					//var conf = this.obj_to_conf(post_val, function (conf){
+						//this.save(conf, post_path_available);
+					//}.bind(this));
+					
+					this.save(post_val, post_path_available);
 					
 					res.json(post_val);
 				}
@@ -1041,9 +1048,10 @@ module.exports = new Class({
 				
 				cfg[index] = this.cfg_merge(cfg[index], value);
 				
-				var conf = this.obj_to_conf(cfg[index], function (conf){
-					this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-				}.bind(this));
+				//var conf = this.obj_to_conf(cfg[index], function (conf){
+					//this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+				//}.bind(this));
+				this.save(cfg[index], read_vhosts[index]['file'], read_vhosts[index]['index']);
 				
 				res.json(value);
 			}
@@ -1065,9 +1073,10 @@ module.exports = new Class({
 				 * */
 				cfg[index] = this.cfg_merge(cfg[index], this.put_value(req));
 				
-				var conf = this.obj_to_conf(cfg[index], function (conf){
-					this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-				}.bind(this));
+				//var conf = this.obj_to_conf(cfg[index], function (conf){
+					//this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+				//}.bind(this));
+				this.save(cfg[index], read_vhosts[index]['file'], read_vhosts[index]['index']);
 				
 				res.json(cfg[index]);
 			}
@@ -1100,9 +1109,10 @@ module.exports = new Class({
 						
 						vhost = this.cfg_merge(vhost, value)
 						
-						var conf = this.obj_to_conf(vhost,  function (conf){
-							this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-						}.bind(this));
+						//var conf = this.obj_to_conf(vhost,  function (conf){
+							//this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+						//}.bind(this));
+						this.save(vhost, read_vhosts[index]['file'], read_vhosts[index]['index']);
 						
 						props[index] = value;
 						
@@ -1125,9 +1135,10 @@ module.exports = new Class({
 					
 					cfg = this.cfg_merge(cfg, value);
 					
-					var conf = this.obj_to_conf(cfg,  function (conf){
-						this.save(conf, read_vhosts['file'], read_vhosts['index']);
-					}.bind(this));
+					//var conf = this.obj_to_conf(cfg,  function (conf){
+						//this.save(conf, read_vhosts['file'], read_vhosts['index']);
+					//}.bind(this));
+					this.save(cfg, read_vhosts['file'], read_vhosts['index']);
 					
 					res.json(value);
 				}
@@ -1156,9 +1167,10 @@ module.exports = new Class({
 						 * */
 						if(!put_val['_value'] && put_val instanceof Object){
 							cfg[index] = this.cfg_merge(cfg[index], put_val)
-							var conf = this.obj_to_conf(cfg[index],  function (conf){
-								this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
-							}.bind(this));
+							//var conf = this.obj_to_conf(cfg[index],  function (conf){
+								//this.save(conf, read_vhosts[index]['file'], read_vhosts[index]['index']);
+							//}.bind(this));
+							this.save(cfg[index], read_vhosts[index]['file'], read_vhosts[index]['index']);
 							
 							vhosts.push(cfg[index]);
 						}
@@ -1182,9 +1194,10 @@ module.exports = new Class({
 					else{
 						cfg = this.cfg_merge(cfg, put_val);
 						
-						var conf = this.obj_to_conf(cfg,  function (conf){
-							this.save(conf, read_vhosts['file'], read_vhosts['index']);
-						}.bind(this));
+						//var conf = this.obj_to_conf(cfg,  function (conf){
+							//this.save(conf, read_vhosts['file'], read_vhosts['index']);
+						//}.bind(this));
+						this.save(cfg, read_vhosts['file'], read_vhosts['index']);
 						
 						res.json(cfg);
 					}
@@ -1231,6 +1244,7 @@ module.exports = new Class({
 		return path;
 	},
 	/**
+	 * @modified
 	 * conf = null to delete vhost
 	 * */
   save: function(conf, file, index){
@@ -1238,10 +1252,25 @@ module.exports = new Class({
 		var original_path = path.dirname(file);
 		var lock = os.tmpdir()+ '/.' + original_file + '.lock';
 		
-		//test
-		//file = os.tmpdir()+ '/.' + original_file + '_' + new Date().getTime();
+		//conf = null;
 		
-				
+		var save_file = function(obj, file){
+			this.obj_to_conf(obj, function (doc){
+				console.log(doc.render());
+				fs.writeFileSync(file, doc.render());
+			}.bind(this));
+		}.bind(this);
+		
+		//var result = (conf == null) ? null : conf.render(); //data to be saved
+		
+		
+		////test
+		////file = os.tmpdir()+ '/.' + original_file + '_' + new Date().getTime();
+		
+		//console.log('---save----');
+		//console.log(file);
+		//console.log(conf);
+		
 		fs.open(file, 'wx', (err, fd) => {
 		
 			lockFile.lock(lock, {wait: 1000} ,function (lock_err) {
@@ -1251,68 +1280,100 @@ module.exports = new Class({
 					
 		
 				if (err) {
-					if(err.code === 'EEXIST'){
-						console.log('exists....');
-						console.log(file);
-						//console.log(conf.apache.server);
+					
+					if(err.code === 'ENOENT'){//if no exist, it's safe to write
+						fs.close(fd);
+						save_file(conf, file);
+					}
+					else if(err.code === 'EEXIST'){
 						
-							//var server = null;
+						//console.log('exists....');
+						//console.log(file);
+						
+						var original_conf = cg.parser( { ConfigFile: file, SlashIsDirectory: true } );
+						var original_conf_data = original_conf.getall();
+						console.log(original_conf_data);
+						console.log(conf);
+						//console.log(conf.render());
+						////console.log(conf.apache.server);
+						
+							////var server = null;
 							
-							apache.create(file, function(err, original_conf) {
-								if (err) {
-									//console.log(err);
-									return;
-								}
+							////apache.create(file, function(err, original_conf) {
+								////if (err) {
+									//////console.log(err);
+									////return;
+								////}
 								
-								//don't write to disk when something changes 
-								//original_conf.die(file);
+								//////don't write to disk when something changes 
+								//////original_conf.die(file);
 								
-								if(original_conf.apache.server){
+								if(Object.keys(original_conf_data).length > 0){//if no empty file
 									
-									if(original_conf.apache.server instanceof Array){
-										//console.log('original_conf.apache.server instanceof Array');
-										if(original_conf.apache.server[index]){
-											if(conf == null){//delete the vhost
-												
-												original_conf.apache._remove('server', index);
-											}
-											else{
-												original_conf.apache.server[index] = conf.apache.server;
-											}
-										}
-										else{
-											throw new Error('Bad index, somthing went wrong!');
-										}
+									if(original_conf_data.VirtualHost){
 									}
-									else{
-										//console.log('original_conf.apache.server NO Array');
-										if(conf == null){//delete the vhost
-											console.log('deleting....');
-											original_conf.apache._remove('server');
-										}
-										else{
-											
-											if(index == 0){
-												original_conf.apache.server = conf.apache.server;
-											}
-											else{
-												original_conf.apache._add('server');
-												original_conf.apache.server[1] = conf.apache.server;
-											}
-										}
+									else if(!original_conf_data.VirtualHost && conf != null){//no vhosts config && adding one
+										original_conf_data.VirtualHost = {};
+										original_conf_data.VirtualHost[conf.VirtualHost] = {};
 										
+										delete conf.VirtualHost;
+										original_conf_data.VirtualHost[conf.VirtualHost] = conf;
+										
+										save_file(original_conf_data, file);
 									}
+									//else{
+										//original_conf_data.VirtualHost = {}
+										//original_conf_data.VirtualHost[conf.VirtualHost] = {};
+										//delete conf.VirtualHost;
+										//original_conf_data.VirtualHost[conf.VirtualHost] = conf.render();
+									//}
+									
+									////if(original_conf.apache.server instanceof Array){
+										////////console.log('original_conf.apache.server instanceof Array');
+										//////if(original_conf.apache.server[index]){
+											//////if(conf == null){//delete the vhost
+												
+												//////original_conf.apache._remove('server', index);
+											//////}
+											//////else{
+												//////original_conf.apache.server[index] = conf.apache.server;
+											//////}
+										//////}
+										//////else{
+											//////throw new Error('Bad index, somthing went wrong!');
+										//////}
+									////}
+									////else{
+										////////console.log('original_conf.apache.server NO Array');
+										//////if(conf == null){//delete the vhost
+											//////console.log('deleting....');
+											//////result = null;
+										//////}
+										//////else{
+											
+											//////if(index == 0){
+												//////original_conf.apache.server = conf.apache.server;
+											//////}
+											//////else{
+												//////original_conf.apache._add('server');
+												//////original_conf.apache.server[1] = conf.apache.server;
+											//////}
+										//////}
+										
+									////}
 									
 									
 								}
 								else{//empty file...and maybe where vhosts are on original_conf.apache.http....
-									original_conf.apache._add('server');
-									original_conf.apache.server = conf.apache.server;
+									console.log('---empty file---');
+									save_file(conf, file);
 								}
 								
-								original_conf.flush();
 								
-							});
+								////fs.writeFileSync(file, result);
+								////original_conf.flush();
+								
+							////});
 							
 						
 					}
@@ -1322,23 +1383,15 @@ module.exports = new Class({
 				}
 				else{//if no exist, it's safe to write
 					fs.close(fd);
-					
-					fs.writeFile(file, '', (err) => {//create empty
-						
-								conf.live(file);
-								conf.flush();
-								
-					});
-					
-					
+					save_file(conf, file);
 				}
 
 			lockFile.unlock(lock, function (lock_err) {
-					if(lock_err)
+				if(lock_err)
 					throw lock_err;
 					
 				});
-			});
+			}.bind(this));
 			
 		});//open
 		
@@ -1867,73 +1920,80 @@ module.exports = new Class({
 	
 	obj_to_conf: function(obj, callback){
 		var conf = new Tonto();
-
-		console.log(conf);
 		
-		var lowerFL = function(string) {
-				return string.charAt(0).toLowerCase() + string.slice(1);
-		}
-		
-		var traverse_obj = function(obj, subDirective){
+		if(obj != null){
 			
-			Object.each(obj, function(value, key){
-				var prop = lowerFL(key);
+
+			//console.log(conf);
+			
+			var lowerFL = function(string) {
+					return string.charAt(0).toLowerCase() + string.slice(1);
+			}
+			
+			var traverse_obj = function(obj, subDirective){
 				
-				try{
-					if(typeof value == 'string'){
-						console.log('---string---');
-						console.log(prop);
-						prop = changeCase.camelCase(prop);
-						subDirective[prop](value);
-					}
-					else if(value instanceof Array){
-						//console.log('---array---');
-						//console.log(prop);
-						Array.each(value, function(val){
-							subDirective[prop](val);
-						});
-						
-					}
-					else{
-						//console.log('---object---');
-						//console.log(value);
-						Object.each(value, function(sub_value, sub_key){
-							//console.log('---subkey---');
-							//console.log(sub_key);
-							
-							subDirective[prop](sub_key, function(sd){
-								traverse_obj(sub_value, sd)
+				Object.each(obj, function(value, key){
+					var prop = lowerFL(key);
+					
+					try{
+						if(typeof value == 'string'){
+							console.log('---string---');
+							console.log(prop);
+							prop = changeCase.camelCase(prop);
+							subDirective[prop](value);
+						}
+						else if(value instanceof Array){
+							//console.log('---array---');
+							//console.log(prop);
+							Array.each(value, function(val){
+								subDirective[prop](val);
 							});
-						});
-						
+							
+						}
+						else{
+							//console.log('---object---');
+							//console.log(value);
+							Object.each(value, function(sub_value, sub_key){
+								//console.log('---subkey---');
+								//console.log(sub_key);
+								
+								subDirective[prop](sub_key, function(sd){
+									traverse_obj(sub_value, sd)
+								});
+							});
+							
+						}
 					}
-				}
-				catch(e){
-					if(e instanceof TypeError){
-						console.log(prop + ': unknown (define a Custom Directive or Custom Block)');
+					catch(e){
+						if(e instanceof TypeError){
+							console.log(prop + ': unknown (define a Custom Directive or Custom Block)');
+						}
+						//else{
+							console.log(e);
+						//}
 					}
-					//else{
-						console.log(e);
-					//}
-				}
+					
+					
+				}.bind(this));
 				
-				
-			}.bind(this));
+				//return subDirective;
+			}
 			
-			//return subDirective;
+			
+			if(obj.VirtualHost){
+				conf.virtualHost(obj.VirtualHost, function (vh) {
+					delete obj.VirtualHost;
+					
+					//var virtualhost = traverse_obj(obj, vh);
+					traverse_obj(obj, vh);
+					
+				});
+			}
+			else{
+				traverse_obj(obj, conf);
+			}
+			//console.log(conf.render());
 		}
-		
-		
-		
-		conf.virtualHost(obj.VirtualHost, function (vh) {
-			delete obj.VirtualHost;
-			
-			//var virtualhost = traverse_obj(obj, vh);
-			traverse_obj(obj, vh);
-			
-		});
-
-		console.log(conf.render());
 		
 		callback(conf);
 	},
