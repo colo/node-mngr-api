@@ -1866,42 +1866,15 @@ module.exports = new Class({
 	},
 	
 	obj_to_conf: function(obj, callback){
-		////var conf = {};
-		////console.log('obj_to_conf');
-		////console.log(obj);
-		//var key = obj.VirtualHost;
-		//delete obj.VirtualHost;
-		
-		//conf[key] = obj;
-		
-		//callback(conf);
-		
-		
-		//Tonto.extend([
-  //'CustomDirective',
-  //'<CustomBlock>'
-//]);
-		
-		////var CustomDirective = new TontoDirective('customDirective', 'somthing');
-		var document = new Tonto();
-		console.log(document);
-		////console.log(document.directives);
-		//////document.push('php_flag');
-		////document.directives.extend([
-			////'php_flag',
-			////'php_admin_value'
-		////]);
-		
-		//document.customDirective('somthing');
+		var conf = new Tonto();
+
+		console.log(conf);
 		
 		var lowerFL = function(string) {
 				return string.charAt(0).toLowerCase() + string.slice(1);
 		}
 		
 		var traverse_obj = function(obj, subDirective){
-			//delete obj.php_flag;
-			//delete obj.php_admin_value;
-			
 			
 			Object.each(obj, function(value, key){
 				var prop = lowerFL(key);
@@ -1952,7 +1925,7 @@ module.exports = new Class({
 		
 		
 		
-		document.virtualHost(obj.VirtualHost, function (vh) {
+		conf.virtualHost(obj.VirtualHost, function (vh) {
 			delete obj.VirtualHost;
 			
 			//var virtualhost = traverse_obj(obj, vh);
@@ -1960,146 +1933,9 @@ module.exports = new Class({
 			
 		});
 
-		console.log(document.render());
+		console.log(conf.render());
 		
-		//fs.writeFile(os.tmpdir()+'/apache-conf', '', (err) => {
-			//if (err) throw err;
-			
-			//apache.create(os.tmpdir()+'/apache-conf', function(err, conf) {
-				//if (err) {
-					////console.log(err);
-					//return;
-				//}
-				
-				//conf.die(os.tmpdir()+'/apache-conf');
-				
-				//////console.log(conf.toString());
-				//conf.apache._add('server');
-				
-				//Object.each(obj, function(value, prop){
-					
-					
-					//if(value instanceof Array){
-						//Array.each(value, function(val, index){
-							
-							
-							//if(val instanceof Object){//ex: 'location' Array
-								
-								//conf.apache.server._add(prop, val['_value']);//add, ex: "location /"
-								
-								//if(this.comments && val['_comments']){
-									//Object.each(val['_comments'], function(comment){
-										//if(conf.apache.server[prop] instanceof Array){//if we added the key before, now is an array ex: multiple "location"
-											//var last = conf.apache.server[prop].length - 1;
-											//conf.apache.server[prop][last]._comments.push(comment);
-										//}
-										//else{
-											//conf.apache.server[prop]._comments.push(comment);
-										//}
-									//});
-								//}
-								 
-								//Object.each(val, function(item, key){//add, ex: "location / {proxy_pass: "$proxy"}"
-									
-									//var comments = null;
-									
-									//console.log('--item--');
-									//console.log(item);
-									
-									//if(item instanceof Object){//it shouldn't, unless it has comments
-										//comments = item['_comments'];
-										//item = item['_value'];
-									//}
-									
-									//if(key != '_value' && key != '_comments'){
-										//if(conf.apache.server[prop] instanceof Array){//if we added the key before, now is an array ex: multiple "location"
-											//var last = conf.apache.server[prop].length - 1;
-											//conf.apache.server[prop][last]._add(key, item);
-											
-											//if(this.comments && comments){
-												//Array.each(comments, function(comment){
-													//conf.apache.server[prop][last][key]._comments.push(comment);
-												//}.bind(this));
-											//}
-												
-										//}
-										//else{
-											//conf.apache.server[prop]._add(key, item);
-											
-											//if(this.comments && comments){
-												//Array.each(comments, function(comment){
-													//conf.apache.server[prop][key]._comments.push(comment);
-												//}.bind(this));
-											//}
-										//}
-									//}
-									
-								//}.bind(this));
-								
-							//}
-							//else{
-								//conf.apache.server._add(prop, val);
-							//}
-						//}.bind(this));
-					//}
-					//else if(value instanceof Object){
-						////console.log('OBJECT');
-						////console.log(value);
-					
-						//conf.apache.server._add(prop);
-						
-						//Object.each(value, function(val, key){
-							//if(key == '_value'){
-								//conf.apache.server[prop]._value = val;
-							//}
-							//else if(key == '_comments' && this.comments){
-								//Array.each(val, function(comment){
-									//conf.apache.server[prop]._comments.push(comment);
-								//});
-							//}
-							//else{
-								//var comments = null;
-									
-								////console.log('--VAL--');
-								////console.log(val);
-								
-								//if(val instanceof Object){//it shouldn't, unless it has comments
-									//comments = val['_comments'];
-									//val = val['_value'];
-								//}
-									
-								//conf.apache.server[prop]._add(key, val);
-								
-								//if(this.comments && comments){
-									//Array.each(comments, function(comment){
-										//conf.apache.server[prop][key]._comments.push(comment);
-									//}.bind(this));
-								//}
-							//}	
-						//}.bind(this));
-					//}
-					//else{
-						//if(prop == '_value'){
-							//conf.apache.server._value = value;
-						//}
-						//else if(prop == '_comments' && this.comments){
-							//conf.apache.server._comments = value;
-						//}
-						//else{
-							//conf.apache.server._add(prop, value);
-						//}
-					//}
-				//}.bind(this));
-				
-				//////console.log(conf);
-				
-				//callback(conf);
-			//}.bind(this));
-			
-		//});
-
-		
-
+		callback(conf);
 	},
 	/**
 	* change "location /" on Array: location[][_value]=/&location[][limit_req]=zone=default burst=5
