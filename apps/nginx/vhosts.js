@@ -398,6 +398,20 @@ module.exports = new Class({
 	},
 	/**
 	 * query with no comments: ?comments=false
+	 * 
+	 * first precedence param
+	 * @first: return first entry
+	 * @first=n: return first N entries (ex: ?first=7, first 7 entries)
+	 * 
+	 * second precedence param
+	 * @last: return last entry 
+	 * @last=n: return last N entries (ex: ?last=7, last 7 entries)
+	 * 
+	 * third precedence params
+	 * @start=n: return from N entry to last or @end (ex: ?start=0, return all entries)
+	 * @end=n: set last N entry for @start (ex: ?start=0&end=9, return first 10 entries)
+	 * 
+	 * status = 206 partial list | 200 full list
 	 * */
 	get: function(req, res, next){
 		
@@ -898,14 +912,150 @@ module.exports = new Class({
 				console.log('GET: ON_NO_VHOST');
 				var scaned_vhosts = params[0];
 				
+				var vhosts = [];
 				var send = [];
 				
+				var URI = req.protocol+'://'+req.hostname+':'+process.env.PORT+this.express().mountpath+'/';
+						
+				var status = 206; //206 partial list | 200 full list
+				
+				var links = {};
+				links.first = URI+'?first';
+				links.last = URI+'?last';
+				
+				links.next = null;
+				links.prev = null;
+				
+				var range_start = 0;
+				var range_end = 0;
+						
 				for(var i = 0; i < scaned_vhosts.length; i++){
-					if(send.indexOf(scaned_vhosts[i].uri) == -1)//not found
-						send.push(scaned_vhosts[i].uri);
+					//doesn't add duplicates
+					if(vhosts.indexOf(scaned_vhosts[i].uri) == -1)//not found
+						vhosts.push(scaned_vhosts[i].uri);
 				}
 				
-				res.json(send);
+				if(req.query.first != undefined){
+					
+					if(req.query.first == '' || !(req.query.first > 0)){
+						
+						links.next = URI+'?start=1&end=2';
+						links.prev = links.last;
+						
+						range_start = 0;
+						range_end = 0;
+				
+						send.push(vhosts[0]);
+						
+						
+					}
+					else{
+						var first = (new Number(req.query.first) < vhosts.length) ? new Number(req.query.first) : vhosts.length - 1;
+						
+						for(var i = 0; i < first; i++){
+							send[i] = vhosts[i];
+						}
+						
+						var next = {};
+						next.start = first;
+						
+						var next_end = next.start + next.start - 1;
+						next.end = (next_end < vhosts.length) ? next_end : vhosts.length - 1;
+						
+						
+						links.next = URI+'?start='+next.start+'&end='+next.end;
+						links.prev = links.last+'='+req.query.first;
+						
+						range_start = 0;
+						range_end = send.length - 1;
+						
+					}
+				}
+				else if(req.query.last != undefined){
+							
+					if(req.query.last == '' || !(req.query.last > 0)){
+						//console.log('LAST');
+						
+						var prev = {};
+						prev.start = prev.end = vhosts.length - 2;
+						
+						links.next = links.first;
+						links.prev = URI+'?start='+prev.start+'&end='+prev.end;
+						
+						send.push(vhosts[vhosts.length - 1]);
+						
+						range_start = vhosts.length - 1;
+						range_end = vhosts.length - 1;
+						
+					}
+					else{
+						var last = (new Number(req.query.last) < vhosts.length) ? new Number(req.query.last) : vhosts.length - 1;
+						
+						for(var i = vhosts.length - last; i <= vhosts.length - 1; i++){
+							send.push(vhosts[i]);
+						}
+						
+						var prev = {};
+						prev.end = vhosts.length - last - 1 ;
+						prev.start = ((prev.end - last + 1) > 0) ? (prev.end - last + 1) : 0;
+						
+						links.next = links.first+'='+last;
+						links.prev = URI+'?start='+prev.start+'&end='+prev.end;
+						
+						range_start = vhosts.length - last;
+						range_end = vhosts.length - 1;
+						
+					}
+					
+				}
+				else if(req.query.start != undefined && req.query.start >= 0){
+					var end = null;
+					var start = (new Number(req.query.start) < vhosts.length) ? new Number(req.query.start) : vhosts.length - 1;
+					
+					if(req.query.end != undefined && new Number(req.query.end) >= start){
+						end = (new Number(req.query.end) < vhosts.length) ? new Number(req.query.end) : vhosts.length -1;
+					}
+					else{
+						end = vhosts.length - 1;
+					}
+					
+					for(var i = start; i <= end; i++){
+						send.push(vhosts[i]);
+					}
+					
+					var next = {};
+					next.start = ((end + 1) < vhosts.length) ? (end + 1) : 0;
+					next.end = (next.start + (end - start) < vhosts.length) ? next.start + (end - start) : vhosts.length -1;
+					
+					var prev = {};
+					prev.end = start - 1;
+					prev.start = (prev.end - (end - start) > 0) ? prev.end - (end - start) : 0;
+					
+					
+					links.next = URI+'?start='+next.start+'&end='+next.end;
+					links.prev = URI+'?start='+prev.start+'&end='+prev.end;
+					
+					range_start = start;
+					range_end = end;
+				}
+				else{
+					
+					links.next = links.last;
+					links.prev = links.first;
+					
+					status = 200;
+					send = vhosts;
+				}
+				
+				if(send.length == vhosts.length)//when 'start=0&end=vhosts.length'
+					status = 200;
+				
+				if(status != 200){//set range Header
+					res.set('Content-Range', range_start+'-'+range_end+'/'+vhosts.length);
+				}	
+				
+				res.status(status).links(links).json(send);
+				//res.json(send);
 			}
 			
 		}.bind(this));
