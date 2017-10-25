@@ -426,6 +426,8 @@ module.exports = new Class({
 		var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
 		
 		var callback = function(scaned_vhosts){
+			//console.log('---scaned_vhosts---');
+			//console.log(scaned_vhosts);
 			
 			var send = null;
 			
@@ -1500,9 +1502,15 @@ module.exports = new Class({
 						tmp.push(dir);
 
 						if(tmp.length == this.options.conf_path[sync].length){
-
+							/**
+							 * sort vhosts by URI alphabetically, to ensure same order always
+							 * */
+							vhosts.sort(function(a, b){
+								if(a.uri < b.uri) return -1;
+								if(a.uri > b.uri) return 1;
+								return 0;
+							});
 							callback(vhosts);
-						
 						}
 					}.bind(this)
 				);
