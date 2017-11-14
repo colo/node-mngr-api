@@ -1121,6 +1121,10 @@ module.exports = new Class({
 				var index = params[1];
 				var read_vhosts = params[2];
 				
+				/*console.log('index: '+index);
+				console.log('cfg:');
+				console.log(read_vhosts);*/
+				
 				res.json(cfg[index]);
 			}
 		}.bind(this));
@@ -1492,10 +1496,15 @@ module.exports = new Class({
 			var tmp = [];
 			Array.each(this.options.conf_path[sync], function(dir, index){
 				
+				//console.log('this.scan_vhosts dir: '+dir);
+				
 				this.scan_vhosts(
 					dir,
 					this.options.conf_ext[sync],
 					function(cfg){
+						
+						/*console.log('this.scan_vhosts cfg: ');
+						console.log(cfg);*/
 						
 						vhosts = vhosts.concat(cfg);
 						
@@ -1503,13 +1512,24 @@ module.exports = new Class({
 
 						if(tmp.length == this.options.conf_path[sync].length){
 							/**
-							 * sort vhosts by URI alphabetically, to ensure same order always
+							 * sort vhosts by URI alphabetically [&& file [ && index]], to ensure same order always
 							 * */
 							vhosts.sort(function(a, b){
 								if(a.uri < b.uri) return -1;
 								if(a.uri > b.uri) return 1;
+								
+								if(a.file < b.file) return -1;
+								if(a.file > b.file) return 1;
+								
+								if(a.index < b.index) return -1;
+								if(a.index > b.index) return 1;
+								
 								return 0;
 							});
+							
+							/*console.log('this.scan_vhosts vhosts');
+							console.log(vhosts);*/
+							
 							callback(vhosts);
 						}
 					}.bind(this)
@@ -1560,7 +1580,7 @@ module.exports = new Class({
 					
 					if(
 						isFile == true &&
-						( ext == null || path.extname(file).match(ext) )&&
+						( ext == null || path.extname(file).match(ext)) &&
 						file.charAt(0) != '.'
 					)
 					{
@@ -1573,10 +1593,12 @@ module.exports = new Class({
 					}
 					
 					if(index == files.length - 1){
-						//console.log('----this.read_vhosts_simple----');
-						//console.log(full_conf_path);
+						
 						this.read_vhosts_simple(vhosts_full_conf_path, function(cfg){
-							
+							/*console.log('----this.read_vhosts_simple----');
+							console.log(vhosts_full_conf_path);
+							console.log(cfg);*/
+						
 							callback(cfg);
 						});
 						
@@ -1693,6 +1715,18 @@ module.exports = new Class({
 					});
 
 				}
+				
+				/**
+				 * sort vhosts by index, to ensure same order always
+				 * */
+				vhosts.sort(function(a, b){
+					if(a.index < b.index) return -1;
+					if(a.index > b.index) return 1;
+					return 0;
+				});
+				
+				/*console.log('this.read_vhosts_simple vhosts');
+				console.log(vhosts);*/
 				
 				callback(vhosts);
 				
