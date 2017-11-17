@@ -36,6 +36,9 @@ var MyApp = new Class({
 		authentication: {
 			users : [
 					//{ id: 1, username: 'lbueno' , role: 'admin', password: '40bd001563085fc35165329ea1ff5c5ecbdbbeef'}, //sha-1 hash
+					/**
+					 * *curl -H "Content-Type:application/json" -H "Accept:application/json" -H "Authorization: Basic bGJ1ZW5vOjEyMw==" http://localhost:8081/
+					 * */
 					{ id: 1, username: 'lbueno' , role: 'admin', password: '123'}, //sha-1 hash
 					{ id: 2, username: 'test' , role: 'user', password: '123'}
 			],
@@ -75,7 +78,7 @@ var MyApp = new Class({
 				all: [
 					{
 					path: '',
-					callbacks: ['get'],
+					callbacks: ['check_authentication', 'get'],
 					version: '',
 					},
 				]
@@ -88,13 +91,13 @@ var MyApp = new Class({
 		console.log(this.authentication.store.users);
 		console.log(this.authentication.auth.users);
 		
-		//console.log('root get');
-		//console.log('req.isAuthenticated');
-		//console.log(req.isAuthenticated());
+		console.log('root get');
+		console.log('req.isAuthenticated');
+		console.log(req.isAuthenticated());
 		
-		//console.log('isAuthorized');
-		//console.log(this.isAuthorized({ op: 'view', res: 'abm'}));
-		//console.log(this.getSession().getRole().getID());
+		console.log('isAuthorized');
+		console.log(this.isAuthorized({ op: 'view', res: 'abm'}));
+		console.log(this.getSession().getRole().getID());
 
 		
 		//if(Object.getLength(req.params) == 0){
@@ -127,6 +130,11 @@ var MyApp = new Class({
 		
 		this.profile('root_init');//start profiling
 		
+		/*this.authentication.addEvent(this.authentication.ON_AUTH, function(err, user){
+			console.log('app.ON_AUTH');
+			console.log(err);
+			console.log(user);
+		});*/
 		/*------------------------------------------*/
 		if(this.authorization){
 			// 	authorization.addEvent(authorization.SET_SESSION, this.logAuthorizationSession.bind(this));
