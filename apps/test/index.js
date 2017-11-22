@@ -90,7 +90,7 @@ module.exports = new Class({
 			all: [
 			  {
 				path: '',
-				callbacks: ['get_no_version_available'],
+				callbacks: ['check_authorization', 'get_no_version_available'],
 				version: '',
 			  },
 			]

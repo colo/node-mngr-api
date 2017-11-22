@@ -1,13 +1,14 @@
 'use strict'
 
-var App = require('node-express-app'),
-	os = require('os'),
-	path = require('path'),
-	fs = require('fs'),
-	bodyParser = require('body-parser'),
-	multer = require('multer'), // v1.0.5
-	upload = multer(), // for parsing multipart/form-data
-	cors = require('cors');
+var	path = require('path'),
+		bodyParser = require('body-parser'),
+		multer = require('multer'), // v1.0.5
+		upload = multer(), // for parsing multipart/form-data
+		cors = require('cors');
+	
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/prod.conf')
+      : require('./config/dev.conf');
 	
 
 	//AdminApp = require(path.join(__dirname,'apps/admin/'));
@@ -19,85 +20,17 @@ var MyApp = new Class({
   Extends: App,
   
   
-  app: null,
-  logger: null,
-  authorization:null,
-  authentication: null,
-  
-  options: {
-	  
-		id: os.hostname(),
-		path: '/',
-		
-		logs: { 
-			path: './logs' 
-		},
-		
-		authentication: {
-			users : [
-					//{ id: 1, username: 'lbueno' , role: 'admin', password: '40bd001563085fc35165329ea1ff5c5ecbdbbeef'}, //sha-1 hash
-					/**
-					 * *curl -H "Content-Type:application/json" -H "Accept:application/json" -H "Authorization: Basic bGJ1ZW5vOjEyMw==" http://localhost:8081/
-					 * */
-					{ id: 1, username: 'lbueno' , role: 'admin', password: '123'}, //sha-1 hash
-					{ id: 2, username: 'test' , role: 'user', password: '123'}
-			],
-		},
-		
-		authorization: {
-			config: path.join(__dirname,'./config/rbac.json'),
-		},
-		
-		routes: {
-			
-			//post: [
-				//{
-				//path: '',
-				//callbacks: ['check_authentication', 'post']
-				//},
-			//],
-			//all: [
-				//{
-				//path: '',
-				//callbacks: ['get']
-				//},
-			//]
-		},
-		
-		api: {
-			
-			version: '1.0.0',
-			
-			routes: {
-				//post: [
-					//{
-					//path: '',
-					//callbacks: ['check_authentication', 'post'],
-					//},
-				//],
-				all: [
-					{
-					path: '',
-					callbacks: ['check_authentication', 'get'],
-					version: '',
-					},
-				]
-			},
-			
-		},
-  },
-  
   get: function(req, res, next){
 		console.log(this.authentication.store.users);
 		console.log(this.authentication.auth.users);
 		
-		console.log('root get');
-		console.log('req.isAuthenticated');
-		console.log(req.isAuthenticated());
+		//console.log('root get');
+		//console.log('req.isAuthenticated');
+		//console.log(req.isAuthenticated());
 		
-		console.log('isAuthorized');
-		console.log(this.isAuthorized({ op: 'view', res: 'abm'}));
-		console.log(this.getSession().getRole().getID());
+		//console.log('isAuthorized');
+		//console.log(this.isAuthorized({ op: 'view', res: 'abm'}));
+		//console.log(this.getSession().getRole().getID());
 
 		
 		//if(Object.getLength(req.params) == 0){
@@ -127,6 +60,9 @@ var MyApp = new Class({
   initialize: function(options){
 		
 		this.parent(options);//override default options
+		console.log(this.options.api.routes.all);
+		
+		//this.parent(config.options);//override default options
 		
 		this.profile('root_init');//start profiling
 		
@@ -146,29 +82,16 @@ var MyApp = new Class({
 			//   //console.log(obj);
 			  
 			  if(!obj.error){
-				
-			// 	web.authorization.processRules({
-			// 	  "subjects":[
-			// 		{
-			// 		  "id": "lbueno",
-			// 		  "roles":["admin"]
-			// 		},
-			// 		{
-			// 		  "id": "test",
-			// 		  "roles":["user"]
-			// 		},
-			// 	  ],
-			// 	});
 
-				this.authorization.processRules({
-				  "subjects": function(){
-					  if(obj.getID() == "test")
-						return [{ "id": "test", "roles":["user"]}];
-					  
-					  if(obj.getID() == "lbueno")
-						return [{ "id": "lbueno", "roles":["admin"]}];
-				  },
-				});
+					this.authorization.processRules({
+						"subjects": function(){
+							if(obj.getID() == "test")
+							return [{ "id": "test", "roles":["user"]}];
+							
+							if(obj.getID() == "lbueno")
+							return [{ "id": "lbueno", "roles":["admin"]}];
+						},
+					});
 			  }
 			  
 			}.bind(this));
@@ -176,9 +99,8 @@ var MyApp = new Class({
 		
 		this.express().use(bodyParser.json()); // for parsing application/json
 		this.express().use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
-		this.express().use(cors({
-			'exposedHeaders': ['Link', 'Content-Range']
-		}));
+		
+		this.express().use(cors(this.options.cors));
 		
 		this.profile('root_init');//end profiling
 		

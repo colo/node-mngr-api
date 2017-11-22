@@ -2,7 +2,7 @@
   "roles":[
 	{
 	  "id": "user",
-	  "permissions":["abmView"]
+	  "permissions":["abmView", "testGet"]
 	}
   ],
   "permissions":[
@@ -11,6 +11,12 @@
 	  "name": "",
 	  "operation": "view",
 	  "resource": "abm"
+	},
+	{
+	  "id": "testGet",
+	  "name": "",
+	  "operation": "get",
+	  "resource": "d15aacfd-62b6-594e-93cf-85baa5e441ec"
 	}
   ]
 }

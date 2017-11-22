@@ -30,6 +30,14 @@
 	  "name": "View"
 	}
   ],
+  "permissions":[
+	{
+	  "id": "coloGet",
+	  "name": "",
+	  "operation": "get",
+	  "resource": "colo"
+	}
+  ],
   "constrains":[
 	{
 	  "type": "RC",
