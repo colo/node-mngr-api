@@ -26,7 +26,7 @@ module.exports = new Class({
 	},*/
 	
 	authorization: {
-		init: false,
+		//init: false,
 		config: path.join(__dirname,'./config/rbac.json'),
 	},
 	
@@ -69,29 +69,29 @@ module.exports = new Class({
 				//version: '1.0.1',
 				},*/
 				{
-				path: ':service_action',
-				callbacks: ['get_api'],
-				content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
-				version: '2.0.0',
+					path: ':service_action',
+					callbacks: ['get_api'],
+					content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
+					version: '2.0.0',
 				},
 				{
-				path: ':service_action',
-				callbacks: ['get_api'],
-				content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
-				version: '1.0.1',
+					path: ':service_action',
+					callbacks: ['get_api'],
+					content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
+					version: '1.0.1',
 				},
 			],
 			post: [
 			  {
-				path: '',
-				callbacks: ['check_authentication', 'post'],
+					path: '',
+					callbacks: ['check_authentication', 'post'],
 			  },
 			],
 			all: [
 			  {
-				path: '',
-				callbacks: ['check_authorization', 'get_no_version_available'],
-				version: '',
+					path: '',
+					callbacks: ['check_authorization', 'get_no_version_available'],
+					version: '',
 			  },
 			]
 		},
