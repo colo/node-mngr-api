@@ -77,7 +77,7 @@ var MyApp = new Class({
 			// 	authorization.addEvent(authorization.IS_AUTHORIZED, this.logAuthorization.bind(this));
 			// 	authentication.addEvent(authentication.ON_AUTH, this.logAuthentication.bind(this));
 			this.authorization.addEvent(this.authorization.NEW_SESSION, function(obj){
-	  
+				console.log('----this.authorization.NEW_SESSION----')
 			//   //console.log('event');
 			//   //console.log(obj);
 			  
@@ -113,7 +113,9 @@ var MyApp = new Class({
 });
 
 var root = new MyApp();
-root.load(path.join(__dirname, '/apps'));
+root.addEvent(root.ON_INIT, root.load(path.join(__dirname, '/apps')));
+
+//root.load(path.join(__dirname, '/apps'));
 //var test = new MyApp();
 //var admin = new AdminApp();
 

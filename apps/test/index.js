@@ -84,14 +84,16 @@ module.exports = new Class({
 			post: [
 			  {
 					path: '',
-					callbacks: ['check_authentication', 'post'],
+					callbacks: ['check_authentication', 'check_authorization','post'],
+					roles: ['admin']
 			  },
 			],
 			all: [
 			  {
 					path: '',
-					callbacks: ['check_authorization', 'get_no_version_available'],
+					callbacks: ['check_authentication', 'check_authorization', 'get_no_version_available'],
 					version: '',
+					roles: ['users']
 			  },
 			]
 		},
@@ -113,6 +115,7 @@ module.exports = new Class({
 		
   },
   get_no_version_available: function(req, res, next){
+		console.log('---get_no_version_available--');
 		
 		res.status(404).json({ message: 'No API version available' });
 		
@@ -149,12 +152,12 @@ module.exports = new Class({
 		
   },
   
-  initialize: function(options){
+  initialize: function(options, extra){
 		this.profile('test_init');//start profiling
 		
 		
 		
-		this.parent(options);//override default options
+		this.parent(options, extra);//override default options
 		
 		/*------------------------------------------*/
 		if(this.authorization){
