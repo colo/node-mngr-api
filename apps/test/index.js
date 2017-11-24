@@ -34,7 +34,7 @@ module.exports = new Class({
 	  service_action: /start|stop/,
 	},
 	
-	routes: {
+	/*routes: {
 		
 		get: [
 			{
@@ -54,7 +54,7 @@ module.exports = new Class({
 			callbacks: ['check_authentication', 'get']
 		  },
 		]
-	},
+	},*/
 	
 	api: {
 		
@@ -70,8 +70,9 @@ module.exports = new Class({
 				},*/
 				{
 					path: ':service_action',
-					callbacks: ['get_api'],
+					callbacks: ['check_authentication', 'check_authorization', 'get_api'],
 					content_type: /^application\/(?:x-www-form-urlencoded|x-.*\+json|json)(?:[\s;]|$)/,
+					roles: ['user'],
 					version: '2.0.0',
 				},
 				{
@@ -91,9 +92,9 @@ module.exports = new Class({
 			all: [
 			  {
 					path: '',
-					callbacks: ['check_authentication', 'check_authorization', 'get_no_version_available'],
+					callbacks: ['check_authorization', 'get_no_version_available'],
 					version: '',
-					roles: ['user']
+					roles: ['anonymous']
 			  },
 			]
 		},

@@ -12,11 +12,7 @@ module.exports = new Class({
 			path: './logs' 
 		},
 		
-		authentication: {
-			users : [
-					{ id: 1, username: 'anonymous' , role: 'anonymous', password: ''}
-			],
-		},
+		
 		
 	},
 	

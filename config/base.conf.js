@@ -23,7 +23,11 @@ module.exports = new Class({
 		
 		logs: null,
 		
-		authentication: null,
+		authentication: {
+			users : [
+					{ id: 1, username: 'anonymous' , role: 'anonymous', password: ''}
+			],
+		},
 		
 		authorization: {
 			config: path.join(__dirname,'./rbac.json'),
@@ -42,7 +46,6 @@ module.exports = new Class({
 					{
 						path: '',
 						callbacks: ['get'],
-						roles: ['user'],
 						version: '',
 					},
 				]
