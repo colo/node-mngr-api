@@ -83,7 +83,7 @@ var MyApp = new Class({
 			  
 			  if(!obj.error){
 
-					this.authorization.processRules({
+					/*this.authorization.processRules({
 						"subjects": function(){
 							if(obj.getID() == "test")
 							return [{ "id": "test", "roles":["user"]}];
@@ -91,7 +91,7 @@ var MyApp = new Class({
 							if(obj.getID() == "lbueno")
 							return [{ "id": "lbueno", "roles":["admin"]}];
 						},
-					});
+					});*/
 			  }
 			  
 			}.bind(this));

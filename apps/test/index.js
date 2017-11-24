@@ -93,7 +93,7 @@ module.exports = new Class({
 					path: '',
 					callbacks: ['check_authentication', 'check_authorization', 'get_no_version_available'],
 					version: '',
-					roles: ['users']
+					roles: ['user']
 			  },
 			]
 		},
@@ -152,51 +152,14 @@ module.exports = new Class({
 		
   },
   
-  initialize: function(options, extra){
+  initialize: function(options){
 		this.profile('test_init');//start profiling
 		
 		
 		
-		this.parent(options, extra);//override default options
+		this.parent(options);//override default options
 		
-		/*------------------------------------------*/
-		if(this.authorization){
-			// 	authorization.addEvent(authorization.SET_SESSION, this.logAuthorizationSession.bind(this));
-			// 	authorization.addEvent(authorization.IS_AUTHORIZED, this.logAuthorization.bind(this));
-			// 	authentication.addEvent(authentication.ON_AUTH, this.logAuthentication.bind(this));
-			this.authorization.addEvent(this.authorization.NEW_SESSION, function(obj){
-	  
-			//   //console.log('event');
-			//   //console.log(obj);
-			  
-			  if(!obj.error){
-				
-			// 	web.authorization.processRules({
-			// 	  "subjects":[
-			// 		{
-			// 		  "id": "lbueno",
-			// 		  "roles":["admin"]
-			// 		},
-			// 		{
-			// 		  "id": "test",
-			// 		  "roles":["user"]
-			// 		},
-			// 	  ],
-			// 	});
-
-				this.authorization.processRules({
-				  "subjects": function(){
-					  if(obj.getID() == "test")
-						return [{ "id": "test", "roles":["user"]}];
-					  
-					  if(obj.getID() == "lbueno")
-						return [{ "id": "lbueno", "roles":["admin"]}];
-				  },
-				});
-			  }
-			  
-			}.bind(this));
-		}
+		
 		
 		this.profile('test_init');//end profiling
 		

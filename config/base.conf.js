@@ -42,6 +42,7 @@ module.exports = new Class({
 					{
 						path: '',
 						callbacks: ['get'],
+						roles: ['user'],
 						version: '',
 					},
 				]
