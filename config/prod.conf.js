@@ -1,7 +1,15 @@
 'use strict'
 
 const Moo = require("mootools"),
+		path = require("path"),
 		BaseApp = require ('./base.conf');
+
+var session = require('express-session'),
+		MemoryStore = require('memorystore')(session); //https://www.npmjs.com/package/memorystore
+
+/*var session = require('express-session'),
+		SQLiteStore = require('connect-sqlite3')(session);*/
+
 
 module.exports = new Class({
   Extends: BaseApp,
@@ -26,6 +34,28 @@ module.exports = new Class({
 		
 	},
 	initialize: function(options){
+		
+		this.options.session = session({
+				store: new MemoryStore({
+					checkPeriod: 3600000 // prune expired entries every hour
+				}),
+				cookie: { path: '/', httpOnly: true, maxAge: null, secure: false },
+				secret: 'keyboard cat',
+				resave: true,
+				saveUninitialized: true
+		});
+		
+		/*this.options.session = session({
+				store: new SQLiteStore ({
+					dir: path.join(__dirname,'../devel/var/lib/mngr-api/'),
+					db: 'sessions.db'
+				}),
+				cookie: { path: '/', httpOnly: true, maxAge: null, secure: false },
+				secret: 'keyboard cat',
+				resave: true,
+				saveUninitialized: true
+		});*/
+			
 		/**
 		 * test, add 'check_authentication' & 'check_authorization' to each route
 		 * */

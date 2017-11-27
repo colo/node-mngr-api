@@ -9,6 +9,8 @@
     "body-parser": "^1.15.0",
     "cors": "^2.7.1",
     "etc-passwd": "^0.1.1",
+    "express-session": "^1.15.6",
+    "memorystore": "^1.6.0",
     "mootools": "^1.5.2",
     "multer": "^1.1.0",
     "serve-index": "^1.7.3",

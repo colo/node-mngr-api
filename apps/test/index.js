@@ -154,6 +154,9 @@ module.exports = new Class({
   },
   
   initialize: function(options){
+		//console.log('---TEST APP----');
+		//console.log(options);
+		
 		this.profile('test_init');//start profiling
 		
 		
