@@ -5,7 +5,9 @@ const Moo = require("mootools"),
 		BaseApp = require ('./base.conf');
 
 var session = require('express-session'),
-		MemoryStore = require('memorystore')(session); //https://www.npmjs.com/package/memorystore
+		MemoryStore = require('memorystore')(session), //https://www.npmjs.com/package/memorystore
+		helmet = require('helmet');
+
 
 /*var session = require('express-session'),
 		SQLiteStore = require('connect-sqlite3')(session);*/
@@ -35,14 +37,21 @@ module.exports = new Class({
 	},
 	initialize: function(options){
 		
+		//this.options.middlewares.unshift(helmet.hidePoweredBy({ setTo: 'PHP 4.2.0' }));
+		this.options.middlewares.unshift(helmet());
+		
+		
+		
 		this.options.session = session({
 				store: new MemoryStore({
 					checkPeriod: 3600000 // prune expired entries every hour
 				}),
 				cookie: { path: '/', httpOnly: true, maxAge: null, secure: false },
-				secret: 'keyboard cat',
+				secret: '19qX9cZ3yvjsMWRiZqOn',
 				resave: true,
-				saveUninitialized: true
+				saveUninitialized: false,
+				name: 'mngr.api',
+				unset: 'destroy'
 		});
 		
 		/*this.options.session = session({
@@ -69,6 +78,7 @@ module.exports = new Class({
 		});
 		
 		this.parent(options);//override default options
+		
 		
 	}
 	

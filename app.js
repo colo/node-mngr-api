@@ -1,10 +1,10 @@
 'use strict'
 
-var	path = require('path'),
-		bodyParser = require('body-parser'),
-		multer = require('multer'), // v1.0.5
-		upload = multer(), // for parsing multipart/form-data
-		cors = require('cors');
+var	path = require('path');
+		//bodyParser = require('body-parser'),
+		//multer = require('multer'), // v1.0.5
+		//upload = multer(), // for parsing multipart/form-data
+		//cors = require('cors');
 	
 const App =  process.env.NODE_ENV === 'production'
       ? require('./config/prod.conf')
@@ -59,6 +59,7 @@ var MyApp = new Class({
   
   initialize: function(options){
 		
+		this.options.middlewares 
 		this.parent(options);//override default options
 		console.log(this.options.api.routes.all);
 		
@@ -97,10 +98,10 @@ var MyApp = new Class({
 			}.bind(this));
 		}
 		
-		this.express().use(bodyParser.json()); // for parsing application/json
-		this.express().use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+		//this.express().use(bodyParser.json()); // for parsing application/json
+		//this.express().use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 		
-		this.express().use(cors(this.options.cors));
+		//this.express().use(cors(this.options.cors));
 		
 		this.profile('root_init');//end profiling
 		
