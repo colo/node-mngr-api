@@ -1,74 +1,54 @@
 'use strict'
 
-var App = require('node-express-app'),
-	path = require('path'),
-	passwd = require('etc-passwd'),
-	uidToUsername = require("uid-username");
+var path = require('path'),
+		passwd = require('etc-passwd'),
+		uidToUsername = require("uid-username");
 	
-
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/prod.conf')
+      : require('./config/dev.conf');
 
 module.exports = new Class({
   Extends: App,
   
-  app: null,
-  logger: null,
-  authorization:null,
-  authentication: null,
   
   options: {
 	  
-	id: 'users',
-	path: '/os/users',
-	
-	//authorization: {
-		//config: path.join(__dirname,'./config/rbac.json'),
-	//},
-	
-	params: {
-	  uid: /^\w+$/,
-	  prop: /username|password|uid|gid|comments|home|shell/
-	},
-	
-	routes: {
+		id: 'users',
+		path: '/os/users',
 		
-		/*all: [
-		  {
-			path: '',
-			callbacks: ['get']
-		  },
-		]*/
-	},
-	
-	api: {
-		
-		version: '1.0.0',
-		
-		routes: {
-			all: [
-			  {
-					path: ':uid',
-					callbacks: ['get_user'],
-					version: '',
-			  },
-			  {
-					path: ':uid/:prop',
-					callbacks: ['get_user'],
-					version: '',
-			  },
-			  {
-					path: '',
-					callbacks: ['get'],
-					version: '',
-			  },
-			]
+		params: {
+			uid: /^\w+$/,
+			prop: /username|password|uid|gid|comments|home|shell/
 		},
 		
-	},
+		api: {
+			
+			version: '1.0.0',
+			
+			routes: {
+				get: [
+					{
+						path: ':uid',
+						callbacks: ['get_user'],
+						version: '',
+					},
+					{
+						path: ':uid/:prop',
+						callbacks: ['get_user'],
+						version: '',
+					},
+					{
+						path: '',
+						callbacks: ['get'],
+						version: '',
+					},
+				]
+			},
+			
+		},
   },
   get_user: function (req, res, next){
-		//console.log('users param:');
-		//console.log(req.params);
-		//console.log(req.path);
 
 		var getUser = function(username){
 			passwd.getUser({'username': username}, function(err, user){

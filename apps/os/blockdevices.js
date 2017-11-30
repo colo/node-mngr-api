@@ -1,12 +1,13 @@
 'use strict'
 
-var App = require('node-express-app'),
-	path = require('path'),
-	fs = require('fs'),
-	BlockDevice = require('blockdevice');
+var path = require('path'),
+		fs = require('fs'),
+		BlockDevice = require('blockdevice');
 	
 	
-
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/prod.conf')
+      : require('./config/dev.conf');
 
 module.exports = new Class({
   Extends: App,
@@ -14,10 +15,6 @@ module.exports = new Class({
   DEVICE_CLOSED: 'deviceClosed',
   ALL_DEVICES_CLOSED: 'allDevicesClosed',
   
-  app: null,
-  logger: null,
-  authorization:null,
-  authentication: null,
   
   devices: {},
   _scaned_devices: [],
@@ -60,23 +57,10 @@ module.exports = new Class({
 		scan: /hd|sd|xvd/,
 		//([^0-9]*)
 		
-		//authorization: {
-			//config: path.join(__dirname,'./config/rbac.json'),
-		//},
 		
 		params: {
 			device: /^\w+$/,
 			prop: /size|blockSize|partitions|stats/
-		},
-		
-		routes: {
-			
-			/*all: [
-				{
-				path: '',
-				callbacks: ['get']
-				},
-			]*/
 		},
 		
 		api: {
@@ -84,7 +68,7 @@ module.exports = new Class({
 			version: '1.0.0',
 			
 			routes: {
-				all: [
+				get: [
 					{
 						path: ':device',
 						callbacks: ['get'],

@@ -1,19 +1,16 @@
 'use strict'
 
-var App = require('node-express-app'),
-	path = require('path'),
-	exec = require('child_process').exec,
-	Q = require('q');
+var path = require('path'),
+		exec = require('child_process').exec,
+		Q = require('q');
 	
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/prod.conf')
+      : require('./config/dev.conf');
 
 
 module.exports = new Class({
   Extends: App,
-  
-  app: null,
-  logger: null,
-  authorization:null,
-  authentication: null,
   
   command: "df -akT",
   mounts: [],
@@ -23,22 +20,8 @@ module.exports = new Class({
 		id: 'mounts',
 		path: '/os/mounts',
 		
-		//authorization: {
-			//config: path.join(__dirname,'./config/rbac.json'),
-		//},
-		
 		params: {
 			prop: /fs|type|bloks|used|available|percentage|mount_point/
-		},
-		
-		routes: {
-			
-			/*all: [
-				{
-				path: '',
-				callbacks: ['get']
-				},
-			]*/
 		},
 		
 		api: {
@@ -46,7 +29,7 @@ module.exports = new Class({
 			version: '1.0.0',
 			
 			routes: {
-				all: [
+				get: [
 					{
 						path: ':mount',
 						callbacks: ['get_mount'],

@@ -24,44 +24,15 @@ var MyApp = new Class({
 		console.log(this.authentication.store.users);
 		console.log(this.authentication.auth.users);
 		
-		//console.log('root get');
-		//console.log('req.isAuthenticated');
-		//console.log(req.isAuthenticated());
-		
-		//console.log('isAuthorized');
-		//console.log(this.isAuthorized({ op: 'view', res: 'abm'}));
-		//console.log(this.getSession().getRole().getID());
-
-		
-		//if(Object.getLength(req.params) == 0){
-			//res.json({ title: 'Root app', content_type: req.get('content-type') });
-			
-		//}
-		//else if(req.params.service_action){
-			////res.json({ title: 'Root app', param: req.params, content_type: req.get('content-type') });
-		//}
-		//else{
-			//////console.log({ title: 'Admin app', param: req.params });
-			//next();
-		//}
-		
 		res.json({ id: this.options.id });
   },
-  
-  //post: function(req, res, next){
-	  
-		//console.log('root post');
-		//console.log(req.user);
-		//////console.log(req.headers);
-		//res.json({ title: 'Root POST' });
-		
-  //},
   
   initialize: function(options){
 		
 		this.options.middlewares 
 		this.parent(options);//override default options
-		console.log(this.options.api.routes.all);
+	
+		//console.log(this.options.api.routes.all);
 		
 		//this.parent(config.options);//override default options
 		

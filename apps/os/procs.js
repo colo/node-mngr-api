@@ -1,71 +1,54 @@
 'use strict'
 
-var App = require('node-express-app'),
-	path = require('path'),
-	exec = require('child_process').exec,
-	Q = require('q');
+var path = require('path'),
+		exec = require('child_process').exec,
+		Q = require('q');
 	
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/prod.conf')
+      : require('./config/dev.conf');
 
 
 module.exports = new Class({
   Extends: App,
-  
-  app: null,
-  logger: null,
-  authorization:null,
-  authentication: null,
   
   //procs: [],
   command: "ps -eo pid",
   
   options: {
 	  
-	id: 'procs',
-	path: '/os/procs',
-	
-	//authorization: {
-		//config: path.join(__dirname,'./config/rbac.json'),
-	//},
-	
-	params: {
-	  //prop: /fs|type|bloks|used|available|percentage|proc_point/
-	},
-	
-	routes: {
+		id: 'procs',
+		path: '/os/procs',
 		
-		/*all: [
-		  {
-			path: '',
-			callbacks: ['get']
-		  },
-		]*/
-	},
-	
-	api: {
-		
-		version: '1.0.0',
-		
-		routes: {
-			all: [
-			  {
-				path: ':proc',
-				callbacks: ['get_proc'],
-				version: '',
-			  },
-			  {
-				path: ':proc/:prop',
-				callbacks: ['get_proc'],
-				version: '',
-			  },
-			  {
-				path: '',
-				callbacks: ['get'],
-				version: '',
-			  },
-			]
+		params: {
+			//prop: /fs|type|bloks|used|available|percentage|proc_point/
 		},
 		
-	},
+		api: {
+			
+			version: '1.0.0',
+			
+			routes: {
+				get: [
+					{
+						path: ':proc',
+						callbacks: ['get_proc'],
+						version: '',
+					},
+					{
+						path: ':proc/:prop',
+						callbacks: ['get_proc'],
+						version: '',
+					},
+					{
+						path: '',
+						callbacks: ['get'],
+						version: '',
+					},
+				]
+			},
+			
+		},
   },
   get_proc: function (req, res, next){
 	//console.log('procs param:');
@@ -219,9 +202,9 @@ module.exports = new Class({
   },
   initialize: function(options){
 	
-	this.parent(options);//override default options
-	
-	this.log('os-procs', 'info', 'os-procs started');
+		this.parent(options);//override default options
+		
+		this.log('os-procs', 'info', 'os-procs started');
   },
 	
 });

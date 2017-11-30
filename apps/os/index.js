@@ -1,70 +1,28 @@
 'use strict'
 
-var App = require('node-express-app'),
-	path = require('path'),
-	os = require('os'),
-	exec = require('child_process').exec,
-	Q = require('q');
+
+var path = require('path'),
+		os = require('os'),
+		exec = require('child_process').exec,
+		Q = require('q'),
+		debug = require('debug')('os');
 	
-
-
+	
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/prod.conf')
+      : require('./config/dev.conf');
+      
 module.exports = new Class({
   Extends: App,
   
-  app: null,
-  logger: null,
-  authorization:null,
-  authentication: null,
-  
-  options: {
-	  
-	id: 'os',
-	path: '/os',
-	
-	//authorization: {
-		//config: path.join(__dirname,'./config/rbac.json'),
-	//},
-	
-	params: {
-	  //route: /^(0|[1-9][0-9]*)$/,
-	},
-	
-	routes: {
-		
-		/*all: [
-		  {
-			path: '',
-			callbacks: ['get']
-		  },
-		]*/
-	},
-	
-	api: {
-		
-		version: '1.0.0',
-		
-		routes: {
-			all: [
-			  {
-				path: '',
-				callbacks: ['get'],
-				version: '',
-			  },
-			]
-		},
-		
-	},
-  },
+
   get: function (req, res, next){
 		this._networkInterfaces()
 		.then(function(ifaces){
-			////console.log('result');
-			////console.log(ifaces);
 			
 			var json = {};
 			Object.each(os, function(item, key){
-				//console.log('OS.'+key);
-				////console.log('OS.'+item);
+
 				if(key != 'getNetworkInterfaces' && key != 'networkInterfaces')//deprecated func && use internal func
 					json[key] = (typeof(item) == 'function') ? os[key]() : os[key];
 				
@@ -74,7 +32,6 @@ module.exports = new Class({
 				
 			}.bind(this));
 			
-			////console.log('OS.'+json);
 			res.json(json);
 		})
 		.done();
@@ -82,7 +39,7 @@ module.exports = new Class({
 	  
   },
   initialize: function(options){
-	
+		
 		//dynamically create routes based on OS module (ex: /os/hostname|/os/cpus|...)
 		Object.each(os, function(item, key){
 			if(key != 'getNetworkInterfaces'){//deprecated func

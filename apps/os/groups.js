@@ -1,75 +1,55 @@
 'use strict'
 
-var App = require('node-express-app'),
-	path = require('path'),
-	passwd = require('etc-passwd');
+var path = require('path'),
+		passwd = require('etc-passwd');
 	
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/prod.conf')
+      : require('./config/dev.conf');
 
 
 module.exports = new Class({
   Extends: App,
   
-  app: null,
-  logger: null,
-  authorization:null,
-  authentication: null,
   
   options: {
 	  
-	id: 'groups',
-	path: '/os/groups',
-	
-	//authorization: {
-		//config: path.join(__dirname,'./config/rbac.json'),
-	//},
-	
-	params: {
-	  uid: /^\w+$/,
-	  prop: /groupname|password|gid|users/
-	},
-	
-	routes: {
+		id: 'groups',
+		path: '/os/groups',
 		
-		/*all: [
-		  {
-			path: '',
-			callbacks: ['get']
-		  },
-		]*/
-	},
-	
-	api: {
-		
-		version: '1.0.0',
-		
-		routes: {
-			all: [
-			  {
-				path: ':gid',
-				callbacks: ['get_group'],
-				version: '',
-			  },
-			  {
-				path: ':gid/:prop',
-				callbacks: ['get_group'],
-				version: '',
-			  },
-			  {
-				path: '',
-				callbacks: ['get'],
-				version: '',
-			  },
-			]
+		params: {
+			uid: /^\w+$/,
+			prop: /groupname|password|gid|users/
 		},
 		
-	},
+		api: {
+			
+			version: '1.0.0',
+			
+			routes: {
+				get: [
+					{
+						path: ':gid',
+						callbacks: ['get_group'],
+						version: '',
+					},
+					{
+						path: ':gid/:prop',
+						callbacks: ['get_group'],
+						version: '',
+					},
+					{
+						path: '',
+						callbacks: ['get'],
+						version: '',
+					},
+				]
+			},
+			
+		},
   },
   get_group: function (req, res, next){
-	//console.log('groups param:');
-	//console.log(req.params);
-	//console.log(req.path);
-
-	//res.json({info: 'groups'});
+	
 	if(req.params.gid){
 		passwd.getGroup({'groupname': req.params.gid}, function(err, group){
 			if(err){
@@ -109,9 +89,9 @@ module.exports = new Class({
   },
   initialize: function(options){
 	
-	this.parent(options);//override default options
-	
-	this.log('os-groups', 'info', 'os-groups started');
+		this.parent(options);//override default options
+		
+		this.log('os-groups', 'info', 'os-groups started');
   },
 	
 });

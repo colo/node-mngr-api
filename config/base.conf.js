@@ -54,10 +54,17 @@ module.exports = new Class({
 			version: '1.0.0',
 			
 			routes: {
-				all: [
+				get: [
 					{
 						path: '',
 						callbacks: ['get'],
+						version: '',
+					},
+				],
+				all: [
+					{
+						path: '',
+						callbacks: ['404'],
 						version: '',
 					},
 				]
