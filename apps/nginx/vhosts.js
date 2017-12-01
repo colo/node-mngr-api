@@ -1,258 +1,21 @@
 'use strict'
 
-var App = require('node-express-app'),
-	os = require('os'),
+var	os = require('os'),
 	path = require('path'),
 	util = require('util'),
 	fs = require('fs'),
 	nginx = require('nginx-conf').NginxConfFile,
 	lockFile = require('lockfile');
 
-
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/vhosts/prod.conf')
+      : require('./config/vhosts/dev.conf');
+      
 module.exports = new Class({
   Extends: App,
   
-  ON_NO_VHOST: 'onNoVhost',
-  ON_VHOST_ERROR: 'onVhostError',
   
-  ON_VHOST_FOUND: 'onVhostFound',
-  ON_VHOST_NOT_FOUND: 'onVhostNotFound',
-  
-  ON_VHOST_INDEX_FOUND: 'onVhostIndexFound',
-  ON_VHOST_INDEX_NOT_FOUND: 'onVhostIndexNotFound',
-  
-  ON_VHOST_INDEX_PROP_FOUND: 'onVhostIndexPropFound',
-  ON_VHOST_INDEX_PROP_NOT_FOUND: 'onVhostIndexPropNotFound',
-  
-  ON_VHOST_PROP_FOUND: 'onVhostPropFound',
-  ON_VHOST_PROP_NOT_FOUND: 'onVhostPropNotFound',
-  
-  app: null,
-  logger: null,
-  //authorization:null,
-  //authentication: null,
-  
-  comments: true,
-  
-  options: {
-		conf_path: {
-			available: [ 
-				path.join(__dirname,"../../devel/etc/nginx/sites-available/"),
-				path.join(__dirname,"../../devel/etc/nginx/sites-available/proxies/"),
-				path.join(__dirname,"../../devel/etc/nginx/sites-available/redirects/"),
-				path.join(__dirname,"../../devel/etc/nginx/sites-available/ssl/"),
-			],
-			enabled: path.join(__dirname,"../../devel/etc/nginx/sites-enabled/"),
-		},
-		/**
-		 * production
-		 * */
-		 
-		 /**
-		  conf_path: {
-			available: [ 
-				path.join("/","/etc/nginx/sites-available/"),
-				path.join("/","/etc/nginx/sites-available/proxies/"),
-				path.join("/","/etc/nginx/sites-available/redirects/"),
-				path.join("/","/etc/nginx/sites-available/ssl/"),
-			],
-			enabled: path.join("/","/etc/nginx/sites-enabled/"),
-		},
-		* */
-		
-		conf_ext: {
-			//available: new RegExp("\\w+", "gi"),
-			//enabled: new RegExp("\\w+", "gi"),
-			available: null,
-			enabled: null,
-		},
-		
-		id: 'nginx_vhosts',
-		path: '/nginx/vhosts',
-		
-		params: {
-			//id: /^(0|[1-9][0-9]*)$/,
-			//username:
-			//role:
-			//password:
-		},
-		
-		routes: {
-			
-			//all: [
-				//{
-				//path: '',
-				//callbacks: ['get']
-				//},
-			//]
-		},
-		
-		api: {
-			
-			version: '1.0.0',
-			
-			routes: {
-				post: [
-					{
-						path: 'enabled',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['add'],
-						version: '',
-					},
-					{
-						path: 'enabled/:uri',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['add'],
-						version: '',
-					},
-					{
-						path: ':uri',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['add'],
-						version: '',
-					},
-					{
-						path: '',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['add'],
-						version: '',
-					},
-				],
-				put: [
-					{
-						path: 'enabled',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['update'],
-						version: '',
-					},
-					{
-						path: 'enabled/:uri',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['update'],
-						version: '',
-					},
-					{
-						path: 'enabled/:uri/:prop_or_index',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['update'],
-						version: '',
-					},
-					{
-						path: 'enabled/:uri/:prop_or_index/:prop',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['update'],
-						version: '',
-					},
-					{
-						path: ':uri',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['update'],
-						version: '',
-					},
-					{
-						path: ':uri/:prop_or_index',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['update'],
-						version: '',
-					},
-					{
-						path: ':uri/:prop_or_index/:prop',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['update'],
-						version: '',
-					},
-					{
-						path: '',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['update'],
-						version: '',
-					},
-				],
-				delete: [
-					{
-						path: 'enabled',
-						callbacks: ['remove'],
-						version: '',
-					},
-					{
-						path: 'enabled/:uri',
-						callbacks: ['remove'],
-						version: '',
-					},
-					{
-						path: 'enabled/:uri/:prop_or_index',
-						callbacks: ['remove'],
-						version: '',
-					},
-					{
-						path: ':uri',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['remove'],
-						version: '',
-					},
-					{
-						path: ':uri/:prop_or_index',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['remove'],
-						version: '',
-					},
-					{
-						path: '',
-						//callbacks: ['check_authentication', 'add'],
-						callbacks: ['remove'],
-						version: '',
-					},
-				],
-				get: [
-					{
-						path: 'enabled',
-						callbacks: ['get'],
-						version: '',
-					},
-					{
-						path: 'enabled/:uri',
-						callbacks: ['get'],
-						version: '',
-					},
-					{
-						path: 'enabled/:uri/:prop_or_index',
-						callbacks: ['get'],
-						version: '',
-					},
-					{
-						path: 'enabled/:uri/:prop_or_index/:prop',
-						callbacks: ['get'],
-						version: '',
-					},
-					{
-						path: ':uri',
-						callbacks: ['get'],
-						version: '',
-					},
-					{
-						path: ':uri/:prop_or_index',
-						callbacks: ['get'],
-						version: '',
-					},
-					{
-						path: ':uri/:prop_or_index/:prop',
-						callbacks: ['get'],
-						version: '',
-					},
-				],
-				all: [
-					{
-					path: '',
-					callbacks: ['get'],
-					version: '',
-					},
-				]
-			},
-			
-		},
-  },
-	
-	add: function(req, res, next){
+  add: function(req, res, next){
 		console.log(req.body);
 		console.log(req.params);
 		console.log(req.query);
@@ -821,10 +584,17 @@ module.exports = new Class({
 					}
 					
 					var conf = this.obj_to_conf(post_val, function (conf){
-						this.save(conf, post_path_available);
+						
+						try {
+							this.save(conf, post_path_available);
+							res.json(post_val);
+						}
+						catch(e){
+							res.status(500).json({error: e.message});
+						}
 					}.bind(this));
 					
-					res.json(post_val);
+					
 				}
 				else{
 					res.status(500).json({error: 'No data sent or incorrect format'});
@@ -1396,63 +1166,67 @@ module.exports = new Class({
 						//console.log(conf.nginx.server);
 						
 							//var server = null;
-							
-							nginx.create(file, function(err, original_conf) {
-								if (err) {
-									//console.log(err);
-									return;
-								}
-								
-								//don't write to disk when something changes 
-								//original_conf.die(file);
-								
-								if(original_conf.nginx.server){
-									
-									if(original_conf.nginx.server instanceof Array){
-										//console.log('original_conf.nginx.server instanceof Array');
-										if(original_conf.nginx.server[index]){
-											if(conf == null){//delete the vhost
-												
-												original_conf.nginx._remove('server', index);
-											}
-											else{
-												original_conf.nginx.server[index] = conf.nginx.server;
-											}
-										}
-										else{
-											throw new Error('Bad index, somthing went wrong!');
-										}
+							try{
+								nginx.create(file, function(err, original_conf) {
+									if (err) {
+										//console.log(err);
+										//return err;
+										throw err;
 									}
-									else{
-										//console.log('original_conf.nginx.server NO Array');
-										if(conf == null){//delete the vhost
-											console.log('deleting....');
-											original_conf.nginx._remove('server');
-										}
-										else{
-											
-											if(index == 0){
-												original_conf.nginx.server = conf.nginx.server;
+									
+									//don't write to disk when something changes 
+									//original_conf.die(file);
+									
+									if(original_conf.nginx.server){
+										
+										if(original_conf.nginx.server instanceof Array){
+											//console.log('original_conf.nginx.server instanceof Array');
+											if(original_conf.nginx.server[index]){
+												if(conf == null){//delete the vhost
+													
+													original_conf.nginx._remove('server', index);
+												}
+												else{
+													original_conf.nginx.server[index] = conf.nginx.server;
+												}
 											}
 											else{
-												original_conf.nginx._add('server');
-												original_conf.nginx.server[1] = conf.nginx.server;
+												throw new Error('Bad index['+index+'], somthing went wrong!');
 											}
+										}
+										else{
+											//console.log('original_conf.nginx.server NO Array');
+											if(conf == null){//delete the vhost
+												console.log('deleting....');
+												original_conf.nginx._remove('server');
+											}
+											else{
+												
+												if(index == 0){
+													original_conf.nginx.server = conf.nginx.server;
+												}
+												else{
+													original_conf.nginx._add('server');
+													original_conf.nginx.server[1] = conf.nginx.server;
+												}
+											}
+											
 										}
 										
+										
+									}
+									else{//empty file...and maybe where vhosts are on original_conf.nginx.http....
+										original_conf.nginx._add('server');
+										original_conf.nginx.server = conf.nginx.server;
 									}
 									
+									original_conf.flush();
 									
-								}
-								else{//empty file...and maybe where vhosts are on original_conf.nginx.http....
-									original_conf.nginx._add('server');
-									original_conf.nginx.server = conf.nginx.server;
-								}
-								
-								original_conf.flush();
-								
-							});
-							
+								});
+							}
+							catch(err){
+								throw err;
+							}
 						
 					}
 					else{

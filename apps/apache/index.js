@@ -1,59 +1,12 @@
 'use strict'
 
-var App = require('node-express-app'),
-	path = require('path'),
-	util = require('util');
-
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/prod.conf')
+      : require('./config/dev.conf');
 
 module.exports = new Class({
   Extends: App,
   
-  app: null,
-  logger: null,
-  //authorization:null,
-  //authentication: null,
-  
-  conf_dir: path.join(__dirname,"../../devel/etc/apache2/"),
-  
-  options: {
-	  
-		id: 'apache',
-		path: '/apache',
-		
-		params: {
-			//id: /^(0|[1-9][0-9]*)$/,
-			//username:
-			//role:
-			//password:
-		},
-		
-		routes: {
-			
-			//all: [
-				//{
-				//path: '',
-				//callbacks: ['get']
-				//},
-			//]
-		},
-		
-		api: {
-			
-			version: '1.0.0',
-			
-			routes: {
-				all: [
-					{
-						path: '',
-						callbacks: ['get'],
-						version: '',
-					},
-				]
-			},
-			
-		},
-  },
-
   get: function(req, res, next){
 		
 		res.status(200);

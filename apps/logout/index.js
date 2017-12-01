@@ -1,55 +1,15 @@
 'use strict'
 
-var App = require('node-express-app'),
-	path = require('path'),
+var path = require('path'),
 	util = require('util');
+
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/prod.conf')
+      : require('./config/dev.conf');
 
 module.exports = new Class({
   Extends: App,
   
-  app: null,
-  logger: null,
-  authorization:null,
-  authentication: null,
-  
-  options: {
-	  
-	id: 'logout',
-	path: '/logout',
-	
-	//authorization: {
-		////config: path.join(__dirname,'./config/rbac.json'),
-	//},
-	
-	params: {
-	},
-	
-	routes: {
-		
-		all: [
-		  {
-			path: '',
-			callbacks: ['logout']
-		  },
-		]
-	},
-	
-	api: {
-		
-		version: '1.0.0',
-		
-		routes: {
-			all: [
-			  {
-				path: '',
-				callbacks: ['logout'],
-				version: '',
-			  },
-			]
-		},
-		
-	},
-  },
   logout: function(req, res, next){
 		//console.log('logout');
 		
