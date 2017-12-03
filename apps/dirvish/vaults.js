@@ -1,117 +1,24 @@
 'use strict'
 
-var App = require('node-express-app'),
-	path = require('path'),
+var	path = require('path'),
 	Q = require('q'),
 	fs = require('fs'),
 	dirvish = require('node-dirvish');
 	
-//const readline = require('readline'),
-			//fs = require('fs');
-
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/vaults/prod.conf')
+      : require('./config/vaults/dev.conf');
+      
 
 module.exports = new Class({
   Extends: App,
   
-  app: null,
-  logger: null,
-  authorization:null,
-  authentication: null,
-  
-  files: ["../../devel/etc/dirvish.conf", "../../devel/etc/dirvish/master.conf"],
-  cfg_file: null,
-  
-  cfg: {},
-  
-  
-  options: {
-	  
-		id: 'vaults',
-		path: '/vaults',
-		
-		//authorization: {
-			//config: path.join(__dirname,'./config/rbac.json'),
-		//},
-		
-		params: {
-			//route: /^(0|[1-9][0-9]*)$/,
-		},
-		
-		routes: {
-			
-			/*all: [
-				{
-				path: '',
-				callbacks: ['get']
-				},
-			]*/
-		},
-		
-		api: {
-			
-			version: '1.0.0',
-			
-			routes: {
-				post: [
-					{
-						path: '',
-						callbacks: ['post'],
-						version: '',
-					}
-				],
-				put: [
-					{
-						path: '',
-						callbacks: ['put'],
-						version: '',
-					}
-				],
-				all: [
-					/**
-					* hist needs to be before :key path, or won't be proceded
-					* 
-					* */
-					{
-						path: 'hist/:key',
-						callbacks: ['hist'],
-						version: '',
-					},
-					{
-						path: 'hist',
-						callbacks: ['hist'],
-						version: '',
-					},
-					{
-						path: ':key',
-						callbacks: ['get'],
-						version: '',
-					},
-					{
-						path: ':key/:prop',
-						callbacks: ['get'],
-						version: '',
-					},
-					{
-						path: ':key/config/:item',
-						callbacks: ['get'],
-						version: '',
-					},
-					{
-						path: '',
-						callbacks: ['get'],
-						version: '',
-					},
-				]
-			},
-			
-		},
-  },
   format: function(json){
 		var cfg = {};
 		
 		Object.each(json, function(value, key){
-			////console.log('key: '+key);
-			////console.log(value);
+			//console.log('key: '+key);
+			//console.log(value);
 			////console.log('typeof: '+typeof(value));
 			
 			if(/SET|UNSET|RESET/.test(key) &&
@@ -233,14 +140,37 @@ module.exports = new Class({
 		}
 	},
 	post: function (req, res, next){//discard existing VAULT config, create new
-		
+		var vault = req.params.vault;
 		var appendable = {};
 		
-		Object.each(req.body, function(value, key){
-			appendable[key] =  {};
-			appendable[key]['config'] =  this.format(value);
+		
+		if(!vault && Object.getLength(req.body) == 1)
+			vault = Object.keys(req.body)[0];
+		
+		appendable[vault]	= {};
+		
+		var body = {}
+		if(Object.getLength(req.body) == 1){
+			body = req.body[vault];
+		}
+		else{
+			body = req.body;
+		}
+		
+		
+		Object.each(body, function(value, key){
+			appendable[vault][key] = null;
+			if(key == 'config'){
+				appendable[vault][key] = this.format(value);
+			}
+			else{
+				appendable[vault][key] = value
+			}
 		}.bind(this));
 		
+		//console.log(appendable);
+			//throw new Error();
+			
 		dirvish.vaults(this.cfg_file)
 		.then(function(config){//read config
 			//console.log('POST this.vaults');
@@ -248,13 +178,15 @@ module.exports = new Class({
 					
 			this.cfg = config;
 			//console.log(this.cfg);
+			//throw new Error();
 			
 			Object.each(this.cfg, function(value, key){
+				
 				this.cfg[key]['config'] = appendable[key]['config'];//discard old config, set value to new one
 				dirvish.save(this.cfg[key]['config'], value['path']);
 			}.bind(this));
 			
-			//res.json(config);
+			
 			dirvish.vaults(this.cfg_file)//re-read saved config
 			.then(function(config){
 				
@@ -269,23 +201,45 @@ module.exports = new Class({
 	},
 	
   put: function (req, res, next){//update existing config
-		
+		var vault = req.params.vault;
 		var appendable = {};
 		
-		Object.each(req.body, function(value, key){
-			appendable[key] =  {};
-			appendable[key]['config'] =  this.format(value);
+		
+		if(!vault && Object.getLength(req.body) == 1)
+			vault = Object.keys(req.body)[0];
+		
+		appendable[vault]	= {};
+		
+		var body = {}
+		if(Object.getLength(req.body) == 1){
+			body = req.body[vault];
+		}
+		else{
+			body = req.body;
+		}
+		
+		
+		Object.each(body, function(value, key){
+			appendable[vault][key] = null;
+			if(key == 'config'){
+				appendable[vault][key] = this.format(value);
+			}
+			else{
+				appendable[vault][key] = value
+			}
 		}.bind(this));
 		
 		dirvish.vaults(this.cfg_file)
 		.then(function(config){//read config
 			//console.log('PUT this.vaults');
 			//console.log(config);
+			
 					
 			//this.cfg = config;
 			this.cfg = Object.merge(config, appendable);
 			
 			//console.log(this.cfg);
+			//throw new Error();
 			
 			Object.each(this.cfg, function(value, key){
 				dirvish.save(value['config'], value['path']);

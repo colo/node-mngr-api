@@ -1,89 +1,18 @@
 'use strict'
 
-var App = require('node-express-app'),
-	path = require('path'),
+var	path = require('path'),
 	Q = require('q'),
 	fs = require('fs'),
 	dirvish = require('node-dirvish');
-	
+
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/config/prod.conf')
+      : require('./config/config/dev.conf');
+      	
 module.exports = new Class({
   Extends: App,
   
-  app: null,
-  logger: null,
-  authorization:null,
-  authentication: null,
   
-  files: ["../../devel/etc/dirvish.conf", "../../devel/etc/dirvish/master.conf"],
-  cfg_file: null,
-  
-  cfg: {},
-  
-  
-  options: {
-	  
-		id: 'config',
-		path: '/config',
-		
-		//authorization: {
-			//config: path.join(__dirname,'./config/rbac.json'),
-		//},
-		
-		params: {
-			//route: /^(0|[1-9][0-9]*)$/,
-		},
-		
-		routes: {
-			
-			/*all: [
-				{
-				path: '',
-				callbacks: ['get']
-				},
-			]*/
-		},
-		
-		api: {
-			
-			version: '1.0.0',
-			
-			routes: {
-				post: [
-					{
-						path: '',
-						callbacks: ['post'],
-						version: '',
-					}
-				],
-				put: [
-					{
-						path: '',
-						callbacks: ['put'],
-						version: '',
-					}
-				],
-				
-				all: [
-					{
-						path: ':key',
-						callbacks: ['get'],
-						version: '',
-					},
-					{
-						path: ':key/:prop',
-						callbacks: ['get'],
-						version: '',
-					},
-					{
-						path: '',
-						callbacks: ['get'],
-						version: '',
-					},
-				]
-			},
-			
-		},
-  },
   format: function(json){
 		var cfg = {};
 		
@@ -181,8 +110,9 @@ module.exports = new Class({
 		
 		this.files.each(function(file, index){
 			var file_path = path.join(__dirname, file);
-			
+			//console.log(file_path);
 			try{
+				
 				fs.accessSync(file_path, fs.R_OK);
 				this.cfg_file = file_path;
 				

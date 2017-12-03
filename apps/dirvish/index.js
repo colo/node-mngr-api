@@ -1,7 +1,10 @@
 'use strict'
 
-var App = require('node-express-app'),
-	path = require('path');
+var path = require('path');
+
+const App =  process.env.NODE_ENV === 'production'
+      ? require('./config/prod.conf')
+      : require('./config/dev.conf');
 	
 
 
@@ -13,45 +16,7 @@ module.exports = new Class({
   authorization:null,
   authentication: null,
   
-  options: {
-	  
-	id: 'dirvish',
-	path: '/dirvish',
-	
-	//authorization: {
-		//config: path.join(__dirname,'./config/rbac.json'),
-	//},
-	
-	params: {
-	  //route: /^(0|[1-9][0-9]*)$/,
-	},
-	
-	routes: {
-		
-		/*all: [
-		  {
-			path: '',
-			callbacks: ['get']
-		  },
-		]*/
-	},
-	
-	api: {
-		
-		version: '1.0.0',
-		
-		routes: {
-			all: [
-			  {
-				path: '',
-				callbacks: ['get'],
-				version: '',
-			  },
-			]
-		},
-		
-	},
-  },
+  
   get: function (req, res, next){
 		res.json({info: 'dirvish api'});
   },
