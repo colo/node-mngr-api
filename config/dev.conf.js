@@ -16,7 +16,8 @@ module.exports = new Class({
 		},
 		
 		logs: { 
-			path: './logs' 
+			path: './logs',
+			console_level: 'debug',
 		},
 		
 		
