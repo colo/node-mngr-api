@@ -45,9 +45,18 @@ module.exports = new Class({
 			config: path.join(__dirname,'./rbac.json'),
 		},
 		
+		/**
+		 * for PROFILING testing
+		 * 
 		routes: {
-			
+			get: [
+				{
+					path: '/app',
+					callbacks: ['get_app'],
+				},
+			],
 		},
+		*/
 		
 		api: {
 			

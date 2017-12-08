@@ -15,9 +15,14 @@ module.exports = new Class({
 			],
 		},
 		
-		logs: { 
+		logs: {
+			loggers: {
+				error: null,
+				access: null,
+				profiling: null
+			},
+			
 			path: './logs',
-			console_level: 'debug',
 		},
 		
 		

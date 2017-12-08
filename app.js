@@ -1,5 +1,10 @@
 'use strict'
 
+/**
+ * NODE_ENV=production
+ * LOG_ENV=debug
+ * PROFILING_ENV=true
+ * */
 var	path = require('path');
 		//bodyParser = require('body-parser'),
 		//multer = require('multer'), // v1.0.5
@@ -19,7 +24,9 @@ const App =  process.env.NODE_ENV === 'production'
 var MyApp = new Class({
   Extends: App,
   
-  
+	//get_app: function(req, res, next){
+		//res.send('App');
+  //},
   get: function(req, res, next){
 		console.log(this.authentication.store.users);
 		console.log(this.authentication.auth.users);

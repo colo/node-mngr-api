@@ -18,7 +18,13 @@ module.exports = new Class({
   
   options: {
 		
-		logs: { 
+		logs: {
+			loggers: {
+				error: null,
+				access: null,
+				profiling: null
+			},
+			
 			path: './logs' 
 		},
 		
