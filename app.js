@@ -36,7 +36,7 @@ var MyApp = new Class({
   
   initialize: function(options){
 		
-		this.options.middlewares 
+		//this.options.middlewares 
 		this.parent(options);//override default options
 	
 		//console.log(this.options.api.routes.all);

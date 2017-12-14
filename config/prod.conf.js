@@ -6,12 +6,41 @@ const Moo = require("mootools"),
 
 var session = require('express-session'),
 		MemoryStore = require('memorystore')(session), //https://www.npmjs.com/package/memorystore
-		helmet = require('helmet');
+		helmet = require('helmet'),
+		winston = require('winston');
 
+/**
+ * Requiring `winston-logstash` will expose
+ * `winston.transports.Logstash`
+ * */
+require('winston-logstash');
+		
+		//winstonKibana = require('winston-kibana');
+		//Elasticsearch = require('winston-elasticsearch-js'),
+		//es = require('elasticsearch');
+		
+//var esClient = new es.Client({
+  //host: 'http://192.168.0.40:9200',
+  ////log: 'trace'
+//});
 
 /*var session = require('express-session'),
 		SQLiteStore = require('connect-sqlite3')(session);*/
 
+var common = require('winston/lib/winston/common');
+
+
+var trasnform = function (level, msg, meta, self) {
+    return common.log({
+        level: level,
+        message: msg,
+        node_name: self.node_name,
+        meta: meta,
+        timestamp: self.timestamp,
+        json: true,
+        label: self.label,
+    });
+};
 
 module.exports = new Class({
   Extends: BaseApp,
@@ -25,7 +54,16 @@ module.exports = new Class({
 				profiling: null
 			},
 			
-			path: './logs' 
+			path: './logs',
+			
+			//default: [
+				//{ transport: 'console', options: { colorize: 'true', level: 'warning' } },
+				//{ transport: 'logstash', options: {level: 'info', port: 28777, node_name: 'mngr-api', host: '192.168.0.40' } }
+			//]
+			default: [
+				{ transport: winston.transports.Console, options: { colorize: 'true', level: 'warning' } },
+				{ transport: winston.transports.Logstash, options: {transform: trasnform, level: 'info', port: 28777, node_name: 'mngr-api', host: '192.168.0.40' } }
+			]
 		},
 		
 		authentication: {
@@ -45,9 +83,43 @@ module.exports = new Class({
 		
 		//this.options.middlewares.unshift(helmet.hidePoweredBy({ setTo: 'PHP 4.2.0' }));
 		this.options.middlewares.unshift(helmet());
-		
-		
-		
+			
+			//var logger = new winston.Logger({
+				//level: 'info',
+				//transports: [
+					//new (winston.transports.Console)(),
+				//]
+			//});
+			
+			//logger.add(winston.transports.Logstash, {level: 'debug', port: 28777, node_name: 'mngr-api', host: '192.168.0.40' });
+			//winston.add(logger);
+			
+			//logger.log('debug', 'message');
+			
+			//winston.loggers.add('something', {
+				//console: {level: 'debug'},
+				//logstash : {level: 'debug', port: 28777, node_name: 'mngr-api', host: '192.168.0.40' }
+			//});
+			
+			////console.log(winston.loggers.get('something').transports);
+			
+			//winston.loggers.get('something').log('debug', 'message');
+			
+			//for(var i=0; i< 1000;i++){
+				//winston.loggers.add('something'+i, {
+					//console: {level: 'debug'},
+					//logstash : {level: 'debug', port: 28777, node_name: 'mngr-api'+i, host: '192.168.0.40' }
+				//});
+				//winston.loggers.get('something'+i).log('debug', 'message');
+			//}
+		 
+		//this.options.logs.default = new winston.Logger({
+			//transports: [
+				////new winston.transports.Console ( { colorize: 'true', level: 'warning' } )
+				////winston.transports.Logstash({level: 'info', port: 28777, node_name: 'mngr-api', host: '192.168.0.40' })
+			//]
+		//});
+			
 		this.options.session = session({
 				store: new MemoryStore({
 					checkPeriod: 3600000 // prune expired entries every hour
