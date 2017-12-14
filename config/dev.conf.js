@@ -3,6 +3,8 @@
 const Moo = require("mootools"),
 		BaseApp = require ('./base.conf');
 
+var winston = require('winston');
+
 module.exports = new Class({
   Extends: BaseApp,
   
@@ -23,6 +25,11 @@ module.exports = new Class({
 			},
 			
 			path: './logs',
+			
+			//default: [
+				//{ transport: winston.transports.Console, options: { colorize: 'true', level: 'warning' } },
+				//{ transport: winston.transports.File, options: {level: 'info', filename: null } }
+			//]
 		},
 		
 		
