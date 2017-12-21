@@ -3,7 +3,7 @@
 const Moo = require("mootools"),
 		BaseApp = require ('./base.conf');
 
-var winston = require('winston');
+//var winston = require('winston');
 
 module.exports = new Class({
   Extends: BaseApp,
