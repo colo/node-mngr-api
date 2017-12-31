@@ -143,7 +143,7 @@ module.exports = new Class({
 				saveUninitialized: true
 		});*/
 			
-		if(process.env.NODE_ENV === 'production'){
+		//if(process.env.NODE_ENV === 'production'){
 			/**
 			 * add 'check_authentication' & 'check_authorization' to each route
 			 * */
@@ -161,7 +161,7 @@ module.exports = new Class({
 				}
 				
 			});
-		}
+		//}
 		
 		this.parent(options);//override default options
 		

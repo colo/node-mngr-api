@@ -84,7 +84,7 @@ var MyApp = new Class({
 		this.profile('root_init');//end profiling
 		
 		this.log('root', 'info', 'root started');
-		this.log('root', 'error', 'ERROR');
+		//this.log('root', 'error', 'ERROR');
 		
 		this.express().set('authentication',this.authentication);
   },

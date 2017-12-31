@@ -7,7 +7,7 @@ const Moo = require("mootools"),
 const limit = require('node-limit/rate/request');
 var req_limit = new limit({
 									limit: 1,
-									interval: 500
+									interval: 1000
 								});
 
 var req_max = new limit({
@@ -21,7 +21,8 @@ module.exports = new Class({
   options: {
 		
 		//middlewares: [req_limit.ip(), req_limit.user()],
-		middlewares: [req_limit.ip(), req_max.ip()],
+		//middlewares: [req_limit.ip(), req_max.ip()],
+		//middlewares: [req_limit.user()],
 		
 		authentication: {
 			users : [
@@ -45,8 +46,38 @@ module.exports = new Class({
 			//]
 		},
 		
-		
-		
+		api: {
+			
+			version: '1.0.0',
+			
+			routes: {
+				get: [
+					{
+						path: '',
+						callbacks: ['check_authentication', req_limit.user(), 'get'],
+						version: '',
+					},
+				],
+				all: [
+					{
+						path: '',
+						callbacks: ['404'],
+						version: '',
+					},
+				]
+			},
+		}
 	},
+	initialize: function(options){
+		
+		//this.addEvent(this.ON_INIT_AUTHENTICATION, function(authentication){
+			//this.app.use(authentication.check_user());
+			//this.app.use(req_limit.user());
+		//});
+		
+		this.parent(options);//override default options
+		
+		
+	}
 	
 });
