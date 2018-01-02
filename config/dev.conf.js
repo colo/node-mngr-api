@@ -6,7 +6,7 @@ const Moo = require("mootools"),
 //var winston = require('winston');
 const limit = require('node-limit/rate/request');
 var req_limit = new limit({
-									limit: 1,
+									limit: 5,
 									interval: 1000
 								});
 
@@ -54,7 +54,7 @@ module.exports = new Class({
 				get: [
 					{
 						path: '',
-						callbacks: ['check_authentication', req_limit.user(), 'get'],
+						callbacks: ['check_authentication', req_limit.user(), req_max.ip(), 'get'],
 						version: '',
 					},
 				],
