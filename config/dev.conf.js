@@ -7,12 +7,14 @@ const Moo = require("mootools"),
 const limit = require('node-limit/rate/request');
 var req_limit = new limit({
 									limit: 5,
-									interval: 1000
+									interval: 1000,
+									response: function(e, req, res, next){ res.json({error: e.message+'[5/1000]'}) }
 								});
 
 var req_max = new limit({
 									limit: 2,
-									interval: 5000
+									interval: 5000,
+									response: function(e, req, res, next){ res.json({error: e.message+'[2/5000]'}) }
 								});
 								
 module.exports = new Class({
