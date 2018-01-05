@@ -29,7 +29,15 @@ module.exports = new Class({
 		authentication: {
 			users : [
 					{ id: 1, username: 'anonymous' , role: 'anonymous', password: ''},
-					{ id: 2, username: 'test' , role: 'user', password: '123'}
+					{ id: 2, 
+						username: 'test' ,
+						role: 'user',
+						password: '123',
+						token: {
+							uuid: '39F6DD61942A4459BC6271F7EC4C87F5',
+							expire: false
+						}
+					}
 			],
 		},
 		
