@@ -64,7 +64,8 @@ module.exports = new Class({
 				get: [
 					{
 						path: '',
-						callbacks: ['check_authentication', req_limit.user(), req_max.ip(), 'get'],
+						//callbacks: ['check_authentication', req_limit.user(), req_max.ip(), 'get'],
+						callbacks: ['get'],
 						version: '',
 					},
 				],
