@@ -6,7 +6,9 @@
     "port": "8081",
     "uid": "colo",
     "gid": "users",
-    "groups": ["disk"]
+    "groups": [
+      "disk"
+    ]
   },
   "scripts": {
     "start": "node ./bin/www"
