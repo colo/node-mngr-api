@@ -22,6 +22,8 @@
     "memorystore": "^1.6.0",
     "mootools": "^1.5.2",
     "multer": "^1.1.0",
+    "node-express-app": "git+https://github.com/colo/node-express-app.git",
+    "node-limit": "git+https://github.com/colo/node-limit.git",
     "serve-index": "^1.7.3",
     "serve-static": "^1.10.2",
     "winston": "^2.4.0",
