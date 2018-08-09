@@ -4,8 +4,8 @@
   "private": true,
   "config": {
     "port": "8081",
-    "uid": "colo",
-    "gid": "users",
+    "uid": "root",
+    "gid": "root",
     "groups": [
       "disk"
     ]

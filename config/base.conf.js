@@ -10,14 +10,14 @@ const App = require('node-express-app'),
 
 module.exports = new Class({
   Extends: App,
-	
+
 	app: null,
   logger: null,
   authorization:null,
   authentication: null,
-  
+
 	options: {
-	  
+
 	  middlewares: [
 			bodyParser.json(),
 			bodyParser.urlencoded({ extended: true }),
@@ -25,29 +25,29 @@ module.exports = new Class({
 				'exposedHeaders': ['Link', 'Content-Range']
 			})
 	  ],
-	  
+
 		id: os.hostname(),
 		path: '/',
-		
+
 		//cors: {
 			//'exposedHeaders': ['Link', 'Content-Range']
 		//},
-		
-		logs: null,
-		
+
+		logs: undefined,
+
 		authentication: {
 			users : [
 					{ id: 1, username: 'anonymous' , role: 'anonymous', password: ''}
 			],
 		},
-		
+
 		authorization: {
 			config: path.join(__dirname,'./rbac.json'),
 		},
-		
+
 		/**
 		 * for PROFILING testing
-		 * 
+		 *
 		routes: {
 			get: [
 				{
@@ -57,11 +57,11 @@ module.exports = new Class({
 			],
 		},
 		*/
-		
+
 		api: {
-			
+
 			version: '1.0.0',
-			
+
 			routes: {
 				get: [
 					{
@@ -78,9 +78,8 @@ module.exports = new Class({
 					},
 				]
 			},
-			
+
 		},
   },
-  
-});
 
+});
