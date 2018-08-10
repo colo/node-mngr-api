@@ -5,7 +5,7 @@
  */
 
 var app = require('../app');
-var debug = require('debug')(process.env.npm_package_name);
+var debug = require('debug')(process.env.npm_package_name || 'Server');
 var http = require('http');
 //var process = require('process');
 
@@ -88,14 +88,14 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
-  
+
   if(process.env.npm_package_config_groups)
 		process.setgroups(process.env.npm_package_config_groups);
-	
+
 	if(process.env.npm_package_config_gid)
 		process.setgid(process.env.npm_package_config_gid);
-			
+
   if(process.env.npm_package_config_uid)
 		process.setuid(process.env.npm_package_config_uid);
-	
+
 }
