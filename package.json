@@ -4,6 +4,7 @@
   "private": true,
   "config": {
     "port": "8081",
+    "host": "127.0.0.1",
     "uid": "root",
     "gid": "root",
     "groups": [
