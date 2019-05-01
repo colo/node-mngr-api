@@ -1,12 +1,16 @@
 'use strict'
 
+require('http').globalAgent.maxSockets = Infinity
+require('https').globalAgent.maxSockets = Infinity
+
 const App = require('node-express-app'),
 			os = require('os'),
 			path = require('path'),
 			bodyParser = require('body-parser'),
 			//multer = require('multer'), // v1.0.5
 			//upload = multer(), // for parsing multipart/form-data
-			cors = require('cors');
+			cors = require('cors'),
+			compression = require('compression');
 
 module.exports = new Class({
   Extends: App,
@@ -19,6 +23,7 @@ module.exports = new Class({
 	options: {
 
 	  middlewares: [
+			compression(),
 			bodyParser.json(),
 			bodyParser.urlencoded({ extended: true }),
 			cors({
