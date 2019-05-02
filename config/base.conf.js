@@ -40,15 +40,17 @@ module.exports = new Class({
 
 		logs: undefined,
 
-		authentication: {
-			users : [
-					{ id: 1, username: 'anonymous' , role: 'anonymous', password: ''}
-			],
-		},
+		// authentication: {
+		// 	users : [
+		// 			{ id: 1, username: 'anonymous' , role: 'anonymous', password: ''}
+		// 	],
+		// },
+		authentication: undefined,
 
-		authorization: {
-			config: path.join(__dirname,'./rbac.json'),
-		},
+		// authorization: {
+		// 	config: path.join(__dirname,'./rbac.json'),
+		// },
+		authorization: undefined,
 
 		/**
 		 * for PROFILING testing
