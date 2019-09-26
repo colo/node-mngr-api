@@ -1,5 +1,8 @@
 'use strict'
 
+//we register many 'exit' events on this emmiter to handle shutdown gracefully (ex: Poller), set it 0 to avoid Warning
+process.setMaxListeners(0);
+
 /**
  * NODE_ENV=production
  * LOG_ENV=debug
